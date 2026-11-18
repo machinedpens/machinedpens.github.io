@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Maker Map · Machined Pens</title>
+  <meta name="description" content="A map of the machined pen makers featured in The Maker Index, a series from Machined Pens on Substack.">
+  <meta name="theme-color" content="#f5ecdc">
+  <meta property="og:title" content="Maker Map · Machined Pens">
+  <meta property="og:description" content="Machined pen makers across the US and Canada, from The Maker Index.">
+  <meta property="og:image" content="https://machinedpens.github.io/maker-map-still.png">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%23c2410c'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%231b1612' stroke-width='2.5'/%3E%3C/svg%3E">
+  <script>
+    // ?theme=light|dark|bold|warm (or 1-4). Warm is the default.
+    (function () {
+      var t = (new URLSearchParams(location.search).get("theme") || "").toLowerCase();
+      var map = { "1": "light", "2": "dark", "3": "bold", "4": "warm" };
+      t = map[t] || t;
+      if (["light", "dark", "bold"].indexOf(t) >= 0) document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#maker-list">Skip to the list of makers</a>
+
+  <header class="site-header">
+    <h1 class="title">Maker Map</h1>
+    <a class="subtitle" href="https://machinedpens.substack.com">Machined Pens · The Maker Index</a>
+  </header>
+
+  <main>
+    <section class="map-panel" aria-label="Map of makers">
+      <div class="map-wrap" id="map-wrap">
+        <svg id="map" role="group" aria-label="Map of the United States and Canada with one pin per maker"></svg>
+
+        <div class="still-tag" aria-hidden="true">Maker Map · <span>Machined Pens</span></div>
+
+        <div class="legend" id="legend" aria-label="Legend">
+          <div class="legend-row">
+            <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--pin)"/></svg>
+            <span>Maker</span>
+          </div>
+          <div class="legend-row">
+            <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--pin)"/><circle cx="12" cy="12" r="9" fill="none" stroke="var(--ring)" stroke-width="1.6"/></svg>
+            <span>Featured in The Maker Index</span>
+          </div>
+        </div>
+
+        <div class="card" id="card" role="dialog" aria-modal="false" aria-labelledby="card-name" hidden>
+          <button class="card-close" id="card-close" type="button" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <h2 class="card-name" id="card-name"></h2>
+          <p class="card-meta" id="card-meta"></p>
+          <div class="card-links" id="card-links"></div>
+        </div>
+      </div>
+
+      <div class="timeline" id="timeline">
+        <button class="play" id="play" type="button" aria-label="Play timeline">
+          <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>
+          <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>
+        </button>
+        <div class="slider-wrap">
+          <label class="sr-only" for="year">Show makers established by year</label>
+          <input type="range" id="year" min="2008" max="2026" step="1" value="2026">
+          <div class="slider-ends" aria-hidden="true"><span id="year-min"></span><span id="year-max"></span></div>
+        </div>
+        <div class="year-readout" aria-live="polite">
+          <span class="year-value" id="year-value">2026</span>
+          <span class="year-count" id="year-count"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="list-panel" id="maker-list" aria-labelledby="list-title">
+      <h2 class="list-title" id="list-title">All makers</h2>
+      <div id="list"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>From <a href="https://machinedpens.substack.com">Machined Pens</a>, a Substack about machined pens and the people who make them. Cities only, never addresses.</p>
+  </footer>
+
+  <noscript><p class="noscript">The map needs JavaScript. You can read The Maker Index on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
+
+  <script src="vendor/d3.min.js"></script>
+  <script src="vendor/topojson-client.min.js"></script>
+  <script src="map.js"></script>
+</body>
+</html>
