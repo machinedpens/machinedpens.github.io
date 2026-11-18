@@ -420,6 +420,36 @@
       "lon": -157.9694,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) locality centroid"
+    },
+    {
+      "name": "Melrose Machine Works",
+      "website": "https://www.melrosemachineworks.com",
+      "city": "San Francisco",
+      "region": "CA",
+      "region_name": "California",
+      "country": "US",
+      "est_year": 2026,
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 37.7879,
+      "lon": -122.4075,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid"
+    },
+    {
+      "name": "Pencestry",
+      "website": "https://www.pencestry.com",
+      "city": "Miami",
+      "region": "FL",
+      "region_name": "Florida",
+      "country": "US",
+      "est_year": 2026,
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 25.7742,
+      "lon": -80.1936,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid"
     }
   ]
 }
