@@ -289,7 +289,7 @@ input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px 
 @media (max-width: 640px) {
   .site-header, main, .site-footer { padding-left: 16px; padding-right: 16px; }
   .site-header { padding-top: 28px; padding-bottom: 16px; }
-  .title { font-size: 32px; }
+  .title { font-size: 28px; }
   .map-panel { border-radius: 16px; }
   .map-wrap { aspect-ratio: auto; }
   #map { height: 80vw; }

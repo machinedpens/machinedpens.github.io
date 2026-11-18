@@ -1,4 +1,4 @@
-/* Maker Map · Machined Pens
+/* Machined Pens Maker Map
    Pure static: D3 v7 + topojson-client, vendored in ./vendor. Data in ./makers.json and ./data. */
 (function () {
   "use strict";
