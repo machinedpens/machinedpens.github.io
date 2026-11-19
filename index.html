@@ -25,9 +25,22 @@
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
 
   <header class="site-header">
-    <h1 class="title">Machined Pens Maker Map</h1>
+    <h1 class="title"><span class="title-live">Machined Pens Maker Map</span><span class="title-print">My Machined Pens Makers</span></h1>
     <a class="subtitle" href="https://machinedpens.substack.com/p/the-maker-index-all-makers">Machined Pens · The Maker Index</a>
   </header>
+
+  <div class="fav-banner" id="fav-banner" hidden>
+    <p class="fav-banner-text">Viewing shared favorites</p>
+    <div class="fav-banner-actions">
+      <button type="button" class="fav-banner-save" id="fav-save">Save as mine</button>
+      <button type="button" class="fav-banner-exit" id="fav-exit">Show all makers</button>
+    </div>
+  </div>
+
+  <div class="print-toolbar" id="print-toolbar" hidden>
+    <button type="button" class="print-now" id="print-now">Print</button>
+    <a class="print-back" id="print-back" href="./">Back to map</a>
+  </div>
 
   <main>
     <section class="map-panel" aria-label="Map of makers">
@@ -52,6 +65,9 @@
         </div>
 
         <div class="card" id="card" role="dialog" aria-modal="false" aria-labelledby="card-name" hidden>
+          <button class="card-star" id="card-star" type="button" aria-pressed="false" aria-label="Add to favorites">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.47 5.01 5.53.8-4 3.9.94 5.5L12 16.2l-4.94 2.6.94-5.5-4-3.9 5.53-.8z"/></svg>
+          </button>
           <button class="card-close" id="card-close" type="button" aria-label="Close">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
@@ -61,6 +77,7 @@
           <p class="card-note" id="card-note" hidden></p>
           <div class="card-links" id="card-links"></div>
           <p class="card-update" id="card-update" hidden></p>
+          <p class="fav-limit-note card-fav-limit" id="card-fav-limit" hidden>You can pick up to 5 favorites. Remove one to add another.</p>
         </div>
       </div>
 
@@ -79,13 +96,35 @@
           <span class="year-count" id="year-count"></span>
         </div>
       </div>
+
+      <div class="fav-bar" id="fav-bar">
+        <button class="fav-toggle" id="fav-toggle" type="button" aria-pressed="false">
+          <svg class="fav-star-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.47 5.01 5.53.8-4 3.9.94 5.5L12 16.2l-4.94 2.6.94-5.5-4-3.9 5.53-.8z"/></svg>
+          <span id="fav-toggle-label">Favorites (0/5)</span>
+        </button>
+        <div class="fav-actions">
+          <button class="fav-action" id="fav-share" type="button" disabled>Share favorites</button>
+          <button class="fav-action" id="fav-image" type="button" disabled>Save image</button>
+          <button class="fav-action" id="fav-manage" type="button" disabled aria-expanded="false" aria-controls="fav-panel">Manage</button>
+        </div>
+        <p class="fav-limit-note" id="fav-limit-note" hidden role="status">You can pick up to 5 favorites. Remove one to add another.</p>
+        <div class="fav-panel" id="fav-panel" hidden role="dialog" aria-label="Manage favorites">
+          <p class="fav-panel-empty" id="fav-panel-empty">No favorites yet. Tap the star on a maker’s card to add one.</p>
+          <ul class="fav-panel-list" id="fav-panel-list"></ul>
+          <button class="fav-clear" id="fav-clear" type="button">Clear favorites</button>
+        </div>
+      </div>
     </section>
 
     <section class="list-panel" id="maker-list" aria-labelledby="list-title">
       <h2 class="list-title" id="list-title">All makers</h2>
       <div id="list"></div>
     </section>
+
+    <section class="print-list" id="print-list" aria-label="Favorite makers" hidden></section>
   </main>
+
+  <p class="print-footer" id="print-footer" hidden>machinedpens.github.io</p>
 
   <footer class="site-footer">
     <p>From <a href="https://machinedpens.substack.com">Machined Pens</a>, a Substack about machined pens and the people who make them. Cities when known, never addresses.</p>

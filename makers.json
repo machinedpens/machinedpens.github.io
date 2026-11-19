@@ -3,6 +3,7 @@
   "makers": [
     {
       "name": "Autmog",
+      "slug": "autmog",
       "website": "https://www.autmog.com",
       "city": "Vancouver",
       "region": "BC",
@@ -19,6 +20,7 @@
     },
     {
       "name": "Confounded Machine",
+      "slug": "confounded-machine",
       "website": "https://www.confoundedmachine.com",
       "city": "Edmonton",
       "region": "AB",
@@ -36,6 +38,7 @@
     },
     {
       "name": "Q3D",
+      "slug": "q3d",
       "website": "https://www.shopq3d.com",
       "city": null,
       "region": "IL",
@@ -52,6 +55,7 @@
     },
     {
       "name": "FocusWorks",
+      "slug": "focusworks",
       "website": "https://focusworksedc.com",
       "city": "Sechelt",
       "region": "BC",
@@ -69,6 +73,7 @@
     },
     {
       "name": "Seguin",
+      "slug": "seguin",
       "website": "https://seguinink.com",
       "city": "Morinville",
       "region": "AB",
@@ -85,6 +90,7 @@
     },
     {
       "name": "Grimsmo",
+      "slug": "grimsmo",
       "website": "https://grimsmoknives.com",
       "city": "Stoney Creek",
       "region": "ON",
@@ -102,6 +108,7 @@
     },
     {
       "name": "MaxMadCo",
+      "slug": "maxmadco",
       "website": "http://maxmadco.com",
       "city": "San Francisco",
       "region": "CA",
@@ -122,6 +129,7 @@
     },
     {
       "name": "SPP",
+      "slug": "spp",
       "website": "https://verrettengineering.com",
       "city": "Clyde",
       "region": "TX",
@@ -142,6 +150,7 @@
     },
     {
       "name": "MachineWise",
+      "slug": "machinewise",
       "website": "https://machinewise.com",
       "city": "Phoenix",
       "region": "AZ",
@@ -159,6 +168,7 @@
     },
     {
       "name": "Schon DSGN",
+      "slug": "schon-dsgn",
       "website": "https://www.schondsgn.com",
       "city": "Philadelphia",
       "region": "PA",
@@ -176,6 +186,7 @@
     },
     {
       "name": "The Right Choice Painting Company",
+      "slug": "the-right-choice-painting-company",
       "website": "https://therightchoicepaintingcompany.com",
       "city": "Tucson",
       "region": "AZ",
@@ -192,6 +203,7 @@
     },
     {
       "name": "Modern Fuel",
+      "slug": "modern-fuel",
       "website": "https://modernfuel.com",
       "city": "San Antonio",
       "region": "TX",
@@ -210,6 +222,7 @@
     },
     {
       "name": "Tactile Turn",
+      "slug": "tactile-turn",
       "website": "https://tactileturn.com",
       "city": "Dallas",
       "region": "TX",
@@ -226,6 +239,7 @@
     },
     {
       "name": "Inventery",
+      "slug": "inventery",
       "website": "https://www.inventery.co",
       "city": "Los Angeles",
       "region": "CA",
@@ -242,6 +256,7 @@
     },
     {
       "name": "Matthew Martin Makes",
+      "slug": "matthew-martin-makes",
       "website": "https://www.matthewmartinmakes.com",
       "city": "Anderson",
       "region": "SC",
@@ -259,6 +274,7 @@
     },
     {
       "name": "Maverick Customs",
+      "slug": "maverick-customs",
       "website": "https://maverickcustomsknives.com",
       "city": "Horse Cave",
       "region": "KY",
@@ -276,6 +292,7 @@
     },
     {
       "name": "OG Brad",
+      "slug": "og-brad",
       "website": "https://ogbrad.com",
       "city": "Piedmont",
       "region": "MO",
@@ -292,6 +309,7 @@
     },
     {
       "name": "Billetspin",
+      "slug": "billetspin",
       "website": "https://www.billetspin.com/",
       "city": "Oshkosh",
       "region": "WI",
@@ -309,6 +327,7 @@
     },
     {
       "name": "Fellhoelter",
+      "slug": "fellhoelter",
       "website": "https://fellhoelter.com/",
       "city": "Lake Havasu City",
       "region": "AZ",
@@ -325,6 +344,7 @@
     },
     {
       "name": "Nottingham Tactical",
+      "slug": "nottingham-tactical",
       "website": "https://nottinghamtactical.com/",
       "city": "Hazlehurst",
       "region": "MS",
@@ -342,6 +362,7 @@
     },
     {
       "name": "Karas Pen Co",
+      "slug": "karas-pen-co",
       "website": "https://karaskustoms.com/",
       "city": "Mesa",
       "region": "AZ",
@@ -359,6 +380,7 @@
     },
     {
       "name": "Machine Era",
+      "slug": "machine-era",
       "website": "https://www.machine-era.com/",
       "city": "Richmond",
       "region": "VA",
@@ -376,6 +398,7 @@
     },
     {
       "name": "Big Idea Design",
+      "slug": "big-idea-design",
       "website": "https://bigidesign.com/",
       "city": "Chattanooga",
       "region": "TN",
@@ -394,6 +417,7 @@
     },
     {
       "name": "Honey Badger Arsenal",
+      "slug": "honey-badger-arsenal",
       "website": "https://honeybadgerarsenal.com/",
       "city": "Las Vegas",
       "region": "NV",
@@ -410,6 +434,7 @@
     },
     {
       "name": "Aerocrafted",
+      "slug": "aerocrafted",
       "website": "https://aerocrafted.com/",
       "city": "San Luis Obispo",
       "region": "CA",
@@ -427,6 +452,7 @@
     },
     {
       "name": "Spoke Design",
+      "slug": "spoke-design",
       "website": "https://spokedesign.com/",
       "city": "Greenville",
       "region": "SC",
@@ -445,6 +471,7 @@
     },
     {
       "name": "Koenig",
+      "slug": "koenig",
       "website": "https://koenigknives.com/",
       "city": "Boise",
       "region": "ID",
@@ -462,6 +489,7 @@
     },
     {
       "name": "Ti2 Design",
+      "slug": "ti2-design",
       "website": "https://ti2design.com/",
       "city": "Pearl City",
       "region": "HI",
@@ -478,6 +506,7 @@
     },
     {
       "name": "Melrose Machine Works",
+      "slug": "melrose-machine-works",
       "website": "https://www.melrosemachineworks.com",
       "city": "San Francisco",
       "region": "CA",
@@ -494,6 +523,7 @@
     },
     {
       "name": "Pencestry",
+      "slug": "pencestry",
       "website": "https://www.pencestry.com",
       "city": "Miami",
       "region": "FL",

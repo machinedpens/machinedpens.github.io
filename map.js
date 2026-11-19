@@ -4,7 +4,9 @@
   "use strict";
 
   var STILL = /[?&]still=1\b/.test(location.search);
+  var PRINT = /[?&]print=1\b/.test(location.search);
   if (STILL) document.body.classList.add("still");
+  if (PRINT && !STILL) document.body.classList.add("print");
 
   var MAX_YEAR = 2026;
   var COUNTRY_NAMES = { US: "United States", CA: "Canada" };
@@ -26,7 +28,7 @@
   var playBtn = document.getElementById("play");
   var mqMobile = window.matchMedia("(max-width: 640px)");
 
-  var state = { makers: [], features: null, topo: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008 };
+  var state = { makers: [], features: null, topo: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, shared: false };
 
   Promise.all([d3.json("makers.json"), d3.json("data/us-canada.topo.json")])
     .then(function (res) { init(res[0].makers, res[1]); })
@@ -36,8 +38,12 @@
     });
 
   function init(makers, topo) {
-    makers.forEach(function (m, i) { m.id = "m" + i; });
+    makers.forEach(function (m, i) {
+      m.id = "m" + i;
+      if (!m.slug) m.slug = slugify(m.name);
+    });
     state.makers = makers;
+    if (!STILL) initFavorites();
     state.topo = topo;
     var obj = topo.objects.usca;
     // Hawaii sits far outside a North America frame, so it is drawn in a lower-left inset.
@@ -62,6 +68,7 @@
     setYear(MAX_YEAR);
     bindUI();
     setupSuggestLink();
+    if (!STILL) bindFavorites();
 
     if (window.ResizeObserver) {
       var el = svg.node();
@@ -446,8 +453,9 @@
     slider.style.setProperty("--fill", pct + "%");
     slider.setAttribute("aria-valuetext", "Founded by " + y);
     document.getElementById("year-value").textContent = y;
-    var known = state.makers.filter(function (m) { return m.est_year && m.est_year <= y; }).length;
-    var unknown = state.makers.filter(function (m) { return !m.est_year; }).length;
+    var pool = state.favOnly ? state.makers.filter(isFav) : state.makers;
+    var known = pool.filter(function (m) { return m.est_year && m.est_year <= y; }).length;
+    var unknown = pool.filter(function (m) { return !m.est_year; }).length;
     var el = document.getElementById("year-count");
     el.textContent = known + (known === 1 ? " maker" : " makers");
     if (unknown) {
@@ -458,19 +466,36 @@
     applyYear();
   }
 
-  function isHidden(m) { return !!m.est_year && m.est_year > state.year; }
+  function isYearHidden(m) { return !!m.est_year && m.est_year > state.year; }
+  function isFavHidden(m) { return !STILL && state.favOnly && !isFav(m); }
+  function isHidden(m) { return isYearHidden(m) || isFavHidden(m); }
 
   function applyYear() {
     var full = state.year >= MAX_YEAR;
     svg.selectAll("g.pin")
       .classed("hidden", function (d) { return isHidden(d.m); })
-      .classed("faded", function (d) { return !d.m.est_year && !full; })
+      .classed("faded", function (d) { return !isHidden(d.m) && !d.m.est_year && !full; })
       .attr("tabindex", function (d) { return isHidden(d.m) ? -1 : 0; })
       .attr("aria-hidden", function (d) { return isHidden(d.m) ? "true" : null; });
     svg.selectAll(".leaders g").classed("hidden", function (d) { return isHidden(d.m); });
     d3.selectAll(".maker-btn").classed("dimmed", function () {
-      var m = byId(this.getAttribute("data-id")); return isHidden(m);
+      var m = byId(this.getAttribute("data-id")); return isYearHidden(m);
     });
+    d3.selectAll(".maker-row").classed("fav-hidden", function () {
+      var btn = this.querySelector(".maker-btn");
+      var m = btn && byId(btn.getAttribute("data-id"));
+      return !!(m && isFavHidden(m));
+    });
+    document.querySelectorAll(".region").forEach(function (reg) {
+      var any = reg.querySelector(".maker-row:not(.fav-hidden)");
+      reg.hidden = state.favOnly && !any;
+    });
+    document.querySelectorAll(".country").forEach(function (sec) {
+      var any = sec.querySelector(".region:not([hidden])");
+      sec.hidden = state.favOnly && !any;
+    });
+    var title = document.getElementById("list-title");
+    if (title && !PRINT) title.textContent = state.favOnly ? "Favorite makers" : "All makers";
     if (state.active && isHidden(state.active)) closeCard(true);
   }
 
@@ -600,12 +625,17 @@
     if (m.website) links.appendChild(link(m.website, "Website", false));
     if (m.maker_index_url) links.appendChild(link(m.maker_index_url, "Read my Maker Index post", true));
     fillUpdateLink(m);
+    syncCardStar(m);
 
     card.hidden = false;
     positionCard(m);
     svg.selectAll("g.pin").classed("active", function (d) { return d.m === m; });
     d3.selectAll(".maker-btn").classed("active", function () { return this.getAttribute("data-id") === m.id; })
       .attr("aria-expanded", function () { return this.getAttribute("data-id") === m.id ? "true" : "false"; });
+    d3.selectAll(".maker-row").classed("is-active", function () {
+      var btn = this.querySelector(".maker-btn");
+      return !!(btn && btn.getAttribute("data-id") === m.id);
+    });
     // Bring the active pin to the top.
     var node = svg.select('g.pin[data-id="' + m.id + '"]').node();
     if (node) node.parentNode.appendChild(node);
@@ -639,6 +669,7 @@
     card.hidden = true;
     svg.selectAll("g.pin").classed("active", false);
     d3.selectAll(".maker-btn").classed("active", false).attr("aria-expanded", "false");
+    d3.selectAll(".maker-row").classed("is-active", false);
     var back = state.returnFocus;
     state.active = null; state.returnFocus = null;
     if (!silent && back && document.activeElement && card.contains(document.activeElement)) back.focus();
@@ -655,9 +686,12 @@
     else if (m.status === "inactive") parts.push("Inactive");
     return parts.join(" · ");
   }
+  var STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.47 5.01 5.53.8-4 3.9.94 5.5L12 16.2l-4.94 2.6.94-5.5-4-3.9 5.53-.8z"/></svg>';
+
   function makerButton(m) {
     var b = document.createElement("button");
     b.type = "button"; b.className = "maker-btn"; b.setAttribute("data-id", m.id);
+    b.setAttribute("data-slug", m.slug);
     b.setAttribute("aria-expanded", "false");
     b.setAttribute("aria-label", ariaLabel(m) + ". Show on map");
     b.innerHTML = swatch(m) + '<span class="m-name"></span><span class="m-meta"></span>';
@@ -665,6 +699,28 @@
     b.querySelector(".m-meta").textContent = listMeta(m);
     b.addEventListener("click", function () { focusMaker(m, b); });
     return b;
+  }
+  function makerStar(m) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "maker-star";
+    b.setAttribute("data-slug", m.slug);
+    b.innerHTML = STAR_SVG;
+    syncStarButton(b, m);
+    b.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      toggleFavorite(m);
+    });
+    return b;
+  }
+  function makerRow(m) {
+    var row = document.createElement("div");
+    row.className = "maker-row";
+    row.setAttribute("data-slug", m.slug);
+    row.appendChild(makerButton(m));
+    if (!STILL && !PRINT) row.appendChild(makerStar(m));
+    return row;
   }
   function buildList() {
     var root = document.getElementById("list");
@@ -689,7 +745,7 @@
         byCountry.get(c).get(r).slice().sort(function (a, b) { return d3.ascending(a.name.toLowerCase(), b.name.toLowerCase()); })
           .forEach(function (m) {
             var li = document.createElement("li");
-            li.appendChild(makerButton(m));
+            li.appendChild(makerRow(m));
             ul.appendChild(li);
           });
         div.appendChild(ul); grid.appendChild(div);
@@ -721,6 +777,783 @@
       window.scrollTo({ top: top, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
       setTimeout(go, 380);
     } else go();
+  }
+
+
+  /* ---------- Favorites ---------- */
+
+  var FAV_KEY = "machinedpens-maker-map-favorites";
+  var FAV_MAX = 5;
+  var STAR_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.47 5.01 5.53.8-4 3.9.94 5.5L12 16.2l-4.94 2.6.94-5.5-4-3.9 5.53-.8z"/></svg>';
+
+  function slugify(name) {
+    return String(name).toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+  function favSet() { return state.favorites; }
+  function isFav(m) { return !!(m && state.favorites[m.slug]); }
+  function favSlugs() {
+    return state.makers.filter(isFav).map(function (m) { return m.slug; });
+  }
+  function favMakers() { return state.makers.filter(isFav); }
+  function sameSlugList(a, b) {
+    if (!a || !b || a.length !== b.length) return false;
+    var aa = a.slice().sort(), bb = b.slice().sort();
+    for (var i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return false;
+    return true;
+  }
+  function knownSlug(slug) {
+    return state.makers.some(function (m) { return m.slug === slug; });
+  }
+  function parseSlugs(raw) {
+    if (raw == null || raw === "") return [];
+    var out = [], seen = {};
+    String(raw).split(",").forEach(function (part) {
+      var s;
+      try { s = decodeURIComponent(part.trim().toLowerCase()); } catch (e) { s = part.trim().toLowerCase(); }
+      if (!s || seen[s] || !knownSlug(s) || out.length >= FAV_MAX) return;
+      seen[s] = true;
+      out.push(s);
+    });
+    return out;
+  }
+  function readFavParam(source) {
+    if (!source) return null;
+    var m = String(source).match(/(?:^|[?#&])fav=([^&]*)/);
+    if (!m) return null;
+    return parseSlugs(m[1]);
+  }
+  function loadStoredFavs() {
+    try {
+      var raw = localStorage.getItem(FAV_KEY);
+      if (!raw) return [];
+      var arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return [];
+      var out = [], seen = {};
+      arr.forEach(function (item) {
+        var s = String(item).toLowerCase();
+        if (!s || seen[s] || !knownSlug(s) || out.length >= FAV_MAX) return;
+        seen[s] = true;
+        out.push(s);
+      });
+      return out;
+    } catch (e) { return []; }
+  }
+  function saveStoredFavs(slugs) {
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(slugs)); } catch (e) {}
+  }
+  function setFavs(slugs) {
+    var next = {}, n = 0;
+    (slugs || []).forEach(function (s) {
+      if (!knownSlug(s) || next[s] || n >= FAV_MAX) return;
+      next[s] = true;
+      n += 1;
+    });
+    state.favorites = next;
+  }
+  function atFavLimit() { return favSlugs().length >= FAV_MAX; }
+  function adoptSharedOnEdit() {
+    if (!state.shared) return;
+    state.shared = false;
+    saveStoredFavs(favSlugs());
+    hideBanner();
+  }
+
+  function initFavorites() {
+    var fromQuery = readFavParam(location.search);
+    var fromHash = readFavParam(location.hash);
+    var incoming = fromQuery || fromHash;
+    var stored = loadStoredFavs();
+    if (incoming && incoming.length && !sameSlugList(incoming, stored)) {
+      state.shared = true;
+      setFavs(incoming);
+      state.favOnly = true;
+    } else {
+      setFavs(stored);
+      if (stored.length) saveStoredFavs(favSlugs());
+      if (incoming && incoming.length && sameSlugList(incoming, stored)) state.favOnly = true;
+    }
+    if (PRINT) state.favOnly = favSlugs().length > 0;
+  }
+
+  function shareUrl() {
+    var url = new URL(location.href);
+    url.searchParams.delete("print");
+    url.searchParams.delete("fav");
+    url.searchParams.delete("still");
+    var slugs = favSlugs();
+    url.hash = slugs.length ? "fav=" + slugs.join(",") : "";
+    return url.toString();
+  }
+  function printViewUrl() {
+    var url = new URL(location.href);
+    url.searchParams.delete("still");
+    url.searchParams.delete("fav");
+    url.searchParams.set("print", "1");
+    var slugs = favSlugs();
+    url.hash = slugs.length ? "fav=" + slugs.join(",") : "";
+    return url.toString();
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly", "");
+    ta.style.position = "fixed"; ta.style.left = "-9999px";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, then) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(then).catch(function () { fallbackCopy(text); if (then) then(); });
+    } else { fallbackCopy(text); if (then) then(); }
+  }
+
+  function syncStarButton(btn, m) {
+    if (!btn || !m) return;
+    var on = isFav(m);
+    var muted = !on && atFavLimit();
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.classList.toggle("is-muted", muted);
+    if (muted) {
+      btn.setAttribute("aria-label", m.name + ". Favorites are full. Remove one to add another.");
+    } else {
+      btn.setAttribute("aria-label", (on ? "Remove " : "Add ") + m.name + " " + (on ? "from" : "to") + " favorites");
+    }
+  }
+  function syncCardStar(m) {
+    var btn = document.getElementById("card-star");
+    if (!btn) return;
+    if (STILL || PRINT || !m) { btn.hidden = true; return; }
+    btn.hidden = false;
+    syncStarButton(btn, m);
+  }
+  function syncAllStars() {
+    document.querySelectorAll(".maker-star").forEach(function (btn) {
+      var m = state.makers.find(function (x) { return x.slug === btn.getAttribute("data-slug"); });
+      if (m) syncStarButton(btn, m);
+    });
+    if (state.active) syncCardStar(state.active);
+    syncFavBar();
+    buildPrintList();
+  }
+  function syncFavBar() {
+    var n = favSlugs().length;
+    var label = document.getElementById("fav-toggle-label");
+    var toggle = document.getElementById("fav-toggle");
+    if (label) label.textContent = "Favorites (" + n + "/" + FAV_MAX + ")";
+    if (toggle) {
+      toggle.setAttribute("aria-pressed", state.favOnly && n ? "true" : "false");
+      toggle.disabled = n === 0 && !state.favOnly;
+    }
+    ["fav-share", "fav-image", "fav-manage"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.disabled = n === 0;
+    });
+    var banner = document.getElementById("fav-banner");
+    if (banner) banner.hidden = !state.shared;
+    if (n < FAV_MAX) hideFavLimitNote();
+    syncImageButton();
+    buildManageList();
+  }
+  function hideBanner() {
+    state.shared = false;
+    var banner = document.getElementById("fav-banner");
+    if (banner) banner.hidden = true;
+  }
+
+  var favNoteTimer = null;
+  function hideFavLimitNote() {
+    ["fav-limit-note", "card-fav-limit"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.hidden = true;
+    });
+    if (favNoteTimer) { clearTimeout(favNoteTimer); favNoteTimer = null; }
+  }
+  function showFavLimitNote() {
+    var cardNote = document.getElementById("card-fav-limit");
+    var barNote = document.getElementById("fav-limit-note");
+    var cardOpen = card && !card.hidden;
+    if (cardNote) cardNote.hidden = !cardOpen;
+    if (barNote) barNote.hidden = false;
+    if (favNoteTimer) clearTimeout(favNoteTimer);
+    favNoteTimer = setTimeout(hideFavLimitNote, 4000);
+  }
+
+  function toggleFavorite(m) {
+    if (!m || STILL || PRINT) return;
+    if (state.favorites[m.slug]) {
+      adoptSharedOnEdit();
+      delete state.favorites[m.slug];
+    } else if (atFavLimit()) {
+      showFavLimitNote();
+      return;
+    } else {
+      adoptSharedOnEdit();
+      state.favorites[m.slug] = true;
+    }
+    hideFavLimitNote();
+    saveStoredFavs(favSlugs());
+    if (favSlugs().length === 0) state.favOnly = false;
+    syncAllStars();
+    setYear(state.year);
+  }
+  function removeFavorite(slug) {
+    var m = state.makers.find(function (x) { return x.slug === slug; });
+    if (m) toggleFavorite(m);
+  }
+  function clearFavorites() {
+    adoptSharedOnEdit();
+    state.favorites = {};
+    state.favOnly = false;
+    saveStoredFavs([]);
+    closeManage();
+    syncAllStars();
+    setYear(state.year);
+  }
+  function setFavOnly(on) {
+    if (!favSlugs().length && on) return;
+    state.favOnly = !!on;
+    syncFavBar();
+    setYear(state.year);
+  }
+
+  function buildManageList() {
+    var list = document.getElementById("fav-panel-list");
+    var empty = document.getElementById("fav-panel-empty");
+    var clear = document.getElementById("fav-clear");
+    if (!list) return;
+    list.innerHTML = "";
+    var items = favMakers().slice().sort(function (a, b) { return d3.ascending(a.name.toLowerCase(), b.name.toLowerCase()); });
+    if (empty) empty.hidden = items.length > 0;
+    if (clear) clear.hidden = items.length === 0;
+    items.forEach(function (m) {
+      var li = document.createElement("li");
+      var name = document.createElement("button");
+      name.type = "button"; name.className = "fav-panel-name"; name.textContent = m.name;
+      name.addEventListener("click", function () { closeManage(); focusMaker(m, document.querySelector('.maker-btn[data-id="' + m.id + '"]')); });
+      var rm = document.createElement("button");
+      rm.type = "button"; rm.className = "fav-panel-remove";
+      rm.setAttribute("aria-label", "Remove " + m.name + " from favorites");
+      rm.textContent = "×";
+      rm.addEventListener("click", function () { removeFavorite(m.slug); });
+      li.appendChild(name); li.appendChild(rm); list.appendChild(li);
+    });
+  }
+  function openManage() {
+    var panel = document.getElementById("fav-panel");
+    var btn = document.getElementById("fav-manage");
+    if (!panel) return;
+    buildManageList();
+    panel.hidden = false;
+    if (btn) btn.setAttribute("aria-expanded", "true");
+  }
+  function closeManage() {
+    var panel = document.getElementById("fav-panel");
+    var btn = document.getElementById("fav-manage");
+    if (panel) panel.hidden = true;
+    if (btn) btn.setAttribute("aria-expanded", "false");
+  }
+  function toggleManage() {
+    var panel = document.getElementById("fav-panel");
+    if (!panel || panel.hidden) openManage(); else closeManage();
+  }
+
+  function foundedPrint(m) {
+    var v = foundedDisplay(m);
+    return v ? "Shop founded " + v : "";
+  }
+  function buildPrintList() {
+    var root = document.getElementById("print-list");
+    if (!root) return;
+    root.innerHTML = "";
+    var items = favMakers().slice().sort(function (a, b) { return d3.ascending(a.name.toLowerCase(), b.name.toLowerCase()); });
+    items.forEach(function (m) {
+      var art = document.createElement("article");
+      art.className = "print-item";
+      var h = document.createElement("h3"); h.textContent = m.name; art.appendChild(h);
+      var loc = document.createElement("p"); loc.textContent = locationLine(m); art.appendChild(loc);
+      var found = foundedPrint(m);
+      if (found) { var f = document.createElement("p"); f.textContent = found; art.appendChild(f); }
+      if (m.website) {
+        var w = document.createElement("p"); w.className = "print-url"; w.textContent = m.website; art.appendChild(w);
+      }
+      root.appendChild(art);
+    });
+  }
+
+  function setupPrintView() {
+    var bar = document.getElementById("print-toolbar");
+    var footer = document.getElementById("print-footer");
+    var list = document.getElementById("print-list");
+    if (bar) bar.hidden = false;
+    if (footer) footer.hidden = false;
+    if (list) list.hidden = false;
+    document.title = "My Machined Pens Makers";
+    if (!document.querySelector(".print-sheet")) {
+      var sheet = document.createElement("div");
+      sheet.className = "print-sheet";
+      var header = document.querySelector(".site-header");
+      var mainEl = document.querySelector("main");
+      header.parentNode.insertBefore(sheet, header);
+      sheet.appendChild(header);
+      sheet.appendChild(mainEl);
+      if (footer) sheet.appendChild(footer);
+    }
+    if (bar && bar.parentNode !== document.body) document.body.appendChild(bar);
+    document.body.insertBefore(bar, document.body.firstChild);
+    var back = document.getElementById("print-back");
+    if (back) {
+      var u = new URL(location.href);
+      u.searchParams.delete("print");
+      u.searchParams.delete("fav");
+      u.hash = favSlugs().length ? "fav=" + favSlugs().join(",") : "";
+      back.href = u.pathname + u.search + u.hash;
+    }
+    var now = document.getElementById("print-now");
+    if (now) now.addEventListener("click", function () { window.print(); });
+    buildPrintList();
+  }
+
+  function shareFavorites() {
+    if (!favSlugs().length) return;
+    var url = shareUrl();
+    var shareBtn = document.getElementById("fav-share");
+    var markCopied = function () {
+      if (!shareBtn) return;
+      var prev = shareBtn.textContent;
+      shareBtn.textContent = "Copied";
+      shareBtn.classList.add("is-copied");
+      setTimeout(function () { shareBtn.textContent = prev; shareBtn.classList.remove("is-copied"); }, 1600);
+    };
+    copyText(url, markCopied);
+    if (navigator.share && (mqMobile.matches || /Mobi|Android/i.test(navigator.userAgent))) {
+      navigator.share({ title: "My Machined Pens Makers", url: url }).catch(function () {});
+    }
+  }
+
+  function isMobileClient() {
+    return mqMobile.matches || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  }
+  function syncImageButton() {
+    var btn = document.getElementById("fav-image");
+    if (!btn || btn.getAttribute("data-busy") === "1") return;
+    btn.textContent = isMobileClient() ? "Share image" : "Save image";
+  }
+
+  function shareImageTitle(n) {
+    return n === 1 ? "My Top Machined Pen Maker" : "My Top " + n + " Machined Pen Makers";
+  }
+  function shareImageFilename(n) {
+    return n === 1 ? "my-top-machined-pen-maker.png" : "my-top-" + n + "-machined-pen-makers.png";
+  }
+  function orderedFavorites() {
+    return favMakers().slice().sort(function (a, b) {
+      var la = a.lon == null ? 999 : a.lon, lb = b.lon == null ? 999 : b.lon;
+      if (la !== lb) return la - lb;
+      return d3.ascending(a.name.toLowerCase(), b.name.toLowerCase());
+    });
+  }
+  function shareLocation(m) {
+    if (m.city) return m.city + ", " + (REGION_ABBR[m.region] || m.region);
+    return m.region_name || "";
+  }
+  function shareFounded(m) {
+    var v = foundedDisplay(m);
+    return v ? "Shop founded " + v : "";
+  }
+
+  var SHARE_W = 1080, SHARE_H = 1350;
+  var SHARE_THEME = {
+    bg: "#f5ecdc", paper: "#fbf5ea", land: "#e4d1b0", landCa: "#ede1ca",
+    name: "rgba(94, 74, 52, 0.55)", country: "rgba(94, 74, 52, 0.42)",
+    inner: "rgba(255, 250, 240, 0.95)", border: "#8c6c45", ink: "#1b1612",
+    ink2: "#5e5246", ink3: "#94857a", pin: "#c2410c", ring: "#1b1612",
+    line: "#e8dcc6", onPin: "#fffaf3"
+  };
+  var SHARE_FONT = "Arial, Helvetica, sans-serif";
+
+  function generateFavoritesImage() {
+    var items = orderedFavorites();
+    if (!items.length) return Promise.reject(new Error("No favorites"));
+    var T = SHARE_THEME;
+    var W = SHARE_W, H = SHARE_H, PAD = 72;
+    var n = items.length;
+    var title = shareImageTitle(n);
+    var includeHi = items.some(isHawaii);
+
+    var holder = document.createElement("div");
+    holder.setAttribute("aria-hidden", "true");
+    holder.style.cssText = "position:fixed;left:-12000px;top:0;width:" + W + "px;height:" + H + "px;pointer-events:none;";
+    document.body.appendChild(holder);
+    var svg = d3.select(holder).append("svg")
+      .attr("xmlns", "http://www.w3.org/2000/svg")
+      .attr("width", W).attr("height", H)
+      .attr("viewBox", "0 0 " + W + " " + H)
+      .attr("role", "img")
+      .attr("aria-label", title)
+      .style("font-family", SHARE_FONT);
+    var node = svg.node();
+
+    svg.append("rect").attr("width", W).attr("height", H).attr("fill", T.bg);
+
+    // Title
+    var titleEl = svg.append("text")
+      .attr("x", W / 2).attr("y", PAD + 46)
+      .attr("text-anchor", "middle")
+      .attr("fill", T.ink)
+      .attr("font-family", SHARE_FONT)
+      .attr("font-weight", 700)
+      .attr("font-size", 52)
+      .attr("letter-spacing", "-0.03em")
+      .text(title);
+    var tBox = titleEl.node().getBBox();
+    if (tBox.width > W - PAD * 2) {
+      titleEl.attr("font-size", 44);
+    }
+
+    var listRow = n >= 5 ? 54 : 60;
+    var listH = n * listRow;
+    var footerY = H - 52;
+    var listTop = footerY - 36 - listH;
+    var mapX = PAD, mapY = PAD + 78, mapW = W - PAD * 2, mapH = listTop - 28 - mapY;
+
+    var clipId = "share-clip-" + Math.random().toString(36).slice(2, 8);
+    svg.append("defs").append("clipPath").attr("id", clipId)
+      .append("rect").attr("x", mapX).attr("y", mapY).attr("width", mapW).attr("height", mapH).attr("rx", 22);
+    var gFrame = svg.append("g");
+    gFrame.append("rect")
+      .attr("x", mapX).attr("y", mapY).attr("width", mapW).attr("height", mapH)
+      .attr("rx", 22).attr("fill", T.paper).attr("stroke", T.line).attr("stroke-width", 1.5);
+    var g = svg.append("g").attr("clip-path", "url(#" + clipId + ")");
+
+    var hiBox = null, hiProj = null;
+    if (includeHi && state.hawaii) {
+      hiBox = { x: mapX + 22, y: mapY + mapH - 22 - 188, w: 290, h: 188 };
+    }
+    var insetPad = includeHi ? 8 : 0;
+    var projection = d3.geoConicConformal()
+      .rotate([96, 0]).parallels([33, 58])
+      .fitExtent(
+        [[mapX + 28, mapY + 26], [mapX + mapW - 28, mapY + mapH - 26 - (includeHi ? 16 : 0)]],
+        frame()
+      );
+    var path = d3.geoPath(projection);
+
+    g.selectAll("path.share-land").data(state.features.features).join("path")
+      .attr("d", path)
+      .attr("fill", function (d) { return d.properties.country === "CAN" ? T.landCa : T.land; })
+      .attr("stroke", "none");
+    g.append("path").attr("d", path(state.innerBorders))
+      .attr("fill", "none").attr("stroke", T.inner).attr("stroke-width", 1.1).attr("stroke-linejoin", "round");
+    if (state.lakes) {
+      g.append("g").selectAll("path").data(state.lakes.features).join("path")
+        .attr("d", path).attr("fill", T.paper).attr("stroke", "none");
+    }
+    g.append("path").attr("d", path(state.countryBorder))
+      .attr("fill", "none").attr("stroke", T.border).attr("stroke-width", 2).attr("stroke-linejoin", "round").attr("stroke-linecap", "round");
+
+    if (hiBox) {
+      hiProj = d3.geoMercator().fitExtent(
+        [[hiBox.x + 14, hiBox.y + 12], [hiBox.x + hiBox.w - 14, hiBox.y + hiBox.h - 28]],
+        state.hawaii
+      );
+      var gHi = g.append("g");
+      gHi.append("rect")
+        .attr("x", hiBox.x).attr("y", hiBox.y).attr("width", hiBox.w).attr("height", hiBox.h)
+        .attr("rx", 12).attr("fill", T.paper).attr("stroke", T.line).attr("stroke-width", 1.5);
+      gHi.append("path").attr("d", d3.geoPath(hiProj)(state.hawaii)).attr("fill", T.land).attr("stroke", "none");
+      gHi.append("text")
+        .attr("x", hiBox.x + hiBox.w / 2).attr("y", hiBox.y + hiBox.h - 12)
+        .attr("text-anchor", "middle").attr("fill", T.name)
+        .attr("font-family", SHARE_FONT).attr("font-weight", 700)
+        .attr("font-size", 13).attr("letter-spacing", "0.16em")
+        .text("HAWAII");
+    }
+
+    // Country names, skipped if they would sit on a pin later — drawn now, under pins.
+    var cfs = 22;
+    [["UNITED STATES", COUNTRY_AT.US], ["CANADA", COUNTRY_AT.CA]].forEach(function (pair) {
+      var p = projection(pair[1]);
+      if (!p) return;
+      if (p[0] < mapX + 40 || p[0] > mapX + mapW - 40 || p[1] < mapY + 30 || p[1] > mapY + mapH - 30) return;
+      if (hiBox && p[0] > hiBox.x - 8 && p[0] < hiBox.x + hiBox.w + 8 && p[1] > hiBox.y - 8 && p[1] < hiBox.y + hiBox.h + 8) return;
+      g.append("text")
+        .attr("x", p[0]).attr("y", p[1])
+        .attr("text-anchor", "middle").attr("dominant-baseline", "middle")
+        .attr("fill", T.country).attr("font-family", SHARE_FONT).attr("font-weight", 700)
+        .attr("font-size", cfs).attr("letter-spacing", "0.22em")
+        .text(pair[0]);
+    });
+
+    var pinR = 22;
+    var mainland = [], insetNodes = [];
+    items.forEach(function (m, i) {
+      if (m.lat == null || m.lon == null) return;
+      var rec = { m: m, num: i + 1 };
+      if (includeHi && isHawaii(m) && hiProj) {
+        var hp = hiProj([m.lon, m.lat]);
+        rec.ax = hp[0]; rec.ay = hp[1]; rec.x = hp[0]; rec.y = hp[1]; rec.inset = true;
+        insetNodes.push(rec);
+      } else {
+        var p = projection([m.lon, m.lat]);
+        rec.ax = p[0]; rec.ay = p[1]; rec.x = p[0]; rec.y = p[1]; rec.inset = false;
+        mainland.push(rec);
+      }
+    });
+    var sim = d3.forceSimulation(mainland)
+      .force("x", d3.forceX(function (d) { return d.ax; }).strength(0.25))
+      .force("y", d3.forceY(function (d) { return d.ay; }).strength(0.25))
+      .force("collide", d3.forceCollide(pinR + 8).strength(1).iterations(4))
+      .stop();
+    for (var i = 0; i < 300; i++) sim.tick();
+    mainland.forEach(function (node) {
+      var minX = mapX + pinR + 8, maxX = mapX + mapW - pinR - 8;
+      var minY = mapY + pinR + 8, maxY = mapY + mapH - pinR - 8;
+      node.x = Math.max(minX, Math.min(maxX, node.x));
+      node.y = Math.max(minY, Math.min(maxY, node.y));
+      if (hiBox) {
+        var inside = node.x > hiBox.x - pinR && node.x < hiBox.x + hiBox.w + pinR
+          && node.y > hiBox.y - pinR && node.y < hiBox.y + hiBox.h + pinR;
+        if (inside) node.y = hiBox.y - pinR - 8;
+      }
+    });
+    var nodes = mainland.concat(insetNodes);
+    nodes.forEach(function (node) {
+      node.moved = Math.hypot(node.x - node.ax, node.y - node.ay) > 2;
+    });
+
+    var gLead = g.append("g");
+    nodes.filter(function (d) { return d.moved; }).forEach(function (d) {
+      gLead.append("line")
+        .attr("x1", d.ax).attr("y1", d.ay).attr("x2", d.x).attr("y2", d.y)
+        .attr("stroke", T.ink3).attr("stroke-width", 1.25).attr("fill", "none");
+      gLead.append("circle").attr("cx", d.ax).attr("cy", d.ay).attr("r", 2.4).attr("fill", T.ink3);
+    });
+
+    var gPins = g.append("g");
+    nodes.forEach(function (d) {
+      var gP = gPins.append("g").attr("transform", "translate(" + d.x + "," + d.y + ")");
+      if (d.m.in_maker_index) {
+        gP.append("circle").attr("r", pinR + 6).attr("fill", "none").attr("stroke", T.ring).attr("stroke-width", 2);
+      }
+      if (d.m.status) {
+        gP.append("circle").attr("r", pinR).attr("fill", T.paper).attr("stroke", T.pin).attr("stroke-width", 2.4);
+        gP.append("text")
+          .attr("text-anchor", "middle").attr("dy", "0.38em")
+          .attr("fill", T.pin).attr("font-family", SHARE_FONT).attr("font-weight", 700).attr("font-size", 22)
+          .text(String(d.num));
+      } else {
+        gP.append("circle").attr("r", pinR).attr("fill", T.pin).attr("stroke", T.paper).attr("stroke-width", 2);
+        gP.append("text")
+          .attr("text-anchor", "middle").attr("dy", "0.38em")
+          .attr("fill", T.onPin).attr("font-family", SHARE_FONT).attr("font-weight", 700).attr("font-size", 22)
+          .text(String(d.num));
+      }
+    });
+
+    // Numbered list
+    var gList = svg.append("g");
+    items.forEach(function (m, i) {
+      var y = listTop + i * listRow;
+      var num = i + 1;
+      var badge = gList.append("g").attr("transform", "translate(" + (PAD + 18) + "," + (y + 22) + ")");
+      if (m.status) {
+        badge.append("circle").attr("r", 16).attr("fill", T.paper).attr("stroke", T.pin).attr("stroke-width", 2);
+        badge.append("text").attr("text-anchor", "middle").attr("dy", "0.38em")
+          .attr("fill", T.pin).attr("font-family", SHARE_FONT).attr("font-weight", 700).attr("font-size", 16).text(String(num));
+      } else {
+        badge.append("circle").attr("r", 16).attr("fill", T.pin);
+        badge.append("text").attr("text-anchor", "middle").attr("dy", "0.38em")
+          .attr("fill", T.onPin).attr("font-family", SHARE_FONT).attr("font-weight", 700).attr("font-size", 16).text(String(num));
+      }
+      gList.append("text")
+        .attr("x", PAD + 46).attr("y", y + 16)
+        .attr("fill", T.ink).attr("font-family", SHARE_FONT).attr("font-weight", 700).attr("font-size", 26)
+        .text(m.name);
+      var meta = [shareLocation(m), shareFounded(m)].filter(Boolean).join("  ·  ");
+      gList.append("text")
+        .attr("x", PAD + 46).attr("y", y + 40)
+        .attr("fill", T.ink2).attr("font-family", SHARE_FONT).attr("font-weight", 400).attr("font-size", 18)
+        .text(meta);
+    });
+
+    svg.append("text")
+      .attr("x", W / 2).attr("y", footerY)
+      .attr("text-anchor", "middle")
+      .attr("fill", T.ink3).attr("font-family", SHARE_FONT).attr("font-weight", 500).attr("font-size", 18)
+      .attr("letter-spacing", "0.02em")
+      .text("machinedpens.github.io  ·  Machined Pens Maker Map");
+
+    return svgToPngBlob(node, W, H).then(function (blob) {
+      if (holder.parentNode) holder.parentNode.removeChild(holder);
+      return blob;
+    }, function (err) {
+      if (holder.parentNode) holder.parentNode.removeChild(holder);
+      throw err;
+    });
+  }
+
+  function svgToPngBlob(svgEl, w, h) {
+    return new Promise(function (resolve, reject) {
+      var xml = new XMLSerializer().serializeToString(svgEl);
+      if (xml.indexOf("xmlns=") < 0) xml = xml.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+      var url = URL.createObjectURL(new Blob([xml], { type: "image/svg+xml;charset=utf-8" }));
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          var ctx = canvas.getContext("2d");
+          ctx.fillStyle = SHARE_THEME.bg;
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          URL.revokeObjectURL(url);
+          canvas.toBlob(function (blob) {
+            if (!blob) reject(new Error("Could not create image"));
+            else resolve(blob);
+          }, "image/png");
+        } catch (e) {
+          URL.revokeObjectURL(url);
+          reject(e);
+        }
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error("Could not render image"));
+      };
+      img.src = url;
+    });
+  }
+
+  function downloadBlob(blob, name) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); if (a.parentNode) a.parentNode.removeChild(a); }, 2000);
+  }
+
+  function saveOrShareImage() {
+    var items = orderedFavorites();
+    if (!items.length) return;
+    var btn = document.getElementById("fav-image");
+    var prev = btn ? btn.textContent : "";
+    if (btn) {
+      btn.setAttribute("data-busy", "1");
+      btn.disabled = true;
+      btn.textContent = isMobileClient() ? "Preparing…" : "Saving…";
+    }
+    var n = items.length;
+    generateFavoritesImage().then(function (blob) {
+      var file = new File([blob], shareImageFilename(n), { type: "image/png" });
+      var usedShare = false;
+      var finish = function () {
+        if (btn) {
+          btn.removeAttribute("data-busy");
+          btn.disabled = favSlugs().length === 0;
+          syncImageButton();
+        }
+      };
+      if (isMobileClient() && navigator.share && navigator.canShare) {
+        try {
+          if (navigator.canShare({ files: [file] })) {
+            usedShare = true;
+            navigator.share({ files: [file], title: shareImageTitle(n), text: shareImageTitle(n) })
+              .then(finish)
+              .catch(function (err) {
+                if (!err || err.name !== "AbortError") downloadBlob(blob, file.name);
+                finish();
+              });
+          }
+        } catch (e) { usedShare = false; }
+      }
+      if (!usedShare) {
+        downloadBlob(blob, file.name);
+        finish();
+      }
+    }).catch(function (err) {
+      console.error(err);
+      if (btn) {
+        btn.removeAttribute("data-busy");
+        btn.disabled = favSlugs().length === 0;
+        syncImageButton();
+      }
+    });
+  }
+
+  function bindFavorites() {
+    var star = document.getElementById("card-star");
+    if (star) star.addEventListener("click", function (ev) {
+      ev.preventDefault(); ev.stopPropagation();
+      if (state.active) toggleFavorite(state.active);
+    });
+    var toggle = document.getElementById("fav-toggle");
+    if (toggle) toggle.addEventListener("click", function () {
+      if (!favSlugs().length) return;
+      setFavOnly(!state.favOnly);
+    });
+    var share = document.getElementById("fav-share");
+    if (share) share.addEventListener("click", shareFavorites);
+    var imageBtn = document.getElementById("fav-image");
+    if (imageBtn) imageBtn.addEventListener("click", function () {
+      if (!favSlugs().length) return;
+      saveOrShareImage();
+    });
+    syncImageButton();
+    if (mqMobile.addEventListener) mqMobile.addEventListener("change", syncImageButton);
+    else if (mqMobile.addListener) mqMobile.addListener(syncImageButton);
+    var manage = document.getElementById("fav-manage");
+    if (manage) manage.addEventListener("click", function (ev) { ev.stopPropagation(); toggleManage(); });
+    var clear = document.getElementById("fav-clear");
+    if (clear) clear.addEventListener("click", clearFavorites);
+    var save = document.getElementById("fav-save");
+    if (save) save.addEventListener("click", function () {
+      state.shared = false;
+      saveStoredFavs(favSlugs());
+      hideBanner();
+    });
+    var exit = document.getElementById("fav-exit");
+    if (exit) exit.addEventListener("click", function () {
+      hideBanner();
+      setFavs(loadStoredFavs());
+      state.favOnly = false;
+      var url = new URL(location.href);
+      url.searchParams.delete("fav");
+      history.replaceState(null, "", url.pathname + url.search);
+      syncAllStars();
+      setYear(state.year);
+    });
+    document.addEventListener("click", function (ev) {
+      var panel = document.getElementById("fav-panel");
+      if (!panel || panel.hidden) return;
+      if (panel.contains(ev.target) || ev.target.closest("#fav-manage")) return;
+      closeManage();
+    });
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") closeManage();
+    });
+    window.addEventListener("hashchange", function () {
+      if (STILL || PRINT) return;
+      var incoming = readFavParam(location.hash);
+      if (!incoming || !incoming.length) return;
+      var stored = loadStoredFavs();
+      if (sameSlugList(incoming, favSlugs()) && !state.shared) {
+        state.favOnly = true;
+        setYear(state.year);
+        syncFavBar();
+        return;
+      }
+      if (!sameSlugList(incoming, stored)) {
+        state.shared = true;
+        setFavs(incoming);
+        state.favOnly = true;
+        syncAllStars();
+        setYear(state.year);
+      }
+    });
+    syncFavBar();
+    buildPrintList();
   }
 
   /* ---------- Wiring ---------- */
