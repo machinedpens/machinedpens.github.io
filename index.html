@@ -19,7 +19,7 @@
       if (["light", "dark", "bold"].indexOf(t) >= 0) document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261118b">
+  <link rel="stylesheet" href="style.css?v=20261118d">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -103,10 +103,15 @@
           <span id="fav-toggle-label">Favorites (0/5)</span>
         </button>
         <div class="fav-actions">
-          <button class="fav-action" id="fav-share" type="button" disabled>Share favorites</button>
-          <button class="fav-action" id="fav-image" type="button" disabled>Save image</button>
-          <button class="fav-action" id="fav-image-post" type="button" disabled>Save post</button>
-          <button class="fav-action" id="fav-manage" type="button" disabled aria-expanded="false" aria-controls="fav-panel">Manage</button>
+          <button class="fav-btn" id="fav-share" type="button" disabled>
+            <svg class="fav-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></svg>
+            <span class="fav-btn-label">Share link</span>
+          </button>
+          <button class="fav-btn fav-btn-primary" id="fav-image" type="button" disabled>
+            <svg class="fav-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M4 17.5l5-4.5 4 3.5 3-2.5 4.5 3.5"/></svg>
+            <span class="fav-btn-label">Share image</span>
+          </button>
+          <button class="fav-edit" id="fav-manage" type="button" disabled aria-expanded="false" aria-controls="fav-panel">Edit</button>
         </div>
         <p class="fav-limit-note" id="fav-limit-note" hidden role="status">You can pick up to 5 favorites. Remove one to add another.</p>
         <div class="fav-panel" id="fav-panel" hidden role="dialog" aria-label="Manage favorites">
@@ -139,9 +144,9 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261118b"></script>
-  <script src="vendor/topojson-client.min.js?v=20261118b"></script>
-  <script src="vendor/qrcode-generator.js?v=20261118b"></script>
-  <script src="map.js?v=20261118b"></script>
+  <script src="vendor/d3.min.js?v=20261118d"></script>
+  <script src="vendor/topojson-client.min.js?v=20261118d"></script>
+  <script src="vendor/qrcode-generator.js?v=20261118d"></script>
+  <script src="map.js?v=20261118d"></script>
 </body>
 </html>

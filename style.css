@@ -468,6 +468,25 @@ body.still .still-tag span { font-weight: 400; color: var(--ink-2); }
 .fav-action:hover:not(:disabled) { color: var(--ink); background: var(--hover); }
 .fav-action:disabled { opacity: .4; cursor: default; }
 .fav-action.is-copied { color: var(--accent); }
+.fav-actions { gap: 8px; }
+.fav-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 38px; padding: 0 14px 0 12px;
+  border: 1px solid var(--ink); border-radius: 999px;
+  background: transparent; color: var(--ink);
+  font-size: 13.5px; font-weight: 600; cursor: pointer;
+}
+.fav-btn-icon { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fav-btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.fav-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.fav-btn:not(.fav-btn-primary):hover:not(:disabled) { background: var(--hover); }
+.fav-btn:disabled { opacity: .4; cursor: default; }
+.fav-btn.is-copied { border-color: var(--accent); color: var(--accent); }
+.fav-edit {
+  min-height: 38px; padding: 0 8px; border: 0; background: transparent;
+  color: var(--ink-2); font-size: 13px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.fav-edit:disabled { opacity: .4; cursor: default; }
 
 .fav-panel {
   position: absolute; z-index: 12; left: 22px; top: calc(100% + 8px);

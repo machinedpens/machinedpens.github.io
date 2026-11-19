@@ -30,7 +30,7 @@
 
   var state = { makers: [], features: null, topo: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, shared: false };
 
-  Promise.all([d3.json("makers.json?v=20261118b"), d3.json("data/us-canada.topo.json?v=20261118b")])
+  Promise.all([d3.json("makers.json?v=20261118d"), d3.json("data/us-canada.topo.json?v=20261118d")])
     .then(function (res) { init(res[0].makers, res[1]); })
     .catch(function (err) {
       console.error(err);
@@ -1120,10 +1120,10 @@
     var shareBtn = document.getElementById("fav-share");
     var markCopied = function () {
       if (!shareBtn) return;
-      var prev = shareBtn.textContent;
-      shareBtn.textContent = "Copied";
+      var prev = btnLabel(shareBtn);
+      btnLabel(shareBtn, "Link copied");
       shareBtn.classList.add("is-copied");
-      setTimeout(function () { shareBtn.textContent = prev; shareBtn.classList.remove("is-copied"); }, 1600);
+      setTimeout(function () { btnLabel(shareBtn, prev); shareBtn.classList.remove("is-copied"); }, 1600);
     };
     copyText(url, markCopied);
     if (navigator.share && (mqMobile.matches || /Mobi|Android/i.test(navigator.userAgent))) {
@@ -1131,13 +1131,19 @@
     }
   }
 
+  function btnLabel(btn, text) {
+    if (!btn) return "";
+    var el = btn.querySelector(".fav-btn-label") || btn;
+    if (text !== undefined) el.textContent = text;
+    return el.textContent;
+  }
   function isMobileClient() {
     return mqMobile.matches || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
   }
   function syncImageButton() {
     var btn = document.getElementById("fav-image");
     if (!btn || btn.getAttribute("data-busy") === "1") return;
-    btn.textContent = isMobileClient() ? "Share image" : "Save image";
+    btnLabel(btn, isMobileClient() ? "Share image" : "Save image");
   }
 
   var SHARE_FONT = "Arial, Helvetica, sans-serif";
@@ -1652,11 +1658,11 @@
     kind = kind === "post" ? "post" : "story";
     var btn = document.getElementById(kind === "post" ? "fav-image-post" : "fav-image");
     var other = document.getElementById(kind === "post" ? "fav-image" : "fav-image-post");
-    var prev = btn ? btn.textContent : "";
+    var prev = btn ? btnLabel(btn) : "";
     if (btn) {
       btn.setAttribute("data-busy", "1");
       btn.disabled = true;
-      btn.textContent = kind === "post" ? "Saving…" : (isMobileClient() ? "Preparing…" : "Saving…");
+      btnLabel(btn, kind === "post" ? "Saving…" : (isMobileClient() ? "Preparing…" : "Saving…"));
     }
     var n = items.length;
     generateFavoritesImage(kind).then(function (blob) {
@@ -1668,7 +1674,7 @@
       var finish = function () {
         if (btn) {
           btn.removeAttribute("data-busy");
-          btn.textContent = prev;
+          btnLabel(btn, prev);
         }
         syncImageButton();
         var postBtn = document.getElementById("fav-image-post");
@@ -1698,7 +1704,7 @@
       console.error(err);
       if (btn) {
         btn.removeAttribute("data-busy");
-        btn.textContent = prev;
+        btnLabel(btn, prev);
       }
       syncImageButton();
       var postBtn = document.getElementById("fav-image-post");
