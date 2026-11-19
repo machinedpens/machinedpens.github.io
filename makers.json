@@ -593,6 +593,47 @@
       "lon": -80.1936,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid"
+    },
+    {
+      "name": "CW&T",
+      "slug": "cwandt",
+      "website": "https://cwandt.com",
+      "city": "Brooklyn",
+      "region": "NY",
+      "region_name": "New York",
+      "country": "US",
+      "est_year": 2009,
+      "shop_founded": "2009",
+      "priceLow": 60,
+      "priceHigh": 250,
+      "first_pen": "2011",
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 40.6526,
+      "lon": -73.9497,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid"
+    },
+    {
+      "name": "Studio Neat",
+      "slug": "studio-neat",
+      "website": "https://www.studioneat.com",
+      "city": "Austin",
+      "region": "TX",
+      "region_name": "Texas",
+      "country": "US",
+      "est_year": 2010,
+      "shop_founded": "2010",
+      "priceLow": 80,
+      "priceHigh": 160,
+      "first_pen": "2018",
+      "previously": "Started in Long Island City, NY; now in Austin, TX",
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 30.2649,
+      "lon": -97.7474,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid"
     }
   ]
 }
