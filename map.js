@@ -92,6 +92,16 @@
     return { dot: 7, ring: 12, hit: 22, gap: 4 };
   }
 
+  // Tight burnt-orange halo just outside the pin, or its Maker Index ring.
+  // Stroke (3) lives in CSS; keep the two in sync.
+  var FOCUS_STROKE = 3;
+  var FOCUS_GAP = 1.5;
+  function focusRingRadius(d, S) {
+    var coreR = d.m.in_maker_index ? S.ring : S.dot;
+    var coreStroke = d.m.in_maker_index ? 1.5 : (d.m.status ? 2 : 1.5);
+    return coreR + coreStroke / 2 + FOCUS_GAP + FOCUS_STROKE / 2;
+  }
+
   function isHawaii(m) { return m.region === "HI"; }
 
   function hawaiiBox(W, H) {
@@ -188,6 +198,7 @@
     var mainland = [];
     var insetNodes = [];
     state.makers.forEach(function (m) {
+      if (m.unmapped || m.lat == null || m.lon == null) return;
       if (isHawaii(m) && hiProj) {
         var hp = hiProj([m.lon, m.lat]);
         insetNodes.push({ m: m, ax: hp[0], ay: hp[1], x: hp[0], y: hp[1], inset: true });
@@ -239,10 +250,11 @@
       .attr("role", "button")
       .attr("tabindex", 0)
       .attr("aria-haspopup", "dialog")
-      .attr("aria-label", function (d) { return ariaLabel(d.m); });
+      .attr("aria-label", function (d) { return ariaLabel(d.m); })
+      .classed("inactive", function (d) { return !!d.m.status; });
     pins.append("circle").attr("class", "hit").attr("r", S.hit);
     var body = pins.append("g").attr("class", "body");
-    body.append("circle").attr("class", "focus-ring").attr("r", S.ring + 4);
+    body.append("circle").attr("class", "focus-ring").attr("r", function (d) { return focusRingRadius(d, S); });
     body.filter(function (d) { return d.m.in_maker_index; })
       .append("circle").attr("class", "ring").attr("r", S.ring);
     body.append("circle").attr("class", "dot").attr("r", S.dot);
@@ -393,13 +405,33 @@
   }
 
 
-  function placeLine(m) {
-    var where = m.city ? m.city + ", " + (REGION_ABBR[m.region] || m.region) : m.region_name;
-    return m.est_year ? where + " · Est. " + m.est_year : where;
+  function locationLine(m) {
+    if (m.city) {
+      var line = m.city + ", " + (REGION_ABBR[m.region] || m.region);
+      if (m.city_unconfirmed) line += " (city unconfirmed)";
+      return line;
+    }
+    return m.region_name || "";
+  }
+  function foundedDisplay(m) {
+    return m.shop_founded || (m.est_year ? String(m.est_year) : null);
+  }
+  function foundedLine(m) {
+    var v = foundedDisplay(m);
+    if (!v) return null;
+    if (/^by /i.test(v)) return "Shop founded " + v;
+    return "Shop founded " + v;
+  }
+  function listYear(m) {
+    return m.shop_founded_short || foundedDisplay(m);
   }
   function ariaLabel(m) {
-    var s = m.name + ", " + (m.city ? m.city + ", " + m.region_name : m.region_name);
-    s += m.est_year ? ", established " + m.est_year : ", founding year not confirmed";
+    var loc = locationLine(m);
+    var s = m.name + (loc ? ", " + loc : "");
+    var founded = foundedDisplay(m);
+    s += founded ? ", shop founded " + founded : ", founding year not confirmed";
+    if (m.first_pen) s += ", first pen " + m.first_pen;
+    if (m.status_label) s += ", " + m.status_label;
     if (m.in_maker_index) s += ", featured in The Maker Index";
     return s;
   }
@@ -411,7 +443,7 @@
     slider.value = y;
     var pct = (y - slider.min) / (slider.max - slider.min) * 100;
     slider.style.setProperty("--fill", pct + "%");
-    slider.setAttribute("aria-valuetext", "Established by " + y);
+    slider.setAttribute("aria-valuetext", "Founded by " + y);
     document.getElementById("year-value").textContent = y;
     var known = state.makers.filter(function (m) { return m.est_year && m.est_year <= y; }).length;
     var unknown = state.makers.filter(function (m) { return !m.est_year; }).length;
@@ -474,7 +506,34 @@
     nameEl.innerHTML = "";
     nameEl.appendChild(document.createTextNode(m.name));
     if (m.in_maker_index) nameEl.insertAdjacentHTML("beforeend", RING_ICON);
-    document.getElementById("card-meta").textContent = placeLine(m);
+    var tag = document.getElementById("card-tag");
+    if (m.status_label) { tag.hidden = false; tag.textContent = m.status_label; }
+    else { tag.hidden = true; tag.textContent = ""; }
+    var meta = document.getElementById("card-meta");
+    meta.innerHTML = "";
+    function addLine(cls, text) {
+      if (!text) return;
+      var el = document.createElement("p");
+      el.className = cls;
+      el.textContent = text;
+      meta.appendChild(el);
+    }
+    addLine("loc", locationLine(m));
+    addLine("founded", foundedLine(m));
+    addLine("pen", m.first_pen ? "First pen " + m.first_pen : null);
+    if (m.previously) {
+      var prev = document.createElement("p");
+      prev.className = "prev";
+      var k = document.createElement("span");
+      k.className = "k";
+      k.textContent = "Previously: ";
+      prev.appendChild(k);
+      prev.appendChild(document.createTextNode(m.previously));
+      meta.appendChild(prev);
+    }
+    var note = document.getElementById("card-note");
+    if (m.status_note) { note.hidden = false; note.textContent = m.status_note; }
+    else { note.hidden = true; note.textContent = ""; }
     var links = document.getElementById("card-links");
     links.innerHTML = "";
     if (m.website) links.appendChild(link(m.website, "Website", false));
@@ -502,6 +561,11 @@
     if (mqMobile.matches) { card.style.left = ""; card.style.top = ""; return; }
     var W = svg.node().clientWidth, H = svg.node().clientHeight;
     var cw = card.offsetWidth, ch = card.offsetHeight, gap = 20;
+    if (m._x == null || m._y == null) {
+      card.style.left = Math.round(Math.max(12, (W - cw) / 2)) + "px";
+      card.style.top = Math.round(Math.max(12, (H - ch) / 2)) + "px";
+      return;
+    }
     var x = m._x + gap, y = m._y - ch / 2;
     if (x + cw > W - 12) x = m._x - gap - cw;
     if (x < 12) { x = Math.min(Math.max(12, m._x - cw / 2), W - cw - 12); y = m._y + gap; if (y + ch > H - 12) y = m._y - gap - ch; }
@@ -520,6 +584,26 @@
 
   /* ---------- List ---------- */
 
+  function listMeta(m) {
+    var parts = [];
+    if (m.city) parts.push(m.city);
+    var year = listYear(m);
+    if (year) parts.push(year);
+    if (m.status === "closed") parts.push("Closed");
+    else if (m.status === "inactive") parts.push("Inactive");
+    return parts.join(" · ");
+  }
+  function makerButton(m) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "maker-btn"; b.setAttribute("data-id", m.id);
+    b.setAttribute("aria-expanded", "false");
+    b.setAttribute("aria-label", ariaLabel(m) + ". Show on map");
+    b.innerHTML = swatch(m) + '<span class="m-name"></span><span class="m-meta"></span>';
+    b.querySelector(".m-name").textContent = m.name;
+    b.querySelector(".m-meta").textContent = listMeta(m);
+    b.addEventListener("click", function () { focusMaker(m, b); });
+    return b;
+  }
   function buildList() {
     var root = document.getElementById("list");
     var byCountry = d3.group(state.makers, function (m) { return m.country; }, function (m) { return m.region_name; });
@@ -543,16 +627,8 @@
         byCountry.get(c).get(r).slice().sort(function (a, b) { return d3.ascending(a.name.toLowerCase(), b.name.toLowerCase()); })
           .forEach(function (m) {
             var li = document.createElement("li");
-            var b = document.createElement("button");
-            b.type = "button"; b.className = "maker-btn"; b.setAttribute("data-id", m.id);
-            b.setAttribute("aria-expanded", "false");
-            b.setAttribute("aria-label", ariaLabel(m) + ". Show on map");
-            var meta = [m.city, m.est_year ? "Est. " + m.est_year : null].filter(Boolean).join(" · ");
-            b.innerHTML = swatch(m) + '<span class="m-name"></span><span class="m-meta"></span>';
-            b.querySelector(".m-name").textContent = m.name;
-            b.querySelector(".m-meta").textContent = meta;
-            b.addEventListener("click", function () { focusMaker(m, b); });
-            li.appendChild(b); ul.appendChild(li);
+            li.appendChild(makerButton(m));
+            ul.appendChild(li);
           });
         div.appendChild(ul); grid.appendChild(div);
       });
@@ -560,7 +636,10 @@
     });
   }
   function swatch(m) {
-    return '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="4.5" fill="var(--pin)"/>' +
+    var dot = m.status
+      ? '<circle cx="10" cy="10" r="4.5" fill="var(--paper)" stroke="var(--pin)" stroke-width="1.8"/>'
+      : '<circle cx="10" cy="10" r="4.5" fill="var(--pin)"/>';
+    return '<svg viewBox="0 0 20 20" aria-hidden="true">' + dot +
       (m.in_maker_index ? '<circle cx="10" cy="10" r="8" fill="none" stroke="var(--ring)" stroke-width="1.4"/>' : "") + "</svg>";
   }
   function focusMaker(m, btn) {
@@ -570,6 +649,7 @@
     var go = function () {
       openCard(m, btn);
       var pin = svg.select('g.pin[data-id="' + m.id + '"]');
+      if (pin.empty()) return;
       pin.select(".dot").interrupt()
         .transition().duration(220).attr("r", sizes().dot * 1.8)
         .transition().duration(380).attr("r", sizes().dot);

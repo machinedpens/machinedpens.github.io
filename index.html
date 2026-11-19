@@ -45,6 +45,10 @@
             <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--pin)"/><circle cx="12" cy="12" r="9" fill="none" stroke="var(--ring)" stroke-width="1.6"/></svg>
             <span>Featured in The Maker Index</span>
           </div>
+          <div class="legend-row">
+            <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--paper)" stroke="var(--pin)" stroke-width="1.8"/></svg>
+            <span>Inactive or closed</span>
+          </div>
         </div>
 
         <div class="card" id="card" role="dialog" aria-modal="false" aria-labelledby="card-name" hidden>
@@ -52,7 +56,9 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
           <h2 class="card-name" id="card-name"></h2>
-          <p class="card-meta" id="card-meta"></p>
+          <p class="card-tag" id="card-tag" hidden></p>
+          <div class="card-meta" id="card-meta"></div>
+          <p class="card-note" id="card-note" hidden></p>
           <div class="card-links" id="card-links"></div>
         </div>
       </div>
@@ -63,7 +69,7 @@
           <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>
         </button>
         <div class="slider-wrap">
-          <label class="sr-only" for="year">Show makers established by year</label>
+          <label class="sr-only" for="year">Show makers founded by year</label>
           <input type="range" id="year" min="2008" max="2026" step="1" value="2026">
           <div class="slider-ends" aria-hidden="true"><span id="year-min"></span><span id="year-max"></span></div>
         </div>
@@ -81,7 +87,7 @@
   </main>
 
   <footer class="site-footer">
-    <p>From <a href="https://machinedpens.substack.com">Machined Pens</a>, a Substack about machined pens and the people who make them. Cities only, never addresses.</p>
+    <p>From <a href="https://machinedpens.substack.com">Machined Pens</a>, a Substack about machined pens and the people who make them. Cities when known, never addresses.</p>
   </footer>
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
