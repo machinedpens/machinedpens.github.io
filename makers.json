@@ -634,6 +634,46 @@
       "lon": -97.7474,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid"
+    },
+    {
+      "name": "OZ Machine Company",
+      "slug": "oz-machine-company",
+      "website": "https://ozmachinecompany.com",
+      "city": "Attica",
+      "region": "IN",
+      "region_name": "Indiana",
+      "country": "US",
+      "est_year": 2020,
+      "shop_founded": "2020",
+      "priceLow": 110,
+      "priceHigh": 170,
+      "first_pen": "2023",
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 40.2942,
+      "lon": -87.2488,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid"
+    },
+    {
+      "name": "Hypercut MFG",
+      "slug": "hypercut-mfg",
+      "website": "https://hypercutmfg.com",
+      "city": "Hendersonville",
+      "region": "NC",
+      "region_name": "North Carolina",
+      "country": "US",
+      "est_year": 2020,
+      "shop_founded": "2020",
+      "priceLow": 160,
+      "priceHigh": 250,
+      "first_pen": "2026",
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 35.3187,
+      "lon": -82.461,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid"
     }
   ]
 }
