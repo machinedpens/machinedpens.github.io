@@ -945,7 +945,7 @@
       toggle.setAttribute("aria-pressed", state.favOnly && n ? "true" : "false");
       toggle.disabled = n === 0 && !state.favOnly;
     }
-    ["fav-share", "fav-image", "fav-manage"].forEach(function (id) {
+    ["fav-share", "fav-image", "fav-image-post", "fav-manage"].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.disabled = n === 0;
     });
@@ -1140,11 +1140,30 @@
     btn.textContent = isMobileClient() ? "Share image" : "Save image";
   }
 
+  var SHARE_FONT = "Arial, Helvetica, sans-serif";
+  var SHARE_THEME = {
+    bg: "#120c09",
+    bgSoft: "#1a120e",
+    land: "#5a4330",
+    landCa: "#463628",
+    inner: "rgba(245, 236, 220, 0.14)",
+    border: "#a1622a",
+    ink: "#f5ecdc",
+    ink2: "#d4c4ae",
+    ink3: "#9a8b7a",
+    pin: "#c2410c",
+    pinHot: "#e24a0f",
+    onPin: "#fff5ea",
+    line: "rgba(245, 236, 220, 0.16)",
+    stroke: "#120c09"
+  };
+
   function shareImageTitle(n) {
     return n === 1 ? "My Top Machined Pen Maker" : "My Top " + n + " Machined Pen Makers";
   }
-  function shareImageFilename(n) {
-    return n === 1 ? "my-top-machined-pen-maker.png" : "my-top-" + n + "-machined-pen-makers.png";
+  function shareImageFilename(n, kind) {
+    var base = n === 1 ? "my-top-machined-pen-maker" : "my-top-" + n + "-machined-pen-makers";
+    return base + (kind === "post" ? "-post.png" : ".png");
   }
   function orderedFavorites() {
     return favMakers().slice().sort(function (a, b) {
@@ -1153,37 +1172,82 @@
       return d3.ascending(a.name.toLowerCase(), b.name.toLowerCase());
     });
   }
-  function shareLocation(m) {
-    if (m.city) return m.city + ", " + (REGION_ABBR[m.region] || m.region);
-    return m.region_name || "";
-  }
-  function shareFounded(m) {
-    var v = foundedDisplay(m);
-    return v ? "Shop founded " + v : "";
+
+  function shareMapExtent(items, includeHi) {
+    var pts = items.filter(function (m) {
+      return m.lon != null && m.lat != null && !(includeHi && isHawaii(m));
+    });
+    if (!pts.length) return frame();
+    var lons = pts.map(function (m) { return m.lon; });
+    var lats = pts.map(function (m) { return m.lat; });
+    var minLon = d3.min(lons), maxLon = d3.max(lons);
+    var minLat = d3.min(lats), maxLat = d3.max(lats);
+    var midLon = (minLon + maxLon) / 2, midLat = (minLat + maxLat) / 2;
+    var spanLon = Math.max(maxLon - minLon, 14);
+    var spanLat = Math.max(maxLat - minLat, 9);
+    spanLon *= 1.55;
+    spanLat *= 1.55;
+    // If the window is already basically the national frame, use the standard frame.
+    if (spanLon > 52 && spanLat > 28) return frame();
+    return {
+      type: "MultiPoint",
+      coordinates: [
+        [midLon - spanLon / 2, midLat - spanLat / 2],
+        [midLon - spanLon / 2, midLat + spanLat / 2],
+        [midLon + spanLon / 2, midLat - spanLat / 2],
+        [midLon + spanLon / 2, midLat + spanLat / 2]
+      ]
+    };
   }
 
-  var SHARE_W = 1080, SHARE_H = 1350;
-  var SHARE_THEME = {
-    bg: "#f5ecdc", paper: "#fbf5ea", land: "#e4d1b0", landCa: "#ede1ca",
-    name: "rgba(94, 74, 52, 0.55)", country: "rgba(94, 74, 52, 0.42)",
-    inner: "rgba(255, 250, 240, 0.95)", border: "#8c6c45", ink: "#1b1612",
-    ink2: "#5e5246", ink3: "#94857a", pin: "#c2410c", ring: "#1b1612",
-    line: "#e8dcc6", onPin: "#fffaf3"
-  };
-  var SHARE_FONT = "Arial, Helvetica, sans-serif";
+  var SUBSTACK_URL = "https://machinedpens.substack.com";
 
-  function generateFavoritesImage() {
+  function drawShareQr(parent, box, T) {
+    if (typeof qrcode !== "function") throw new Error("QR library missing");
+    var qr = qrcode(0, "Q");
+    qr.addData(SUBSTACK_URL);
+    qr.make();
+    var n = qr.getModuleCount();
+    var quiet = 4;
+    var total = n + quiet * 2;
+    var cell = Math.floor(box.w / total);
+    var render = cell * total;
+    var ox = box.x + Math.floor((box.w - render) / 2);
+    var oy = box.y + Math.floor((box.h - render) / 2);
+    var g = parent.append("g").attr("aria-hidden", "true");
+    g.append("rect")
+      .attr("x", box.x).attr("y", box.y).attr("width", box.w).attr("height", box.h)
+      .attr("rx", 16).attr("fill", T.ink)
+      .attr("stroke", T.pin).attr("stroke-width", 1.25).attr("stroke-opacity", 0.55);
+    var parts = [];
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) {
+        if (qr.isDark(r, c)) {
+          var px = ox + (c + quiet) * cell;
+          var py = oy + (r + quiet) * cell;
+          parts.push("M" + px + "," + py + "h" + cell + "v" + cell + "h" + (-cell) + "z");
+        }
+      }
+    }
+    g.append("path").attr("d", parts.join("")).attr("fill", T.stroke);
+  }
+
+  function generateFavoritesImage(kind) {
     var items = orderedFavorites();
     if (!items.length) return Promise.reject(new Error("No favorites"));
+    kind = kind === "post" ? "post" : "story";
     var T = SHARE_THEME;
-    var W = SHARE_W, H = SHARE_H, PAD = 72;
+    var W = 1080, H = kind === "story" ? 1920 : 1350;
     var n = items.length;
     var title = shareImageTitle(n);
     var includeHi = items.some(isHawaii);
+    var topSafe = kind === "story" ? 250 : 56;
+    var bottomSafe = kind === "story" ? 250 : 56;
+    var stickerH = kind === "story" ? 220 : 0;
 
     var holder = document.createElement("div");
     holder.setAttribute("aria-hidden", "true");
-    holder.style.cssText = "position:fixed;left:-12000px;top:0;width:" + W + "px;height:" + H + "px;pointer-events:none;";
+    holder.style.cssText = "position:fixed;left:-14000px;top:0;width:" + W + "px;height:" + H + "px;pointer-events:none;";
     document.body.appendChild(holder);
     var svg = d3.select(holder).append("svg")
       .attr("xmlns", "http://www.w3.org/2000/svg")
@@ -1193,49 +1257,119 @@
       .attr("aria-label", title)
       .style("font-family", SHARE_FONT);
     var node = svg.node();
+    var uid = "s" + Math.random().toString(36).slice(2, 9);
+
+    var defs = svg.append("defs");
+    var glow = defs.append("radialGradient").attr("id", uid + "-glow")
+      .attr("cx", "50%").attr("cy", "40%").attr("r", "58%");
+    glow.append("stop").attr("offset", "0%").attr("stop-color", "#c2410c").attr("stop-opacity", 0.32);
+    glow.append("stop").attr("offset", "45%").attr("stop-color", "#c2410c").attr("stop-opacity", 0.08);
+    glow.append("stop").attr("offset", "100%").attr("stop-color", "#120c09").attr("stop-opacity", 0);
+    var vig = defs.append("radialGradient").attr("id", uid + "-vig")
+      .attr("cx", "50%").attr("cy", "45%").attr("r", "72%");
+    vig.append("stop").attr("offset", "50%").attr("stop-color", "#120c09").attr("stop-opacity", 0);
+    vig.append("stop").attr("offset", "100%").attr("stop-color", "#000000").attr("stop-opacity", 0.55);
+    var pinGlow = defs.append("filter").attr("id", uid + "-pin")
+      .attr("x", "-120%").attr("y", "-120%").attr("width", "340%").attr("height", "340%");
+    pinGlow.append("feGaussianBlur").attr("in", "SourceGraphic").attr("stdDeviation", 5).attr("result", "blur");
+    var mer = pinGlow.append("feMerge");
+    mer.append("feMergeNode").attr("in", "blur");
+    mer.append("feMergeNode").attr("in", "SourceGraphic");
+    var grain = defs.append("filter").attr("id", uid + "-grain");
+    grain.append("feTurbulence").attr("type", "fractalNoise").attr("baseFrequency", 0.85).attr("numOctaves", 2).attr("stitchTiles", "stitch");
+    grain.append("feColorMatrix").attr("type", "saturate").attr("values", "0");
+    var ct = grain.append("feComponentTransfer");
+    ct.append("feFuncA").attr("type", "linear").attr("slope", 0.055);
+
+    var clipId = uid + "-clip";
 
     svg.append("rect").attr("width", W).attr("height", H).attr("fill", T.bg);
+    svg.append("rect").attr("width", W).attr("height", H).attr("fill", "url(#" + uid + "-glow)");
+    svg.append("rect").attr("width", W).attr("height", H).attr("fill", T.ink)
+      .attr("filter", "url(#" + uid + "-grain)");
 
-    // Title
-    var titleEl = svg.append("text")
-      .attr("x", W / 2).attr("y", PAD + 46)
-      .attr("text-anchor", "middle")
-      .attr("fill", T.ink)
-      .attr("font-family", SHARE_FONT)
-      .attr("font-weight", 700)
-      .attr("font-size", 52)
-      .attr("letter-spacing", "-0.03em")
-      .text(title);
-    var tBox = titleEl.node().getBBox();
-    if (tBox.width > W - PAD * 2) {
-      titleEl.attr("font-size", 44);
+    // Headline — starts just under the top safe area
+    var headY = kind === "story" ? topSafe + 18 : topSafe + 28;
+    var kickerSize = kind === "story" ? 18 : 16;
+    var kicker = svg.append("g");
+    var kText = kicker.append("text")
+      .attr("x", 22).attr("y", 0)
+      .attr("fill", T.pin)
+      .attr("font-family", SHARE_FONT).attr("font-weight", 700)
+      .attr("font-size", kickerSize).attr("letter-spacing", "0.28em")
+      .text("MACHINED PENS");
+    var kbb = kText.node().getBBox();
+    kicker.append("circle").attr("cx", 2).attr("cy", -5).attr("r", 7).attr("fill", T.pin)
+      .attr("filter", "url(#" + uid + "-pin)");
+    kicker.append("circle").attr("cx", 2).attr("cy", -5).attr("r", 11).attr("fill", "none")
+      .attr("stroke", T.ink).attr("stroke-width", 1.6);
+    var kMin = -11, kMax = kbb.x + kbb.width;
+    kicker.attr("transform", "translate(" + (W / 2 - (kMin + kMax) / 2) + "," + headY + ")");
+
+    var line1 = n === 1 ? "My Top" : "My Top " + n;
+    var line2 = n === 1 ? "Machined Pen Maker" : "Machined Pen Makers";
+    var titleSize = kind === "story" ? 99 : 64;
+    var titleDy = kind === "story" ? 96 : 72;
+    var subSize = kind === "story" ? 48 : 34;
+    var subDy = kind === "story" ? 160 : 122;
+    var t1 = svg.append("text")
+      .attr("x", W / 2).attr("y", headY + titleDy)
+      .attr("text-anchor", "middle").attr("fill", T.ink)
+      .attr("font-family", SHARE_FONT).attr("font-weight", 800)
+      .attr("font-size", titleSize)
+      .attr("letter-spacing", "-0.035em")
+      .text(line1);
+    // Paint the number in orange by rewriting as tspans when there is a count
+    if (n !== 1) {
+      t1.text("");
+      t1.append("tspan").text("My Top ");
+      t1.append("tspan").attr("fill", T.pinHot).text(String(n));
     }
+    svg.append("text")
+      .attr("x", W / 2).attr("y", headY + subDy)
+      .attr("text-anchor", "middle").attr("fill", T.ink)
+      .attr("font-family", SHARE_FONT).attr("font-weight", 700)
+      .attr("font-size", subSize)
+      .attr("letter-spacing", "0.04em")
+      .text(line2);
 
-    var listRow = n >= 5 ? 54 : 60;
-    var listH = n * listRow;
-    var footerY = H - 52;
-    var listTop = footerY - 36 - listH;
-    var mapX = PAD, mapY = PAD + 78, mapW = W - PAD * 2, mapH = listTop - 28 - mapY;
+    var titleBottom = headY + (kind === "story" ? 180 : 148);
+    var ctaSpace = kind === "story" ? 92 : 96;
+    var mapTop = kind === "story" ? 520 : titleBottom + 18;
+    var mapBottom = H - bottomSafe - stickerH - ctaSpace;
+    if (kind === "post") mapBottom = H - bottomSafe - ctaSpace;
+    var mapX = 48, mapY = mapTop, mapW = W - 96, mapH = mapBottom - mapTop;
+    if (mapH < 420) { mapH = 420; mapY = mapBottom - mapH; }
 
-    var clipId = "share-clip-" + Math.random().toString(36).slice(2, 8);
-    svg.append("defs").append("clipPath").attr("id", clipId)
-      .append("rect").attr("x", mapX).attr("y", mapY).attr("width", mapW).attr("height", mapH).attr("rx", 22);
-    var gFrame = svg.append("g");
-    gFrame.append("rect")
+    defs.append("clipPath").attr("id", clipId)
+      .append("rect").attr("x", mapX).attr("y", mapY).attr("width", mapW).attr("height", mapH).attr("rx", 28);
+
+    var gMap = svg.append("g");
+    gMap.append("rect")
       .attr("x", mapX).attr("y", mapY).attr("width", mapW).attr("height", mapH)
-      .attr("rx", 22).attr("fill", T.paper).attr("stroke", T.line).attr("stroke-width", 1.5);
+      .attr("rx", 28).attr("fill", T.bgSoft).attr("stroke", T.line).attr("stroke-width", 1.5);
     var g = svg.append("g").attr("clip-path", "url(#" + clipId + ")");
 
     var hiBox = null, hiProj = null;
     if (includeHi && state.hawaii) {
-      hiBox = { x: mapX + 22, y: mapY + mapH - 22 - 188, w: 290, h: 188 };
+      var hiW = Math.min(320, mapW * 0.36), hiH = hiW * 0.64;
+      hiBox = { x: mapX + 24, y: mapY + mapH - 24 - hiH, w: hiW, h: hiH };
     }
-    var insetPad = includeHi ? 8 : 0;
+
+    var qrSize = kind === "story" ? 168 : 152;
+    var qrBox = {
+      x: mapX + mapW - 22 - qrSize,
+      y: mapY + mapH - 22 - qrSize,
+      w: qrSize,
+      h: qrSize
+    };
+
+    var extent = shareMapExtent(items, includeHi);
     var projection = d3.geoConicConformal()
       .rotate([96, 0]).parallels([33, 58])
       .fitExtent(
-        [[mapX + 28, mapY + 26], [mapX + mapW - 28, mapY + mapH - 26 - (includeHi ? 16 : 0)]],
-        frame()
+        [[mapX + 36, mapY + 32], [mapX + mapW - 36, mapY + mapH - 32 - (includeHi ? 12 : 0)]],
+        extent
       );
     var path = d3.geoPath(projection);
 
@@ -1244,52 +1378,41 @@
       .attr("fill", function (d) { return d.properties.country === "CAN" ? T.landCa : T.land; })
       .attr("stroke", "none");
     g.append("path").attr("d", path(state.innerBorders))
-      .attr("fill", "none").attr("stroke", T.inner).attr("stroke-width", 1.1).attr("stroke-linejoin", "round");
+      .attr("fill", "none").attr("stroke", T.inner).attr("stroke-width", 1.15).attr("stroke-linejoin", "round");
     if (state.lakes) {
       g.append("g").selectAll("path").data(state.lakes.features).join("path")
-        .attr("d", path).attr("fill", T.paper).attr("stroke", "none");
+        .attr("d", path).attr("fill", T.bgSoft).attr("stroke", "none");
     }
     g.append("path").attr("d", path(state.countryBorder))
-      .attr("fill", "none").attr("stroke", T.border).attr("stroke-width", 2).attr("stroke-linejoin", "round").attr("stroke-linecap", "round");
+      .attr("fill", "none").attr("stroke", T.border).attr("stroke-width", 2.2).attr("stroke-linejoin", "round").attr("stroke-linecap", "round");
 
     if (hiBox) {
       hiProj = d3.geoMercator().fitExtent(
-        [[hiBox.x + 14, hiBox.y + 12], [hiBox.x + hiBox.w - 14, hiBox.y + hiBox.h - 28]],
+        [[hiBox.x + 16, hiBox.y + 14], [hiBox.x + hiBox.w - 16, hiBox.y + hiBox.h - 30]],
         state.hawaii
       );
       var gHi = g.append("g");
       gHi.append("rect")
         .attr("x", hiBox.x).attr("y", hiBox.y).attr("width", hiBox.w).attr("height", hiBox.h)
-        .attr("rx", 12).attr("fill", T.paper).attr("stroke", T.line).attr("stroke-width", 1.5);
-      gHi.append("path").attr("d", d3.geoPath(hiProj)(state.hawaii)).attr("fill", T.land).attr("stroke", "none");
+        .attr("rx", 14).attr("fill", "#241a14").attr("stroke", T.line).attr("stroke-width", 1.5);
+      gHi.append("path").attr("d", d3.geoPath(hiProj)(state.hawaii)).attr("fill", "#6a5138").attr("stroke", "none");
       gHi.append("text")
         .attr("x", hiBox.x + hiBox.w / 2).attr("y", hiBox.y + hiBox.h - 12)
-        .attr("text-anchor", "middle").attr("fill", T.name)
+        .attr("text-anchor", "middle").attr("fill", T.ink2)
         .attr("font-family", SHARE_FONT).attr("font-weight", 700)
-        .attr("font-size", 13).attr("letter-spacing", "0.16em")
+        .attr("font-size", 13).attr("letter-spacing", "0.18em")
         .text("HAWAII");
     }
 
-    // Country names, skipped if they would sit on a pin later — drawn now, under pins.
-    var cfs = 22;
-    [["UNITED STATES", COUNTRY_AT.US], ["CANADA", COUNTRY_AT.CA]].forEach(function (pair) {
-      var p = projection(pair[1]);
-      if (!p) return;
-      if (p[0] < mapX + 40 || p[0] > mapX + mapW - 40 || p[1] < mapY + 30 || p[1] > mapY + mapH - 30) return;
-      if (hiBox && p[0] > hiBox.x - 8 && p[0] < hiBox.x + hiBox.w + 8 && p[1] > hiBox.y - 8 && p[1] < hiBox.y + hiBox.h + 8) return;
-      g.append("text")
-        .attr("x", p[0]).attr("y", p[1])
-        .attr("text-anchor", "middle").attr("dominant-baseline", "middle")
-        .attr("fill", T.country).attr("font-family", SHARE_FONT).attr("font-weight", 700)
-        .attr("font-size", cfs).attr("letter-spacing", "0.22em")
-        .text(pair[0]);
-    });
+    g.append("rect")
+      .attr("x", mapX).attr("y", mapY).attr("width", mapW).attr("height", mapH)
+      .attr("fill", "url(#" + uid + "-vig)");
 
-    var pinR = 22;
+    var pinR = 17;
     var mainland = [], insetNodes = [];
-    items.forEach(function (m, i) {
+    items.forEach(function (m) {
       if (m.lat == null || m.lon == null) return;
-      var rec = { m: m, num: i + 1 };
+      var rec = { m: m };
       if (includeHi && isHawaii(m) && hiProj) {
         var hp = hiProj([m.lon, m.lat]);
         rec.ax = hp[0]; rec.ay = hp[1]; rec.x = hp[0]; rec.y = hp[1]; rec.inset = true;
@@ -1301,88 +1424,89 @@
       }
     });
     var sim = d3.forceSimulation(mainland)
-      .force("x", d3.forceX(function (d) { return d.ax; }).strength(0.25))
-      .force("y", d3.forceY(function (d) { return d.ay; }).strength(0.25))
-      .force("collide", d3.forceCollide(pinR + 8).strength(1).iterations(4))
+      .force("x", d3.forceX(function (d) { return d.ax; }).strength(0.28))
+      .force("y", d3.forceY(function (d) { return d.ay; }).strength(0.28))
+      .force("collide", d3.forceCollide(pinR + 10).strength(1).iterations(4))
       .stop();
     for (var i = 0; i < 300; i++) sim.tick();
-    mainland.forEach(function (node) {
-      var minX = mapX + pinR + 8, maxX = mapX + mapW - pinR - 8;
-      var minY = mapY + pinR + 8, maxY = mapY + mapH - pinR - 8;
-      node.x = Math.max(minX, Math.min(maxX, node.x));
-      node.y = Math.max(minY, Math.min(maxY, node.y));
+    mainland.forEach(function (nd) {
+      var minX = mapX + pinR + 10, maxX = mapX + mapW - pinR - 10;
+      var minY = mapY + pinR + 10, maxY = mapY + mapH - pinR - 10;
+      nd.x = Math.max(minX, Math.min(maxX, nd.x));
+      nd.y = Math.max(minY, Math.min(maxY, nd.y));
       if (hiBox) {
-        var inside = node.x > hiBox.x - pinR && node.x < hiBox.x + hiBox.w + pinR
-          && node.y > hiBox.y - pinR && node.y < hiBox.y + hiBox.h + pinR;
-        if (inside) node.y = hiBox.y - pinR - 8;
+        var inside = nd.x > hiBox.x - pinR && nd.x < hiBox.x + hiBox.w + pinR
+          && nd.y > hiBox.y - pinR && nd.y < hiBox.y + hiBox.h + pinR;
+        if (inside) nd.y = hiBox.y - pinR - 10;
+      }
+      if (qrBox) {
+        var overQr = nd.x > qrBox.x - pinR && nd.x < qrBox.x + qrBox.w + pinR
+          && nd.y > qrBox.y - pinR && nd.y < qrBox.y + qrBox.h + pinR;
+        if (overQr) nd.x = qrBox.x - pinR - 10;
       }
     });
     var nodes = mainland.concat(insetNodes);
-    nodes.forEach(function (node) {
-      node.moved = Math.hypot(node.x - node.ax, node.y - node.ay) > 2;
+    nodes.forEach(function (nd) {
+      nd.moved = Math.hypot(nd.x - nd.ax, nd.y - nd.ay) > 2;
     });
 
     var gLead = g.append("g");
     nodes.filter(function (d) { return d.moved; }).forEach(function (d) {
       gLead.append("line")
         .attr("x1", d.ax).attr("y1", d.ay).attr("x2", d.x).attr("y2", d.y)
-        .attr("stroke", T.ink3).attr("stroke-width", 1.25).attr("fill", "none");
-      gLead.append("circle").attr("cx", d.ax).attr("cy", d.ay).attr("r", 2.4).attr("fill", T.ink3);
+        .attr("stroke", T.ink3).attr("stroke-width", 1.2).attr("fill", "none");
+      gLead.append("circle").attr("cx", d.ax).attr("cy", d.ay).attr("r", 2.2).attr("fill", T.ink3);
     });
 
     var gPins = g.append("g");
     nodes.forEach(function (d) {
       var gP = gPins.append("g").attr("transform", "translate(" + d.x + "," + d.y + ")");
-      if (d.m.in_maker_index) {
-        gP.append("circle").attr("r", pinR + 6).attr("fill", "none").attr("stroke", T.ring).attr("stroke-width", 2);
-      }
+      gP.append("circle").attr("r", pinR + 7).attr("fill", T.pin).attr("opacity", 0.28)
+        .attr("filter", "url(#" + uid + "-pin)");
       if (d.m.status) {
-        gP.append("circle").attr("r", pinR).attr("fill", T.paper).attr("stroke", T.pin).attr("stroke-width", 2.4);
-        gP.append("text")
-          .attr("text-anchor", "middle").attr("dy", "0.38em")
-          .attr("fill", T.pin).attr("font-family", SHARE_FONT).attr("font-weight", 700).attr("font-size", 22)
-          .text(String(d.num));
+        gP.append("circle").attr("r", pinR).attr("fill", T.bgSoft).attr("stroke", T.pin).attr("stroke-width", 3);
       } else {
-        gP.append("circle").attr("r", pinR).attr("fill", T.pin).attr("stroke", T.paper).attr("stroke-width", 2);
-        gP.append("text")
-          .attr("text-anchor", "middle").attr("dy", "0.38em")
-          .attr("fill", T.onPin).attr("font-family", SHARE_FONT).attr("font-weight", 700).attr("font-size", 22)
-          .text(String(d.num));
+        gP.append("circle").attr("r", pinR).attr("fill", T.pin).attr("stroke", T.onPin).attr("stroke-width", 2);
       }
     });
 
-    // Numbered list
-    var gList = svg.append("g");
-    items.forEach(function (m, i) {
-      var y = listTop + i * listRow;
-      var num = i + 1;
-      var badge = gList.append("g").attr("transform", "translate(" + (PAD + 18) + "," + (y + 22) + ")");
-      if (m.status) {
-        badge.append("circle").attr("r", 16).attr("fill", T.paper).attr("stroke", T.pin).attr("stroke-width", 2);
-        badge.append("text").attr("text-anchor", "middle").attr("dy", "0.38em")
-          .attr("fill", T.pin).attr("font-family", SHARE_FONT).attr("font-weight", 700).attr("font-size", 16).text(String(num));
-      } else {
-        badge.append("circle").attr("r", 16).attr("fill", T.pin);
-        badge.append("text").attr("text-anchor", "middle").attr("dy", "0.38em")
-          .attr("fill", T.onPin).attr("font-family", SHARE_FONT).attr("font-weight", 700).attr("font-size", 16).text(String(num));
-      }
-      gList.append("text")
-        .attr("x", PAD + 46).attr("y", y + 16)
-        .attr("fill", T.ink).attr("font-family", SHARE_FONT).attr("font-weight", 700).attr("font-size", 26)
-        .text(m.name);
-      var meta = [shareLocation(m), shareFounded(m)].filter(Boolean).join("  ·  ");
-      gList.append("text")
-        .attr("x", PAD + 46).attr("y", y + 40)
-        .attr("fill", T.ink2).attr("font-family", SHARE_FONT).attr("font-weight", 400).attr("font-size", 18)
-        .text(meta);
-    });
+    placeShareLabels(g, nodes, pinR, { x: mapX, y: mapY, w: mapW, h: mapH }, hiBox, qrBox, T, uid);
 
-    svg.append("text")
-      .attr("x", W / 2).attr("y", footerY)
+    svg.append("rect")
+      .attr("x", mapX).attr("y", mapY).attr("width", mapW).attr("height", mapH)
+      .attr("rx", 28).attr("fill", "none").attr("stroke", T.line).attr("stroke-width", 1.5);
+
+    // QR sits in the map's lower-right corner, above the sticker well.
+    drawShareQr(svg, qrBox, T);
+
+    // Primary CTA is the Substack URL; the map link is the quieter second line.
+    var ctaY = kind === "story" ? mapBottom + 36 : mapBottom + 42;
+    var subY = kind === "story" ? mapBottom + 70 : mapBottom + 74;
+    var primary = svg.append("text")
+      .attr("x", W / 2).attr("y", ctaY)
       .attr("text-anchor", "middle")
-      .attr("fill", T.ink3).attr("font-family", SHARE_FONT).attr("font-weight", 500).attr("font-size", 18)
-      .attr("letter-spacing", "0.02em")
-      .text("machinedpens.github.io  ·  Machined Pens Maker Map");
+      .attr("font-family", SHARE_FONT).attr("font-weight", 700)
+      .attr("font-size", kind === "story" ? 32 : 26);
+    primary.append("tspan").attr("fill", T.ink2).text("Read more at ");
+    primary.append("tspan").attr("fill", T.pinHot).text("machinedpens.substack.com");
+    var secondary = svg.append("text")
+      .attr("x", W / 2).attr("y", subY)
+      .attr("text-anchor", "middle")
+      .attr("font-family", SHARE_FONT).attr("font-weight", 700)
+      .attr("font-size", kind === "story" ? 20 : 18);
+    secondary.append("tspan").attr("fill", T.ink3).text("Make yours  →  ");
+    secondary.append("tspan").attr("fill", T.ink2).text("machinedpens.github.io");
+
+    // Sticker well (~1080x220 on stories) stays visually quiet for the link sticker.
+    // A small footer at the bottom of the well balances the frame without filling it.
+    if (kind === "story") {
+      svg.append("text")
+        .attr("x", W / 2).attr("y", H - bottomSafe - 18)
+        .attr("text-anchor", "middle").attr("fill", T.ink3)
+        .attr("font-family", SHARE_FONT).attr("font-weight", 700)
+        .attr("font-size", 15).attr("letter-spacing", "0.16em")
+        .text("Machined Pens Maker Map");
+    }
 
     return svgToPngBlob(node, W, H).then(function (blob) {
       if (holder.parentNode) holder.parentNode.removeChild(holder);
@@ -1390,6 +1514,90 @@
     }, function (err) {
       if (holder.parentNode) holder.parentNode.removeChild(holder);
       throw err;
+    });
+  }
+
+  function placeShareLabels(g, nodes, pinR, bounds, hiBox, qrBox, T, uid) {
+    var boxes = nodes.map(function (n) {
+      return { x: n.x - pinR - 6, y: n.y - pinR - 6, w: pinR * 2 + 12, h: pinR * 2 + 12 };
+    });
+    if (hiBox) boxes.push({ x: hiBox.x - 8, y: hiBox.y - 8, w: hiBox.w + 16, h: hiBox.h + 16 });
+    if (qrBox) boxes.push({ x: qrBox.x - 8, y: qrBox.y - 8, w: qrBox.w + 16, h: qrBox.h + 16 });
+
+    function fits(box) {
+      if (box.x < bounds.x + 12 || box.y < bounds.y + 12 ||
+          box.x + box.w > bounds.x + bounds.w - 12 ||
+          box.y + box.h > bounds.y + bounds.h - 12) return false;
+      for (var i = 0; i < boxes.length; i++) if (overlap(box, boxes[i]) > 0) return false;
+      return true;
+    }
+    function crowd(n) {
+      return d3.sum(nodes, function (o) { return o !== n && Math.hypot(o.x - n.x, o.y - n.y) < 140 ? 1 : 0; });
+    }
+    var order = nodes.slice().sort(function (a, b) { return crowd(b) - crowd(a); });
+    var gLab = g.append("g");
+
+    order.forEach(function (n) {
+      var name = n.m.name;
+      var fs = name.length > 24 ? 22 : name.length > 16 ? 25 : 28;
+      var tmp = gLab.append("text")
+        .attr("font-family", SHARE_FONT).attr("font-weight", 700).attr("font-size", fs)
+        .text(name);
+      var bb = tmp.node().getBBox();
+      tmp.remove();
+      var off = pinR + 16, far = pinR + 52;
+      var cands = [
+        { x: n.x + off, y: n.y + bb.height * 0.32, a: "start" },
+        { x: n.x - off, y: n.y + bb.height * 0.32, a: "end" },
+        { x: n.x, y: n.y - off - 4, a: "middle" },
+        { x: n.x, y: n.y + off + bb.height * 0.7, a: "middle" },
+        { x: n.x + off * 0.85, y: n.y - off * 0.8, a: "start" },
+        { x: n.x - off * 0.85, y: n.y - off * 0.8, a: "end" },
+        { x: n.x + off * 0.85, y: n.y + off * 0.8 + bb.height * 0.55, a: "start" },
+        { x: n.x - off * 0.85, y: n.y + off * 0.8 + bb.height * 0.55, a: "end" },
+        { x: n.x + far, y: n.y + bb.height * 0.32, a: "start", lead: true },
+        { x: n.x - far, y: n.y + bb.height * 0.32, a: "end", lead: true },
+        { x: n.x + far, y: n.y - far * 0.55, a: "start", lead: true },
+        { x: n.x - far, y: n.y - far * 0.55, a: "end", lead: true },
+        { x: n.x + far, y: n.y + far * 0.55, a: "start", lead: true },
+        { x: n.x - far, y: n.y + far * 0.55, a: "end", lead: true },
+        { x: n.x, y: n.y - far - 6, a: "middle", lead: true },
+        { x: n.x, y: n.y + far + bb.height, a: "middle", lead: true }
+      ];
+      var best = null, bestScore = Infinity;
+      cands.forEach(function (c, idx) {
+        var x0 = c.a === "start" ? c.x : c.a === "end" ? c.x - bb.width : c.x - bb.width / 2;
+        var box = { x: x0 - 5, y: c.y - bb.height * 0.82, w: bb.width + 10, h: bb.height + 6 };
+        if (!fits(box)) return;
+        var score = idx * 0.4 + (c.lead ? 18 : 0);
+        boxes.forEach(function (o) { score += overlap(box, o) * 0.02; });
+        if (score < bestScore) { bestScore = score; best = { c: c, box: box }; }
+      });
+      if (!best) {
+        // Last resort: place to the right and accept the edge clamp
+        var fallback = cands[0];
+        var x0 = fallback.x;
+        best = { c: fallback, box: { x: x0 - 5, y: fallback.y - bb.height * 0.82, w: bb.width + 10, h: bb.height + 6 } };
+      }
+      if (best.c.lead) {
+        var lx = best.c.a === "start" ? best.box.x : best.c.a === "end" ? best.box.x + best.box.w : n.x;
+        var ly = best.box.y + best.box.h / 2;
+        var ang = Math.atan2(ly - n.y, lx - n.x);
+        gLab.append("line")
+          .attr("x1", n.x + Math.cos(ang) * (pinR + 3))
+          .attr("y1", n.y + Math.sin(ang) * (pinR + 3))
+          .attr("x2", lx).attr("y2", ly)
+          .attr("stroke", T.ink2).attr("stroke-width", 1.4).attr("fill", "none");
+      }
+      gLab.append("text")
+        .attr("x", best.c.x).attr("y", best.c.y)
+        .attr("text-anchor", best.c.a)
+        .attr("fill", T.ink)
+        .attr("font-family", SHARE_FONT).attr("font-weight", 700).attr("font-size", fs)
+        .attr("stroke", T.stroke).attr("stroke-width", 7).attr("paint-order", "stroke")
+        .attr("stroke-linejoin", "round")
+        .text(name);
+      boxes.push(best.box);
     });
   }
 
@@ -1434,32 +1642,53 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); if (a.parentNode) a.parentNode.removeChild(a); }, 2000);
   }
 
-  function saveOrShareImage() {
+  var shareToastTimer = null;
+  function showShareToast(msg) {
+    var el = document.getElementById("share-toast");
+    if (!el) return;
+    el.textContent = msg;
+    el.hidden = false;
+    if (shareToastTimer) clearTimeout(shareToastTimer);
+    shareToastTimer = setTimeout(function () { el.hidden = true; shareToastTimer = null; }, 4200);
+  }
+
+  function saveOrShareImage(kind) {
     var items = orderedFavorites();
     if (!items.length) return;
-    var btn = document.getElementById("fav-image");
+    kind = kind === "post" ? "post" : "story";
+    var btn = document.getElementById(kind === "post" ? "fav-image-post" : "fav-image");
+    var other = document.getElementById(kind === "post" ? "fav-image" : "fav-image-post");
     var prev = btn ? btn.textContent : "";
     if (btn) {
       btn.setAttribute("data-busy", "1");
       btn.disabled = true;
-      btn.textContent = isMobileClient() ? "Preparing…" : "Saving…";
+      btn.textContent = kind === "post" ? "Saving…" : (isMobileClient() ? "Preparing…" : "Saving…");
     }
+    if (other) other.disabled = true;
     var n = items.length;
-    generateFavoritesImage().then(function (blob) {
-      var file = new File([blob], shareImageFilename(n), { type: "image/png" });
+    generateFavoritesImage(kind).then(function (blob) {
+      var file = new File([blob], shareImageFilename(n, kind), { type: "image/png" });
+      copyText(SUBSTACK_URL, function () {
+        showShareToast("Substack link copied – add it as a link sticker");
+      });
       var usedShare = false;
       var finish = function () {
         if (btn) {
           btn.removeAttribute("data-busy");
-          btn.disabled = favSlugs().length === 0;
-          syncImageButton();
+          btn.textContent = prev;
         }
+        syncImageButton();
+        var postBtn = document.getElementById("fav-image-post");
+        var storyBtn = document.getElementById("fav-image");
+        var empty = favSlugs().length === 0;
+        if (postBtn) postBtn.disabled = empty;
+        if (storyBtn) storyBtn.disabled = empty;
       };
-      if (isMobileClient() && navigator.share && navigator.canShare) {
+      if (kind === "story" && isMobileClient() && navigator.share && navigator.canShare) {
         try {
           if (navigator.canShare({ files: [file] })) {
             usedShare = true;
-            navigator.share({ files: [file], title: shareImageTitle(n), text: shareImageTitle(n) })
+            navigator.share({ files: [file], title: shareImageTitle(n), text: shareImageTitle(n) + "\n" + SUBSTACK_URL })
               .then(finish)
               .catch(function (err) {
                 if (!err || err.name !== "AbortError") downloadBlob(blob, file.name);
@@ -1476,9 +1705,14 @@
       console.error(err);
       if (btn) {
         btn.removeAttribute("data-busy");
-        btn.disabled = favSlugs().length === 0;
-        syncImageButton();
+        btn.textContent = prev;
       }
+      syncImageButton();
+      var postBtn = document.getElementById("fav-image-post");
+      var storyBtn = document.getElementById("fav-image");
+      var empty = favSlugs().length === 0;
+      if (postBtn) postBtn.disabled = empty;
+      if (storyBtn) storyBtn.disabled = empty;
     });
   }
 
@@ -1498,7 +1732,12 @@
     var imageBtn = document.getElementById("fav-image");
     if (imageBtn) imageBtn.addEventListener("click", function () {
       if (!favSlugs().length) return;
-      saveOrShareImage();
+      saveOrShareImage("story");
+    });
+    var postBtn = document.getElementById("fav-image-post");
+    if (postBtn) postBtn.addEventListener("click", function () {
+      if (!favSlugs().length) return;
+      saveOrShareImage("post");
     });
     syncImageButton();
     if (mqMobile.addEventListener) mqMobile.addEventListener("change", syncImageButton);

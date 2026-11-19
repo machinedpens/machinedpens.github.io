@@ -105,6 +105,7 @@
         <div class="fav-actions">
           <button class="fav-action" id="fav-share" type="button" disabled>Share favorites</button>
           <button class="fav-action" id="fav-image" type="button" disabled>Save image</button>
+          <button class="fav-action" id="fav-image-post" type="button" disabled>Save post</button>
           <button class="fav-action" id="fav-manage" type="button" disabled aria-expanded="false" aria-controls="fav-panel">Manage</button>
         </div>
         <p class="fav-limit-note" id="fav-limit-note" hidden role="status">You can pick up to 5 favorites. Remove one to add another.</p>
@@ -128,13 +129,19 @@
 
   <footer class="site-footer">
     <p>From <a href="https://machinedpens.substack.com">Machined Pens</a>, a Substack about machined pens and the people who make them. Cities when known, never addresses.</p>
-    <p class="suggest-wrap"><a class="suggest-maker" id="suggest-maker" href="https://github.com/machinedpens/machinedpens.github.io/issues/new">Suggest a maker</a></p>
+    <p class="suggest-wrap">
+      <a href="https://machinedpens.substack.com">Read Machined Pens on Substack</a>
+      <a class="suggest-maker" id="suggest-maker" href="https://github.com/machinedpens/machinedpens.github.io/issues/new">Suggest a maker</a>
+    </p>
   </footer>
+
+  <p class="share-toast" id="share-toast" hidden role="status"></p>
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
   <script src="vendor/d3.min.js"></script>
   <script src="vendor/topojson-client.min.js"></script>
+  <script src="vendor/qrcode-generator.js"></script>
   <script src="map.js"></script>
 </body>
 </html>

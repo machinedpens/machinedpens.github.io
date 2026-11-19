@@ -298,7 +298,7 @@ input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px 
 .site-footer p { margin: 0; }
 .site-footer p:first-child { border-top: 1px solid var(--line); padding-top: 18px; }
 .site-footer a { color: var(--ink-2); text-underline-offset: 3px; }
-.site-footer .suggest-wrap { margin-top: 8px; }
+.site-footer .suggest-wrap { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px 18px; }
 .noscript { text-align: center; padding: 24px; }
 
 /* Tablet and down */
@@ -392,7 +392,7 @@ input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px 
 body.still { background: var(--paper); }
 body.still .skip, body.still .site-header, body.still .timeline, body.still .list-panel, body.still .site-footer, body.still .card,
 body.still .card-update, body.still .suggest-wrap, body.still .fav-banner, body.still .fav-bar, body.still .print-toolbar,
-body.still .print-list, body.still .print-footer, body.still .title-print, body.still .card-star, body.still .maker-star, body.still .fav-limit-note { display: none !important; }
+body.still .print-list, body.still .print-footer, body.still .title-print, body.still .card-star, body.still .maker-star, body.still .fav-limit-note, body.still .share-toast { display: none !important; }
 body.still main { max-width: none; padding: 0; margin: 0; }
 body.still .map-panel { border: 0; border-radius: 0; box-shadow: none; }
 body.still .map-wrap { aspect-ratio: auto; height: 100vh; border-radius: 0; overflow: hidden; }
