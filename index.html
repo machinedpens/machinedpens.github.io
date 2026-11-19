@@ -19,7 +19,7 @@
       if (["light", "dark", "bold"].indexOf(t) >= 0) document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261118d">
+  <link rel="stylesheet" href="style.css?v=20261118e">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -124,7 +124,19 @@
 
     <section class="list-panel" id="maker-list" aria-labelledby="list-title">
       <h2 class="list-title" id="list-title">All makers</h2>
+      <div class="list-controls" id="list-controls">
+        <label class="list-search-wrap" for="list-search">
+          <span class="sr-only">Find a maker</span>
+          <input type="search" id="list-search" class="list-search" placeholder="Find a maker" autocomplete="off" spellcheck="false" enterkeyhint="search">
+        </label>
+        <div class="list-sort" id="list-sort" role="group" aria-label="Sort makers">
+          <button type="button" class="list-sort-btn" data-sort="state" aria-pressed="true">By state</button>
+          <button type="button" class="list-sort-btn" data-sort="az" aria-pressed="false">A–Z</button>
+          <button type="button" class="list-sort-btn" data-sort="newest" aria-pressed="false">Newest</button>
+        </div>
+      </div>
       <div id="list"></div>
+      <p class="list-empty" id="list-empty" hidden>No makers match</p>
     </section>
 
     <section class="print-list" id="print-list" aria-label="Favorite makers" hidden></section>
@@ -144,9 +156,9 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261118d"></script>
-  <script src="vendor/topojson-client.min.js?v=20261118d"></script>
-  <script src="vendor/qrcode-generator.js?v=20261118d"></script>
-  <script src="map.js?v=20261118d"></script>
+  <script src="vendor/d3.min.js?v=20261118e"></script>
+  <script src="vendor/topojson-client.min.js?v=20261118e"></script>
+  <script src="vendor/qrcode-generator.js?v=20261118e"></script>
+  <script src="map.js?v=20261118e"></script>
 </body>
 </html>
