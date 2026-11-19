@@ -37,9 +37,9 @@
   var playBtn = document.getElementById("play");
   var mqMobile = window.matchMedia("(max-width: 640px)");
 
-  var state = { makers: [], features: null, topo: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, shared: false, listSort: "state", listQuery: "" };
+  var state = { makers: [], features: null, topo: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, mapMode: "timeline", priceFilter: null, shared: false, listSort: "state", listQuery: "" };
 
-  Promise.all([d3.json("makers.json?v=20261119e"), d3.json("data/us-canada.topo.json?v=20261119e")])
+  Promise.all([d3.json("makers.json?v=20261119g"), d3.json("data/us-canada.topo.json?v=20261119g")])
     .then(function (res) { init(res[0].makers, res[1]); })
     .catch(function (err) {
       console.error(err);
@@ -78,6 +78,7 @@
     bindUI();
     setupSuggestLink();
     if (!STILL) bindFavorites();
+    else applyMapMode();
 
     if (window.ResizeObserver) {
       var el = svg.node();
@@ -489,11 +490,44 @@
   function listYear(m) {
     return m.shop_founded_short || foundedDisplay(m);
   }
+  function hasPrice(m) {
+    return !!(m && m.priceLow != null && m.priceHigh != null);
+  }
+  function formatMoney(n) {
+    return "$" + Number(n).toLocaleString("en-US");
+  }
+  function priceText(m) {
+    if (!hasPrice(m)) return null;
+    if (m.priceLow === m.priceHigh) return formatMoney(m.priceLow);
+    return formatMoney(m.priceLow) + "\u2013" + formatMoney(m.priceHigh).replace("$", "");
+  }
+  function priceLine(m) {
+    var t = priceText(m);
+    return t ? "Price " + t : null;
+  }
+  function matchesPriceTier(m, tier) {
+    if (!hasPrice(m)) return false;
+    if (tier === "under-100") return m.priceLow < 100;
+    if (tier === "100-250") return m.priceLow <= 250 && m.priceHigh >= 100;
+    if (tier === "over-250") return m.priceHigh > 250;
+    return false;
+  }
+  function priceTintTier(m) {
+    if (!hasPrice(m)) return "none";
+    if (m.priceLow < 100) return "under-100";
+    if (m.priceLow <= 250) return "100-250";
+    return "over-250";
+  }
+  function isPriceHidden(m) {
+    return !STILL && state.mapMode === "price" && !!state.priceFilter && !matchesPriceTier(m, state.priceFilter);
+  }
   function ariaLabel(m) {
     var loc = locationLine(m);
     var s = m.name + (loc ? ", " + loc : "");
     var founded = foundedDisplay(m);
     s += founded ? ", shop founded " + founded : ", founding year not confirmed";
+    var price = priceText(m);
+    if (price) s += ", price " + price;
     if (m.first_pen) s += ", first pen " + m.first_pen;
     if (m.status_label) s += ", " + m.status_label;
     if (m.in_maker_index) s += ", featured in The Maker Index";
@@ -509,28 +543,42 @@
     slider.style.setProperty("--fill", pct + "%");
     slider.setAttribute("aria-valuetext", "Founded by " + y);
     document.getElementById("year-value").textContent = y;
-    var pool = state.favOnly ? state.makers.filter(isFav) : state.makers;
-    var known = pool.filter(function (m) { return m.est_year && m.est_year <= y; }).length;
-    var unknown = pool.filter(function (m) { return !m.est_year; }).length;
-    var el = document.getElementById("year-count");
-    el.textContent = known + (known === 1 ? " maker" : " makers");
-    if (unknown) {
-      var ex = document.createElement("span");
-      ex.className = "extra"; ex.textContent = " + " + unknown + " year unknown";
-      el.appendChild(ex);
+    var pool = state.makers.filter(function (m) {
+      if (state.favOnly && !isFav(m)) return false;
+      if (isPriceHidden(m)) return false;
+      return true;
+    });
+    if (state.mapMode === "price") {
+      var priceCount = document.getElementById("price-count");
+      if (priceCount) priceCount.textContent = pool.length + (pool.length === 1 ? " maker" : " makers");
+    } else {
+      var known = pool.filter(function (m) { return m.est_year && m.est_year <= y; }).length;
+      var unknown = pool.filter(function (m) { return !m.est_year; }).length;
+      var el = document.getElementById("year-count");
+      el.textContent = known + (known === 1 ? " maker" : " makers");
+      if (unknown) {
+        var ex = document.createElement("span");
+        ex.className = "extra"; ex.textContent = " + " + unknown + " year unknown";
+        el.appendChild(ex);
+      }
     }
     applyYear();
   }
 
-  function isYearHidden(m) { return !!m.est_year && m.est_year > state.year; }
+  function isYearHidden(m) {
+    if (state.mapMode === "price") return false;
+    return !!m.est_year && m.est_year > state.year;
+  }
   function isFavHidden(m) { return !STILL && state.favOnly && !isFav(m); }
-  function isHidden(m) { return isYearHidden(m) || isFavHidden(m); }
+  function isFilterHidden(m) { return isFavHidden(m) || isPriceHidden(m); }
+  function isHidden(m) { return isYearHidden(m) || isFilterHidden(m); }
 
   function applyYear() {
     var full = state.year >= MAX_YEAR;
     svg.selectAll("g.pin")
       .classed("hidden", function (d) { return isHidden(d.m); })
-      .classed("faded", function (d) { return !isHidden(d.m) && !d.m.est_year && !full; })
+      .classed("faded", function (d) { return state.mapMode !== "price" && !isHidden(d.m) && !d.m.est_year && !full; })
+      .attr("data-tier", function (d) { return priceTintTier(d.m); })
       .attr("tabindex", function (d) { return isHidden(d.m) ? -1 : 0; })
       .attr("aria-hidden", function (d) { return isHidden(d.m) ? "true" : null; });
     svg.selectAll(".leaders g").classed("hidden", function (d) { return isHidden(d.m); });
@@ -540,15 +588,16 @@
     d3.selectAll(".maker-row").classed("fav-hidden", function () {
       var btn = this.querySelector(".maker-btn");
       var m = btn && byId(btn.getAttribute("data-id"));
-      return !!(m && isFavHidden(m));
+      return !!(m && isFilterHidden(m));
     });
+    var filtering = state.favOnly || (state.mapMode === "price" && !!state.priceFilter);
     document.querySelectorAll(".region").forEach(function (reg) {
       var any = reg.querySelector(".maker-row:not(.fav-hidden)");
-      reg.hidden = state.favOnly && !any;
+      reg.hidden = filtering && !any;
     });
     document.querySelectorAll(".country").forEach(function (sec) {
       var any = sec.querySelector(".region:not([hidden])");
-      sec.hidden = state.favOnly && !any;
+      sec.hidden = filtering && !any;
     });
     var title = document.getElementById("list-title");
     if (title && !PRINT) title.textContent = state.favOnly ? "Favorite makers" : "All makers";
@@ -665,6 +714,7 @@
     }
     addLine("loc", locationLine(m));
     addLine("founded", foundedLine(m));
+    addLine("price", priceLine(m));
     addLine("pen", m.first_pen ? "First pen " + m.first_pen : null);
     if (m.previously) {
       var prev = document.createElement("p");
@@ -799,12 +849,22 @@
     if (ay !== by) return by - ay;
     return compareName(a, b);
   }
+  function comparePrice(a, b) {
+    var ap = hasPrice(a), bp = hasPrice(b);
+    if (ap && !bp) return -1;
+    if (!ap && bp) return 1;
+    if (!ap && !bp) return compareName(a, b);
+    if (a.priceLow !== b.priceLow) return a.priceLow - b.priceLow;
+    if (a.priceHigh !== b.priceHigh) return a.priceHigh - b.priceHigh;
+    return compareName(a, b);
+  }
   function updateListEmpty() {
     var empty = document.getElementById("list-empty");
     if (!empty) return;
     var q = (state.listQuery || "").trim();
     var visible = document.querySelectorAll("#list .maker-row:not(.fav-hidden)");
-    empty.hidden = !q || visible.length > 0;
+    var filtering = !!(q || state.favOnly || (state.mapMode === "price" && state.priceFilter));
+    empty.hidden = !filtering || visible.length > 0;
   }
   function syncListActive() {
     var id = state.active && state.active.id;
@@ -862,12 +922,13 @@
     var makers = state.makers.filter(matchesListQuery);
     if (state.listSort === "az") appendFlatList(root, makers.slice().sort(compareName));
     else if (state.listSort === "newest") appendFlatList(root, makers.slice().sort(compareNewest));
+    else if (state.listSort === "price") appendFlatList(root, makers.slice().sort(comparePrice));
     else appendGroupedList(root, makers);
     applyYear();
     syncListActive();
   }
   function setListSort(mode) {
-    if (mode !== "state" && mode !== "az" && mode !== "newest") mode = "state";
+    if (mode !== "state" && mode !== "az" && mode !== "newest" && mode !== "price") mode = "state";
     state.listSort = mode;
     document.querySelectorAll(".list-sort-btn").forEach(function (btn) {
       var on = btn.getAttribute("data-sort") === mode;
@@ -1960,6 +2021,86 @@
     });
     syncFavBar();
     buildPrintList();
+    bindMapMode();
+  }
+
+  function syncPriceChips() {
+    document.querySelectorAll(".price-chip").forEach(function (btn) {
+      var on = btn.getAttribute("data-price") === state.priceFilter;
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+  function setPriceFilter(tier) {
+    if (STILL || PRINT || state.mapMode !== "price") return;
+    var next = (tier && tier === state.priceFilter) ? null : (tier || null);
+    var turningOn = !!next && next !== state.priceFilter;
+    state.priceFilter = next;
+    syncPriceChips();
+    if (state.active && isHidden(state.active)) closeCard(true);
+    setYear(state.year);
+    if (turningOn) track("filter-price/" + next, "Filter price");
+  }
+  function applyMapMode() {
+    var price = state.mapMode === "price";
+    if (!STILL && !PRINT) document.body.setAttribute("data-map-mode", state.mapMode);
+    else document.body.removeAttribute("data-map-mode");
+    var timeline = document.getElementById("timeline");
+    var priceControls = document.getElementById("price-controls");
+    var priceReadout = document.getElementById("price-readout");
+    var modeBar = document.getElementById("map-mode-bar");
+    var legendTime = document.getElementById("legend-timeline");
+    var legendPrice = document.getElementById("legend-price");
+    if (STILL || PRINT) {
+      if (modeBar) modeBar.hidden = true;
+      if (priceControls) priceControls.hidden = true;
+      if (priceReadout) priceReadout.hidden = true;
+      if (timeline) timeline.hidden = !!PRINT;
+      if (legendTime) legendTime.hidden = false;
+      if (legendPrice) legendPrice.hidden = true;
+      return;
+    }
+    if (modeBar) modeBar.hidden = false;
+    if (timeline) timeline.hidden = price;
+    if (priceControls) priceControls.hidden = !price;
+    if (priceReadout) priceReadout.hidden = !price;
+    if (legendTime) legendTime.hidden = price;
+    if (legendPrice) legendPrice.hidden = !price;
+    document.querySelectorAll(".map-mode-btn").forEach(function (btn) {
+      var on = btn.getAttribute("data-mode") === state.mapMode;
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    syncPriceChips();
+  }
+  function setMapMode(mode) {
+    if (STILL || PRINT) return;
+    if (mode !== "price") mode = "timeline";
+    if (state.mapMode === mode) return;
+    state.mapMode = mode;
+    if (mode === "price" && state.playing) stopPlay();
+    applyMapMode();
+    if (state.active && isHidden(state.active)) closeCard(true);
+    setYear(state.year);
+    track("mode/" + mode, mode === "price" ? "Price mode" : "Timeline mode");
+  }
+  function bindMapMode() {
+    applyMapMode();
+    if (STILL || PRINT) return;
+    var mode = document.getElementById("map-mode");
+    if (mode) {
+      mode.addEventListener("click", function (ev) {
+        var btn = ev.target.closest("[data-mode]");
+        if (!btn) return;
+        setMapMode(btn.getAttribute("data-mode"));
+      });
+    }
+    var wrap = document.getElementById("price-filters");
+    if (wrap) {
+      wrap.addEventListener("click", function (ev) {
+        var btn = ev.target.closest("[data-price]");
+        if (!btn) return;
+        setPriceFilter(btn.getAttribute("data-price"));
+      });
+    }
   }
 
   /* ---------- Wiring ---------- */
