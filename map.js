@@ -30,7 +30,7 @@
 
   var state = { makers: [], features: null, topo: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, shared: false };
 
-  Promise.all([d3.json("makers.json"), d3.json("data/us-canada.topo.json")])
+  Promise.all([d3.json("makers.json?v=20261118b"), d3.json("data/us-canada.topo.json?v=20261118b")])
     .then(function (res) { init(res[0].makers, res[1]); })
     .catch(function (err) {
       console.error(err);
@@ -1664,7 +1664,6 @@
       btn.disabled = true;
       btn.textContent = kind === "post" ? "Saving…" : (isMobileClient() ? "Preparing…" : "Saving…");
     }
-    if (other) other.disabled = true;
     var n = items.length;
     generateFavoritesImage(kind).then(function (blob) {
       var file = new File([blob], shareImageFilename(n, kind), { type: "image/png" });
