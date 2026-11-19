@@ -8,6 +8,15 @@
   if (STILL) document.body.classList.add("still");
   if (PRINT && !STILL) document.body.classList.add("print");
 
+  function track(path, title) {
+    try {
+      if (STILL) return;
+      if (window.goatcounter && window.goatcounter.count) {
+        window.goatcounter.count({ path: path, title: title, event: true });
+      }
+    } catch (e) {}
+  }
+
   var MAX_YEAR = 2026;
   var COUNTRY_NAMES = { US: "United States", CA: "Canada" };
   var COUNTRY_ORDER = ["US", "CA"];
@@ -30,7 +39,7 @@
 
   var state = { makers: [], features: null, topo: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, shared: false, listSort: "state", listQuery: "" };
 
-  Promise.all([d3.json("makers.json?v=20261119d"), d3.json("data/us-canada.topo.json?v=20261119d")])
+  Promise.all([d3.json("makers.json?v=20261119e"), d3.json("data/us-canada.topo.json?v=20261119e")])
     .then(function (res) { init(res[0].makers, res[1]); })
     .catch(function (err) {
       console.error(err);
@@ -615,6 +624,7 @@
     a.rel = "noopener";
     a.textContent = "Update this entry";
     a.setAttribute("aria-label", "Update this entry for " + m.name + " (opens in a new tab)");
+    a.addEventListener("click", function () { track("update-entry/" + m.slug, m.name); });
     wrap.appendChild(a);
     wrap.hidden = false;
   }
@@ -625,6 +635,7 @@
     a.href = suggestMakerUrl();
     a.target = "_blank";
     a.rel = "noopener";
+    a.addEventListener("click", function () { track("suggest-maker", "Suggest a maker"); });
   }
 
   /* ---------- Card ---------- */
@@ -1006,6 +1017,9 @@
     var fromHash = readFavParam(location.hash);
     var incoming = fromQuery || fromHash;
     var stored = loadStoredFavs();
+    if ((fromHash && fromHash.length) || (fromQuery && fromQuery.length)) {
+      track("opened-shared-link", "Opened shared link");
+    }
     if (incoming && incoming.length && !sameSlugList(incoming, stored)) {
       state.shared = true;
       setFavs(incoming);
@@ -1128,12 +1142,14 @@
     if (state.favorites[m.slug]) {
       adoptSharedOnEdit();
       delete state.favorites[m.slug];
+      track("unstar/" + m.slug, m.name);
     } else if (atFavLimit()) {
       showFavLimitNote();
       return;
     } else {
       adoptSharedOnEdit();
       state.favorites[m.slug] = true;
+      track("star/" + m.slug, m.name);
     }
     hideFavLimitNote();
     saveStoredFavs(favSlugs());
@@ -1146,6 +1162,7 @@
     if (m) toggleFavorite(m);
   }
   function clearFavorites() {
+    var cleared = favMakers().slice();
     adoptSharedOnEdit();
     state.favorites = {};
     state.favOnly = false;
@@ -1153,6 +1170,7 @@
     closeManage();
     syncAllStars();
     setYear(state.year);
+    cleared.forEach(function (m) { track("unstar/" + m.slug, m.name); });
   }
   function setFavOnly(on) {
     if (!favSlugs().length && on) return;
@@ -1260,6 +1278,7 @@
 
   function shareFavorites() {
     if (!favSlugs().length) return;
+    track("share-link", "Share link");
     var url = shareUrl();
     var shareBtn = document.getElementById("fav-share");
     var markCopied = function () {
@@ -1879,6 +1898,7 @@
     var imageBtn = document.getElementById("fav-image");
     if (imageBtn) imageBtn.addEventListener("click", function () {
       if (!favSlugs().length) return;
+      track("share-image", "Share image");
       saveOrShareImage("story");
     });
     var postBtn = document.getElementById("fav-image-post");
