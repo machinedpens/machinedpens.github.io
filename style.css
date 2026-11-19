@@ -189,6 +189,13 @@ button { font: inherit; color: inherit; }
 .card-links a.primary { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
 .card-links a.primary:hover { background: var(--ink-hover); }
 .card-links svg { width: 13px; height: 13px; }
+.card-update { margin: 10px 0 0; }
+.card-update[hidden] { display: none; }
+.card-update a {
+  font-size: 12.5px; font-weight: 500; color: var(--ink-3);
+  text-decoration: none; text-underline-offset: 3px;
+}
+.card-update a:hover { color: var(--ink-2); text-decoration: underline; }
 
 /* Timeline */
 .timeline {
@@ -289,8 +296,10 @@ input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px 
 
 /* Footer */
 .site-footer { padding-top: 40px; padding-bottom: 48px; font-size: 13.5px; color: var(--ink-3); }
-.site-footer p { margin: 0; border-top: 1px solid var(--line); padding-top: 18px; }
+.site-footer p { margin: 0; }
+.site-footer p:first-child { border-top: 1px solid var(--line); padding-top: 18px; }
 .site-footer a { color: var(--ink-2); text-underline-offset: 3px; }
+.site-footer .suggest-wrap { margin-top: 8px; }
 .noscript { text-align: center; padding: 24px; }
 
 /* Tablet and down */
@@ -341,6 +350,8 @@ input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px 
   .card-meta .prev, .card-note { font-size: 14px; }
   .card-links { gap: 10px; }
   .card-links a { min-height: 48px; padding: 0 18px; font-size: 15px; flex: 1 1 auto; justify-content: center; }
+  .card-update { margin-top: 8px; }
+  .card-update a { display: inline-flex; align-items: center; min-height: 36px; font-size: 13.5px; }
   .regions { grid-template-columns: 1fr; }
   .maker-btn .m-name { font-size: 16px; }
   .list-panel { margin-top: 32px; }
@@ -379,7 +390,8 @@ input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px 
 
 /* Still mode (for the Substack image) */
 body.still { background: var(--paper); }
-body.still .skip, body.still .site-header, body.still .timeline, body.still .list-panel, body.still .site-footer, body.still .card { display: none !important; }
+body.still .skip, body.still .site-header, body.still .timeline, body.still .list-panel, body.still .site-footer, body.still .card,
+body.still .card-update, body.still .suggest-wrap { display: none !important; }
 body.still main { max-width: none; padding: 0; margin: 0; }
 body.still .map-panel { border: 0; border-radius: 0; box-shadow: none; }
 body.still .map-wrap { aspect-ratio: auto; height: 100vh; }

@@ -61,6 +61,7 @@
     render();
     setYear(MAX_YEAR);
     bindUI();
+    setupSuggestLink();
 
     if (window.ResizeObserver) {
       var el = svg.node();
@@ -493,6 +494,66 @@
     playBtn.setAttribute("aria-label", "Play timeline");
   }
 
+
+  var ISSUE_NEW = "https://github.com/machinedpens/machinedpens.github.io/issues/new";
+
+  function issueValue(v) {
+    return (v == null || v === "") ? "—" : String(v);
+  }
+  function issueUrl(title, body) {
+    return ISSUE_NEW + "?title=" + encodeURIComponent(title) + "&body=" + encodeURIComponent(body);
+  }
+  function updateIssueUrl(m) {
+    var body = [
+      "Current values",
+      "- Name: " + issueValue(m.name),
+      "- Location: " + issueValue(locationLine(m)),
+      "- Shop founded: " + issueValue(foundedDisplay(m)),
+      "- First pen: " + issueValue(m.first_pen),
+      "- Status: " + issueValue(m.status_label || (m.status ? m.status : "Active")),
+      "- Website: " + issueValue(m.website),
+      "",
+      "What should change:",
+      "",
+      "",
+      "Source (link):",
+      ""
+    ].join("\n");
+    return issueUrl("Update: " + m.name, body);
+  }
+  function suggestMakerUrl() {
+    var body = [
+      "Name: ",
+      "Website: ",
+      "City/State or Province: ",
+      "Shop founded: ",
+      "First pen: ",
+      "Source: "
+    ].join("\n");
+    return issueUrl("New maker: ", body);
+  }
+  function fillUpdateLink(m) {
+    var wrap = document.getElementById("card-update");
+    wrap.innerHTML = "";
+    if (STILL) { wrap.hidden = true; return; }
+    var a = document.createElement("a");
+    a.href = updateIssueUrl(m);
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = "Update this entry";
+    a.setAttribute("aria-label", "Update this entry for " + m.name + " (opens in a new tab)");
+    wrap.appendChild(a);
+    wrap.hidden = false;
+  }
+  function setupSuggestLink() {
+    var a = document.getElementById("suggest-maker");
+    if (!a) return;
+    if (STILL) { a.parentElement.hidden = true; return; }
+    a.href = suggestMakerUrl();
+    a.target = "_blank";
+    a.rel = "noopener";
+  }
+
   /* ---------- Card ---------- */
 
   var RING_ICON = '<svg class="ring-icon" viewBox="0 0 24 24" role="img" aria-label="Featured in The Maker Index"><title>Featured in The Maker Index</title><circle cx="12" cy="12" r="4.5" fill="var(--pin)"/><circle cx="12" cy="12" r="9" fill="none" stroke="var(--ring)" stroke-width="2"/></svg>';
@@ -538,6 +599,7 @@
     links.innerHTML = "";
     if (m.website) links.appendChild(link(m.website, "Website", false));
     if (m.maker_index_url) links.appendChild(link(m.maker_index_url, "Read my Maker Index post", true));
+    fillUpdateLink(m);
 
     card.hidden = false;
     positionCard(m);
