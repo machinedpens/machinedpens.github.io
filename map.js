@@ -1356,13 +1356,7 @@
       hiBox = { x: mapX + 24, y: mapY + mapH - 24 - hiH, w: hiW, h: hiH };
     }
 
-    var qrSize = kind === "story" ? 168 : 152;
-    var qrBox = {
-      x: mapX + mapW - 22 - qrSize,
-      y: mapY + mapH - 22 - qrSize,
-      w: qrSize,
-      h: qrSize
-    };
+    var qrBox = null; // QR removed per Teja (Nov 18)
 
     var extent = shareMapExtent(items, includeHi);
     var projection = d3.geoConicConformal()
@@ -1477,7 +1471,7 @@
       .attr("rx", 28).attr("fill", "none").attr("stroke", T.line).attr("stroke-width", 1.5);
 
     // QR sits in the map's lower-right corner, above the sticker well.
-    drawShareQr(svg, qrBox, T);
+    if (qrBox) drawShareQr(svg, qrBox, T);
 
     // Primary CTA is the Substack URL; the map link is the quieter second line.
     var ctaY = kind === "story" ? mapBottom + 36 : mapBottom + 42;
