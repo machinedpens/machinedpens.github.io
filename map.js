@@ -30,7 +30,7 @@
 
   var state = { makers: [], features: null, topo: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, shared: false, listSort: "state", listQuery: "" };
 
-  Promise.all([d3.json("makers.json?v=20261118e"), d3.json("data/us-canada.topo.json?v=20261118e")])
+  Promise.all([d3.json("makers.json?v=20261119d"), d3.json("data/us-canada.topo.json?v=20261119d")])
     .then(function (res) { init(res[0].makers, res[1]); })
     .catch(function (err) {
       console.error(err);
@@ -95,18 +95,35 @@
 
   function sizes() {
     var w = svg.node().clientWidth;
-    if (STILL) return { dot: 8, ring: 13.5, hit: 22, gap: 6 };
-    if (w < 500) return { dot: 5.5, ring: 9.5, hit: 22, gap: 3 };
-    return { dot: 7, ring: 12, hit: 22, gap: 4 };
+    // Favorite stars match pin size: outer border ≈ the pin (dot) or, for Index, the ring.
+    if (STILL) return { dot: 8, ring: 13.5, hit: 22, gap: 6, star: 5.5, starBorder: 8, starIndex: 13.5 };
+    if (w < 500) return { dot: 5.5, ring: 9.5, hit: 22, gap: 3, star: 3.8, starBorder: 5.5, starIndex: 9.5 };
+    return { dot: 7, ring: 12, hit: 22, gap: 4, star: 4.8, starBorder: 7, starIndex: 12 };
   }
+
+  // 5-point star centered at the origin, outer radius r. Same plump ratio as the UI star.
+  function starPath(r) {
+    var inner = r * 0.45, d = [];
+    for (var i = 0; i < 10; i++) {
+      var rad = i % 2 === 0 ? r : inner;
+      var a = -Math.PI / 2 + i * Math.PI / 5;
+      d.push((i ? "L" : "M") + (Math.cos(a) * rad).toFixed(3) + "," + (Math.sin(a) * rad).toFixed(3));
+    }
+    return d.join("") + "Z";
+  }
+  function favBorderRadius(d, S) {
+    return d.m.in_maker_index ? S.starIndex : S.starBorder;
+  }
+  var STAR_BORDER_STROKE = 1.5;
 
   // Tight burnt-orange halo just outside the pin, or its Maker Index ring.
   // Stroke (3) lives in CSS; keep the two in sync.
   var FOCUS_STROKE = 3;
   var FOCUS_GAP = 1.5;
   function focusRingRadius(d, S) {
-    var coreR = d.m.in_maker_index ? S.ring : S.dot;
-    var coreStroke = d.m.in_maker_index ? 1.5 : (d.m.status ? 2 : 1.5);
+    var fav = !STILL && isFav(d.m);
+    var coreR = fav ? favBorderRadius(d, S) : (d.m.in_maker_index ? S.ring : S.dot);
+    var coreStroke = fav ? STAR_BORDER_STROKE : (d.m.in_maker_index ? 1.5 : (d.m.status ? 2 : 1.5));
     return coreR + coreStroke / 2 + FOCUS_GAP + FOCUS_STROKE / 2;
   }
 
@@ -259,13 +276,20 @@
       .attr("tabindex", 0)
       .attr("aria-haspopup", "dialog")
       .attr("aria-label", function (d) { return ariaLabel(d.m); })
-      .classed("inactive", function (d) { return !!d.m.status; });
+      .classed("inactive", function (d) { return !!d.m.status; })
+      .classed("fav", function (d) { return !STILL && isFav(d.m); });
     pins.append("circle").attr("class", "hit").attr("r", S.hit);
     var body = pins.append("g").attr("class", "body");
     body.append("circle").attr("class", "focus-ring").attr("r", function (d) { return focusRingRadius(d, S); });
     body.filter(function (d) { return d.m.in_maker_index; })
       .append("circle").attr("class", "ring").attr("r", S.ring);
     body.append("circle").attr("class", "dot").attr("r", S.dot);
+    if (!STILL) {
+      var mark = body.append("g").attr("class", "star-mark");
+      mark.append("path").attr("class", "star-border")
+        .attr("d", function (d) { return starPath(favBorderRadius(d, S)); });
+      mark.append("path").attr("class", "star").attr("d", starPath(S.star));
+    }
 
     pins.on("click", function (ev, d) { ev.stopPropagation(); openCard(d.m, this); })
       .on("keydown", function (ev, d) {
@@ -276,7 +300,30 @@
     drawNames(gNames, path, projection, nodes, S, W, H, taken);
 
     applyYear();
+    applyFavMarkers();
     if (state.active) positionCard(state.active);
+  }
+
+  function applyFavMarkers() {
+    if (STILL) return;
+    var S = sizes();
+    svg.selectAll("g.pin")
+      .classed("fav", function (d) { return isFav(d.m); });
+    svg.selectAll("g.pin .focus-ring")
+      .attr("r", function (d) { return focusRingRadius(d, S); });
+    raiseFavPins();
+  }
+  function raiseFavPins() {
+    var g = svg.select("g.pins").node();
+    if (!g) return;
+    var favs = [], active = null;
+    Array.prototype.forEach.call(g.querySelectorAll("g.pin"), function (node) {
+      var d = d3.select(node).datum();
+      if (state.active && d && d.m === state.active) active = node;
+      else if (d && isFav(d.m)) favs.push(node);
+    });
+    favs.forEach(function (n) { g.appendChild(n); });
+    if (active) g.appendChild(active);
   }
 
   function drawLabels(nodes, S, W, H) {
@@ -857,9 +904,16 @@
       openCard(m, btn);
       var pin = svg.select('g.pin[data-id="' + m.id + '"]');
       if (pin.empty()) return;
-      pin.select(".dot").interrupt()
-        .transition().duration(220).attr("r", sizes().dot * 1.8)
-        .transition().duration(380).attr("r", sizes().dot);
+      var S = sizes();
+      if (isFav(m)) {
+        pin.select(".star-mark").interrupt()
+          .transition().duration(220).attr("transform", "scale(1.35)")
+          .transition().duration(380).attr("transform", "scale(1)");
+      } else {
+        pin.select(".dot").interrupt()
+          .transition().duration(220).attr("r", S.dot * 1.8)
+          .transition().duration(380).attr("r", S.dot);
+      }
     };
     if (needScroll) {
       var top = window.scrollY + rect.top - (mqMobile.matches ? 8 : 24);
@@ -1024,6 +1078,7 @@
     if (state.active) syncCardStar(state.active);
     syncFavBar();
     buildPrintList();
+    applyFavMarkers();
   }
   function syncFavBar() {
     var n = favSlugs().length;
@@ -1498,6 +1553,10 @@
       .attr("fill", "url(#" + uid + "-vig)");
 
     var pinR = 17;
+    // Share image stars are identical for every favorite — no Index-specific border.
+    var starBorderR = pinR;
+    var shareBorderStroke = 2.5;
+    var starR = starBorderR - shareBorderStroke / 2 - starBorderR * (1.45 / 7);
     var mainland = [], insetNodes = [];
     items.forEach(function (m) {
       if (m.lat == null || m.lon == null) return;
@@ -1515,23 +1574,24 @@
     var sim = d3.forceSimulation(mainland)
       .force("x", d3.forceX(function (d) { return d.ax; }).strength(0.28))
       .force("y", d3.forceY(function (d) { return d.ay; }).strength(0.28))
-      .force("collide", d3.forceCollide(pinR + 10).strength(1).iterations(4))
+      .force("collide", d3.forceCollide(starBorderR + 8).strength(1).iterations(4))
       .stop();
     for (var i = 0; i < 300; i++) sim.tick();
     mainland.forEach(function (nd) {
-      var minX = mapX + pinR + 10, maxX = mapX + mapW - pinR - 10;
-      var minY = mapY + pinR + 10, maxY = mapY + mapH - pinR - 10;
+      var r = starBorderR;
+      var minX = mapX + r + 10, maxX = mapX + mapW - r - 10;
+      var minY = mapY + r + 10, maxY = mapY + mapH - r - 10;
       nd.x = Math.max(minX, Math.min(maxX, nd.x));
       nd.y = Math.max(minY, Math.min(maxY, nd.y));
       if (hiBox) {
-        var inside = nd.x > hiBox.x - pinR && nd.x < hiBox.x + hiBox.w + pinR
-          && nd.y > hiBox.y - pinR && nd.y < hiBox.y + hiBox.h + pinR;
-        if (inside) nd.y = hiBox.y - pinR - 10;
+        var inside = nd.x > hiBox.x - r && nd.x < hiBox.x + hiBox.w + r
+          && nd.y > hiBox.y - r && nd.y < hiBox.y + hiBox.h + r;
+        if (inside) nd.y = hiBox.y - r - 10;
       }
       if (qrBox) {
-        var overQr = nd.x > qrBox.x - pinR && nd.x < qrBox.x + qrBox.w + pinR
-          && nd.y > qrBox.y - pinR && nd.y < qrBox.y + qrBox.h + pinR;
-        if (overQr) nd.x = qrBox.x - pinR - 10;
+        var overQr = nd.x > qrBox.x - r && nd.x < qrBox.x + qrBox.w + r
+          && nd.y > qrBox.y - r && nd.y < qrBox.y + qrBox.h + r;
+        if (overQr) nd.x = qrBox.x - r - 10;
       }
     });
     var nodes = mainland.concat(insetNodes);
@@ -1550,16 +1610,15 @@
     var gPins = g.append("g");
     nodes.forEach(function (d) {
       var gP = gPins.append("g").attr("transform", "translate(" + d.x + "," + d.y + ")");
-      gP.append("circle").attr("r", pinR + 7).attr("fill", T.pin).attr("opacity", 0.28)
+      gP.append("circle").attr("r", starBorderR + 6).attr("fill", T.pin).attr("opacity", 0.28)
         .attr("filter", "url(#" + uid + "-pin)");
-      if (d.m.status) {
-        gP.append("circle").attr("r", pinR).attr("fill", T.bgSoft).attr("stroke", T.pin).attr("stroke-width", 3);
-      } else {
-        gP.append("circle").attr("r", pinR).attr("fill", T.pin).attr("stroke", T.onPin).attr("stroke-width", 2);
-      }
+      gP.append("path").attr("d", starPath(starBorderR)).attr("fill", T.onPin).attr("stroke", T.stroke)
+        .attr("stroke-width", shareBorderStroke).attr("stroke-linejoin", "round");
+      gP.append("path").attr("d", starPath(starR)).attr("fill", T.pin).attr("stroke", "none")
+        .attr("stroke-linejoin", "round");
     });
 
-    placeShareLabels(g, nodes, pinR, { x: mapX, y: mapY, w: mapW, h: mapH }, hiBox, qrBox, T, uid);
+    placeShareLabels(g, nodes, starBorderR, { x: mapX, y: mapY, w: mapW, h: mapH }, hiBox, qrBox, T, uid);
 
     svg.append("rect")
       .attr("x", mapX).attr("y", mapY).attr("width", mapW).attr("height", mapH)

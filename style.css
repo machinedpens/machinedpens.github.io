@@ -117,10 +117,23 @@ button { font: inherit; color: inherit; }
 .pin .hit { fill: transparent; }
 .pin .dot { fill: var(--pin); stroke: var(--dot-stroke); stroke-width: 1.5; transition: r .2s ease; }
 .pin.inactive .dot { fill: var(--paper); stroke: var(--pin); stroke-width: 2; }
+.pin .star-mark {
+  display: none; transform-box: fill-box; transform-origin: center;
+  transition: transform .2s ease;
+}
+.pin.fav .star-mark { display: block; }
+.pin.fav .dot, .pin.fav .ring { display: none; }
+.pin .star-border {
+  fill: var(--paper); stroke: var(--ring); stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.pin .star { fill: var(--pin); stroke: none; stroke-linejoin: round; }
+.pin.fav.inactive .star { fill: var(--paper); stroke: var(--pin); stroke-width: 1.25; }
 .pin .ring { fill: none; stroke: var(--ring); stroke-width: 1.5; }
 .pin .focus-ring { fill: none; stroke: var(--accent); stroke-width: 3; opacity: 0; transition: opacity .15s; }
 .pin:focus-visible .focus-ring, .pin.active .focus-ring { opacity: 1; }
 .pin:hover:not(.active) .dot { r: 8; }
+.pin.fav:hover:not(.active) .star-mark { transform: scale(1.12); }
 .pin .body { transition: opacity .35s ease, transform .45s cubic-bezier(.2, .9, .3, 1.3); transform-box: fill-box; transform-origin: center; }
 .pin.hidden { pointer-events: none; }
 .pin.hidden .body { opacity: 0; transform: scale(0.2); }
@@ -399,6 +412,7 @@ input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px 
   .year-value { font-size: 22px; }
   .year-count { font-size: 11.5px; }
   .pin:hover .dot { r: inherit; }
+  .pin.fav:hover:not(.active) .star-mark { transform: none; }
   .hi-inset-label { font-size: 8px; letter-spacing: .12em; }
   .region-label { fill-opacity: .85; font-weight: 500; }
 
