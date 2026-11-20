@@ -902,7 +902,7 @@ body.print .print-footer[hidden] { display: block; }
 .country-pin-label {
   font-family: inherit; font-weight: 700; fill: var(--ink);
   paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round;
-  pointer-events: none;
+  pointer-events: auto;
 }
 .country-pin:hover .dot, .country-pin:focus .dot { fill: var(--ink); }
 .country-pin:focus { outline: none; }

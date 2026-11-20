@@ -736,6 +736,46 @@
       "lon": 134.8601,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid"
+    },
+    {
+      "name": "Arno Bernard Pens",
+      "slug": "arno-bernard-pens",
+      "website": "https://arnobernardpens.com",
+      "city": "Bethlehem",
+      "region": "Free State",
+      "region_name": "Free State",
+      "country": "ZA",
+      "est_year": 2024,
+      "shop_founded": "2024",
+      "priceLow": 180,
+      "priceHigh": 250,
+      "first_pen": "2024",
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": -28.2308,
+      "lon": 28.3089,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid"
+    },
+    {
+      "name": "Herman Knives",
+      "slug": "herman-knives",
+      "website": "https://herman-knives.com",
+      "city": "Łódź",
+      "region": "Łódzkie",
+      "region_name": "Łódzkie",
+      "country": "PL",
+      "est_year": 2013,
+      "shop_founded": "2013",
+      "priceLow": 300,
+      "priceHigh": 1000,
+      "first_pen": "2024",
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 51.7687,
+      "lon": 19.457,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid"
     }
   ]
 }

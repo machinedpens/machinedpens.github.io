@@ -18,10 +18,11 @@
   }
 
   var MAX_YEAR = 2026;
-  var COUNTRY_NAMES = { US: "United States", CA: "Canada", UK: "United Kingdom", JP: "Japan" };
-  var COUNTRY_ORDER = ["US", "CA", "UK", "JP"];
-  var COUNTRY_LABELS = { US: "US", CA: "Canada", UK: "UK", JP: "Japan" };
-  var WORLD_ISO = { "840": "US", "124": "CA", "826": "UK", "392": "JP" };
+  var COUNTRY_NAMES = { US: "United States", CA: "Canada", UK: "United Kingdom", JP: "Japan", PL: "Poland", ZA: "South Africa" };
+  var COUNTRY_ORDER = ["US", "CA", "UK", "JP", "PL", "ZA"];
+  var COUNTRY_LABELS = { US: "US", CA: "Canada", UK: "UK", JP: "Japan", PL: "Poland", ZA: "South Africa" };
+  var WORLD_ISO = { "840": "US", "124": "CA", "826": "UK", "392": "JP", "616": "PL", "710": "ZA" };
+  var SIMPLE_COUNTRIES = { UK: 1, JP: 1, PL: 1, ZA: 1 };
   var REGION_ABBR = {
     // Used in "City, ST" lines
     AL:"AL",AK:"AK",AZ:"AZ",AR:"AR",CA:"CA",CO:"CO",CT:"CT",DE:"DE",FL:"FL",GA:"GA",HI:"HI",ID:"ID",IL:"IL",IN:"IN",IA:"IA",
@@ -42,9 +43,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, mapMode: "timeline", priceFilter: null, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261120a"),
-    d3.json("data/us-canada.topo.json?v=20261120a"),
-    d3.json("data/world-110m.topo.json?v=20261120a")
+    d3.json("makers.json?v=20261120b"),
+    d3.json("data/us-canada.topo.json?v=20261120b"),
+    d3.json("data/world-110m.topo.json?v=20261120b")
   ]).then(function (res) { init(res[0].makers, res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -236,12 +237,16 @@
       US: { x: 0, y: 20, anchor: "middle" },
       CA: { x: 11, y: -8, anchor: "start" },
       UK: { x: 11, y: 4, anchor: "start" },
-      JP: { x: 11, y: 4, anchor: "start" }
+      JP: { x: 11, y: 4, anchor: "start" },
+      PL: { x: 11, y: 4, anchor: "start" },
+      ZA: { x: 11, y: 4, anchor: "start" }
     } : {
       US: { x: 14, y: 4, anchor: "start" },
       CA: { x: 14, y: 4, anchor: "start" },
       UK: { x: 14, y: 4, anchor: "start" },
-      JP: { x: 14, y: 4, anchor: "start" }
+      JP: { x: 14, y: 4, anchor: "start" },
+      PL: { x: 14, y: 4, anchor: "start" },
+      ZA: { x: 14, y: 4, anchor: "start" }
     };
     groups.append("circle").attr("class", "hit").attr("r", narrow ? 22 : 28);
     groups.append("circle").attr("class", "pin-halo").attr("r", narrow ? 11 : 16);
@@ -349,11 +354,13 @@
       // Short city labels next to pins on simple country views.
       var gLab = svg.append("g").attr("class", "labels");
       nodes.forEach(function (n) {
-        gLab.append("text").attr("class", "simple-label")
-          .attr("x", n.x + S.ring + 5).attr("y", n.y + 4)
+        var lab = gLab.append("text").attr("class", "simple-label")
+          .attr("y", n.y + 4)
           .attr("font-size", 12).attr("font-weight", 600)
-          .attr("text-anchor", "start")
           .text(n.m.name);
+        var tw = lab.node().getBBox().width;
+        if (n.x + S.ring + 5 + tw < W - 8) lab.attr("x", n.x + S.ring + 5).attr("text-anchor", "start");
+        else lab.attr("x", n.x - S.ring - 5).attr("text-anchor", "end");
       });
     }
     applyYear();
@@ -439,7 +446,7 @@
   function render() {
     syncMapButtons();
     if (!STILL && !PRINT && state.view === "world") { renderWorld(); return; }
-    if (state.focusCountry === "UK" || state.focusCountry === "JP") { renderSimpleCountry(); return; }
+    if (SIMPLE_COUNTRIES[state.focusCountry]) { renderSimpleCountry(); return; }
     renderDetailed();
   }
   function renderDetailed() {
@@ -1287,7 +1294,7 @@
   function focusMaker(m, btn) {
     if (isHidden(m)) { stopPlay(); setYear(MAX_YEAR); }
     if (!STILL) {
-      if (m.country === "UK" || m.country === "JP") {
+      if (SIMPLE_COUNTRIES[m.country]) {
         if (state.view !== "country" || state.focusCountry !== m.country) showCountry(m.country);
       } else if (state.view !== "home") {
         showHome();
