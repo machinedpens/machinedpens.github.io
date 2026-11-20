@@ -18,11 +18,44 @@
   }
 
   var MAX_YEAR = 2026;
-  var COUNTRY_NAMES = { US: "United States", CA: "Canada", UK: "United Kingdom", JP: "Japan", PL: "Poland", ZA: "South Africa" };
-  var COUNTRY_ORDER = ["US", "CA", "UK", "JP", "PL", "ZA"];
-  var COUNTRY_LABELS = { US: "US", CA: "Canada", UK: "UK", JP: "Japan", PL: "Poland", ZA: "South Africa" };
-  var WORLD_ISO = { "840": "US", "124": "CA", "826": "UK", "392": "JP", "616": "PL", "710": "ZA" };
-  var SIMPLE_COUNTRIES = { UK: 1, JP: 1, PL: 1, ZA: 1 };
+  var COUNTRY_NAMES = {
+    US: "United States", CA: "Canada", EU: "Europe",
+    UK: "United Kingdom", GB: "United Kingdom", JP: "Japan", ZA: "South Africa",
+    AL: "Albania", AD: "Andorra", AT: "Austria", BY: "Belarus", BE: "Belgium",
+    BA: "Bosnia and Herzegovina", BG: "Bulgaria", HR: "Croatia", CY: "Cyprus",
+    CZ: "Czechia", DK: "Denmark", EE: "Estonia", FI: "Finland", FR: "France",
+    DE: "Germany", GR: "Greece", HU: "Hungary", IS: "Iceland", IE: "Ireland",
+    IT: "Italy", XK: "Kosovo", LV: "Latvia", LI: "Liechtenstein", LT: "Lithuania",
+    LU: "Luxembourg", MT: "Malta", MD: "Moldova", MC: "Monaco", ME: "Montenegro",
+    NL: "Netherlands", MK: "North Macedonia", NO: "Norway", PL: "Poland",
+    PT: "Portugal", RO: "Romania", SM: "San Marino", RS: "Serbia", SK: "Slovakia",
+    SI: "Slovenia", ES: "Spain", SE: "Sweden", CH: "Switzerland", UA: "Ukraine",
+    VA: "Vatican City"
+  };
+  var COUNTRY_ORDER = ["US", "CA", "EU", "JP", "ZA"];
+  var COUNTRY_LABELS = { US: "US", CA: "Canada", EU: "Europe", JP: "Japan", ZA: "South Africa" };
+  // Alpha-2 codes in the Europe unit. Future makers with these country codes
+  // automatically join the Europe pin, Europe zoom, and Europe list group.
+  var EUROPE_COUNTRIES = {
+    AL:1, AD:1, AT:1, BY:1, BE:1, BA:1, BG:1, HR:1, CY:1, CZ:1, DK:1, EE:1, FI:1, FR:1,
+    DE:1, GR:1, HU:1, IS:1, IE:1, IT:1, XK:1, LV:1, LI:1, LT:1, LU:1, MT:1, MD:1, MC:1,
+    ME:1, NL:1, MK:1, NO:1, PL:1, PT:1, RO:1, SM:1, RS:1, SK:1, SI:1, ES:1, SE:1, CH:1,
+    UA:1, GB:1, UK:1, VA:1, FO:1, GI:1, GG:1, IM:1, JE:1, AX:1
+  };
+  // world-110m numeric ids for European land. Russia, Turkey, Georgia, Armenia,
+  // Azerbaijan, Kazakhstan, and Greenland are left out so the zoom stays a conventional Europe map.
+  var EUROPE_ISO = {
+    "008":1, "040":1, "056":1, "070":1, "100":1, "112":1, "191":1, "196":1, "203":1, "208":1,
+    "233":1, "246":1, "250":1, "276":1, "300":1, "348":1, "352":1, "372":1, "380":1, "428":1,
+    "440":1, "442":1, "498":1, "499":1, "528":1, "578":1, "616":1, "620":1, "642":1, "688":1,
+    "703":1, "705":1, "724":1, "752":1, "756":1, "804":1, "826":1
+  };
+  var WORLD_ISO = { "840": "US", "124": "CA", "392": "JP", "710": "ZA" };
+  Object.keys(EUROPE_ISO).forEach(function (id) { WORLD_ISO[id] = "EU"; });
+  var SIMPLE_COUNTRIES = { EU: 1, JP: 1, ZA: 1 };
+  function isEuropeCountry(code) { return !!EUROPE_COUNTRIES[code]; }
+  function isEuropeMaker(m) { return !!(m && isEuropeCountry(m.country)); }
+  function unitCode(m) { return isEuropeMaker(m) ? "EU" : (m && m.country); }
   var REGION_ABBR = {
     // Used in "City, ST" lines
     AL:"AL",AK:"AK",AZ:"AZ",AR:"AR",CA:"CA",CO:"CO",CT:"CT",DE:"DE",FL:"FL",GA:"GA",HI:"HI",ID:"ID",IL:"IL",IN:"IN",IA:"IA",
@@ -43,9 +76,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, mapMode: "timeline", priceFilter: null, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261120c"),
-    d3.json("data/us-canada.topo.json?v=20261120c"),
-    d3.json("data/world-110m.topo.json?v=20261120c")
+    d3.json("makers.json?v=20261120d"),
+    d3.json("data/us-canada.topo.json?v=20261120d"),
+    d3.json("data/world-110m.topo.json?v=20261120d")
   ]).then(function (res) { init(res[0].makers, res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -141,6 +174,7 @@
   }
   function showCountry(code) {
     if (!code || code === "US" || code === "CA") return showHome();
+    if (isEuropeCountry(code)) code = "EU";
     state.view = "country";
     state.focusCountry = code;
     document.body.setAttribute("data-view", "country");
@@ -151,14 +185,33 @@
     return state.makers.filter(function (m) {
       if (m.unmapped || m.lat == null || m.lon == null) return false;
       if (state.view === "home" && m.country !== "US" && m.country !== "CA") return false;
+      if (state.view === "country" && state.focusCountry === "EU") return isEuropeMaker(m);
       if (state.view === "country" && state.focusCountry && m.country !== state.focusCountry) return false;
       return true;
     });
   }
+  function belongsToUnit(m, code) {
+    if (code === "EU") return isEuropeMaker(m);
+    return m.country === code;
+  }
   function countryVisibleCount(code) {
     return state.makers.filter(function (m) {
-      return m.country === code && !isHidden(m) && !m.unmapped && m.lat != null;
+      return belongsToUnit(m, code) && !isHidden(m) && !m.unmapped && m.lat != null;
     }).length;
+  }
+  function europeFrame() {
+    var pts = [];
+    for (var lon = -25; lon <= 40; lon += 2) { pts.push([lon, 34], [lon, 71]); }
+    for (var lat = 34; lat <= 71; lat += 2) { pts.push([-25, lat], [40, lat]); }
+    return { type: "MultiPoint", coordinates: pts };
+  }
+  function europeLandFeatures() {
+    if (!state.worldFeatures) return [];
+    return state.worldFeatures.features.filter(function (f) {
+      if (EUROPE_ISO[String(f.id)]) return true;
+      var name = f.properties && f.properties.name;
+      return name === "Kosovo";
+    });
   }
   function worldCountryFeature(code) {
     if (!state.worldFeatures) return null;
@@ -208,14 +261,20 @@
     COUNTRY_ORDER.forEach(function (code) {
       var n = countryVisibleCount(code);
       if (!n) return;
-      var feat = worldCountryFeature(code);
-      if (!feat) return;
-      var c = path.centroid(feat);
+      var c;
+      if (code === "EU") {
+        c = projection(W < 500 ? [15, 49] : [12, 50]);
+      } else {
+        var feat = worldCountryFeature(code);
+        if (!feat) return;
+        c = path.centroid(feat);
+        if (!c || isNaN(c[0]) || isNaN(c[1])) return;
+        // Keep the US pin in the lower 48 (full-country centroid is pulled north by Alaska).
+        // On a narrow world map, nudge the two North American pins apart so they stay tappable.
+        if (code === "US") c = projection(W < 500 ? [-98, 36.2] : [-98.3, 39.8]);
+        if (code === "CA") c = projection(W < 500 ? [-97, 62] : [-96, 56]);
+      }
       if (!c || isNaN(c[0]) || isNaN(c[1])) return;
-      // Keep the US pin in the lower 48 (full-country centroid is pulled north by Alaska).
-      // On a narrow world map, nudge the two North American pins apart so they stay tappable.
-      if (code === "US") c = projection(W < 500 ? [-98, 36.2] : [-98.3, 39.8]);
-      if (code === "CA") c = projection(W < 500 ? [-97, 62] : [-96, 56]);
       pins.push({ code: code, n: n, x: c[0], y: c[1] });
     });
 
@@ -227,7 +286,7 @@
       .attr("tabindex", 0)
       .attr("aria-label", function (d) { return COUNTRY_NAMES[d.code] + ", " + d.n + (d.n === 1 ? " maker" : " makers"); })
       .attr("data-tier", function (d) {
-        var lows = state.makers.filter(function (m) { return m.country === d.code && !isHidden(m); }).map(function (m) { return m.priceLow; }).filter(function (v) { return v != null; });
+        var lows = state.makers.filter(function (m) { return belongsToUnit(m, d.code) && !isHidden(m); }).map(function (m) { return m.priceLow; }).filter(function (v) { return v != null; });
         if (!lows.length) return "none";
         return priceTintTier({ priceLow: d3.min(lows), priceHigh: d3.min(lows) });
       })
@@ -239,16 +298,14 @@
     var labelAt = narrow ? {
       US: { x: 0, y: 20, anchor: "middle" },
       CA: { x: 11, y: -8, anchor: "start" },
-      UK: { x: 11, y: 4, anchor: "start" },
+      EU: { x: 11, y: 4, anchor: "start" },
       JP: { x: 11, y: 4, anchor: "start" },
-      PL: { x: 11, y: 4, anchor: "start" },
       ZA: { x: 11, y: 4, anchor: "start" }
     } : {
       US: { x: 14, y: 4, anchor: "start" },
       CA: { x: 14, y: 4, anchor: "start" },
-      UK: { x: 14, y: 4, anchor: "start" },
+      EU: { x: 14, y: 4, anchor: "start" },
       JP: { x: 14, y: 4, anchor: "start" },
-      PL: { x: 14, y: 4, anchor: "start" },
       ZA: { x: 14, y: 4, anchor: "start" }
     };
     groups.append("circle").attr("class", "hit").attr("r", narrow ? 22 : 28);
@@ -279,15 +336,30 @@
     svg.selectAll("*").remove();
     document.body.setAttribute("data-view", "country");
     syncMapButtons();
-    var feat = worldCountryFeature(state.focusCountry);
-    if (!feat) return;
+    var isEU = state.focusCountry === "EU";
+    var feat, fit;
+    if (isEU) {
+      var euro = europeLandFeatures();
+      if (!euro.length) return;
+      feat = { type: "FeatureCollection", features: euro };
+      fit = europeFrame();
+    } else {
+      feat = worldCountryFeature(state.focusCountry);
+      if (!feat) return;
+      fit = feat;
+    }
     var pad = W < 500 ? { t: 52, r: 18, b: 20, l: 18 } : { t: 56, r: 80, b: 40, l: 80 };
-    var projection = d3.geoMercator().fitExtent([[pad.l, pad.t], [W - pad.r, H - pad.b]], feat);
+    var projection = d3.geoMercator().fitExtent([[pad.l, pad.t], [W - pad.r, H - pad.b]], fit);
     var path = d3.geoPath(projection);
     state.projection = projection;
 
     var gLand = svg.append("g").attr("class", "land-layer");
-    gLand.append("path").datum(feat).attr("class", "land land-us").attr("d", path);
+    if (isEU) {
+      gLand.selectAll("path").data(feat.features).join("path")
+        .attr("class", "land land-us").attr("d", path);
+    } else {
+      gLand.append("path").datum(feat).attr("class", "land land-us").attr("d", path);
+    }
 
     svg.on("click", function (ev) { if (!ev.target.closest(".pin")) closeCard(); });
 
@@ -760,10 +832,14 @@
 
   function locationLine(m) {
     if (m.city) {
-      var line = m.city + ", " + (REGION_ABBR[m.region] || m.region);
+      var place = isEuropeMaker(m) && COUNTRY_NAMES[m.country]
+        ? COUNTRY_NAMES[m.country]
+        : (REGION_ABBR[m.region] || m.region);
+      var line = m.city + ", " + place;
       if (m.city_unconfirmed) line += " (city unconfirmed)";
       return line;
     }
+    if (isEuropeMaker(m) && COUNTRY_NAMES[m.country]) return COUNTRY_NAMES[m.country];
     return m.region_name || "";
   }
   function foundedDisplay(m) {
@@ -1078,10 +1154,14 @@
   function listMeta(m, opts) {
     var parts = [];
     if (opts && opts.includeRegion) {
-      if (m.city) parts.push(m.city + ", " + (REGION_ABBR[m.region] || m.region));
+      if (m.city && isEuropeMaker(m) && COUNTRY_NAMES[m.country]) parts.push(m.city + ", " + COUNTRY_NAMES[m.country]);
+      else if (m.city) parts.push(m.city + ", " + (REGION_ABBR[m.region] || m.region));
+      else if (isEuropeMaker(m) && COUNTRY_NAMES[m.country]) parts.push(COUNTRY_NAMES[m.country]);
       else if (m.region_name) parts.push(m.region_name);
     } else if (m.city) {
       parts.push(m.city);
+    } else if (isEuropeMaker(m) && COUNTRY_NAMES[m.country]) {
+      parts.push(COUNTRY_NAMES[m.country]);
     }
     var year = listYear(m);
     if (year) parts.push(year);
@@ -1126,13 +1206,17 @@
     return row;
   }
   function matchesListQuery(m) {
-    if (state.listCountry && m.country !== state.listCountry) return false;
+    if (state.listCountry) {
+      if (state.listCountry === "EU") { if (!isEuropeMaker(m)) return false; }
+      else if (m.country !== state.listCountry) return false;
+    }
     var q = (state.listQuery || "").trim().toLowerCase();
     if (!q) return true;
     return (m.name || "").toLowerCase().indexOf(q) !== -1
       || (m.city || "").toLowerCase().indexOf(q) !== -1
       || (m.region_name || "").toLowerCase().indexOf(q) !== -1
-      || (COUNTRY_NAMES[m.country] || "").toLowerCase().indexOf(q) !== -1;
+      || (COUNTRY_NAMES[m.country] || "").toLowerCase().indexOf(q) !== -1
+      || (isEuropeMaker(m) && "europe".indexOf(q) !== -1);
   }
   function compareName(a, b) {
     return d3.ascending((a.name || "").toLowerCase(), (b.name || "").toLowerCase());
@@ -1179,7 +1263,10 @@
     root.appendChild(ul);
   }
   function appendGroupedList(root, makers) {
-    var byCountry = d3.group(makers, function (m) { return m.country; }, function (m) { return m.region_name; });
+    var byCountry = d3.group(makers, function (m) { return unitCode(m); }, function (m) {
+      if (isEuropeMaker(m)) return COUNTRY_NAMES[m.country] || m.country;
+      return m.region_name;
+    });
     var countries = Array.from(byCountry.keys()).sort(function (a, b) {
       var ia = COUNTRY_ORDER.indexOf(a), ib = COUNTRY_ORDER.indexOf(b);
       return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
@@ -1200,7 +1287,7 @@
         byCountry.get(c).get(r).slice().sort(compareName)
           .forEach(function (m) {
             var li = document.createElement("li");
-            li.appendChild(makerRow(m));
+            li.appendChild(makerRow(m, isEuropeMaker(m) ? { includeRegion: true } : null));
             ul.appendChild(li);
           });
         div.appendChild(ul); grid.appendChild(div);
@@ -1297,7 +1384,9 @@
   function focusMaker(m, btn) {
     if (isHidden(m)) { stopPlay(); setYear(MAX_YEAR); }
     if (!STILL) {
-      if (SIMPLE_COUNTRIES[m.country]) {
+      if (isEuropeMaker(m)) {
+        if (state.view !== "country" || state.focusCountry !== "EU") showCountry("EU");
+      } else if (SIMPLE_COUNTRIES[m.country]) {
         if (state.view !== "country" || state.focusCountry !== m.country) showCountry(m.country);
       } else if (state.view !== "home") {
         showHome();
