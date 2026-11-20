@@ -7,7 +7,7 @@
   <meta name="description" content="A map of the machined pen makers featured in The Maker Index, a series from Machined Pens on Substack.">
   <meta name="theme-color" content="#f5ecdc">
   <meta property="og:title" content="Machined Pens Maker Map">
-  <meta property="og:description" content="Machined pen makers across the US and Canada, from The Maker Index.">
+  <meta property="og:description" content="Machined pen makers around the world, from The Maker Index.">
   <meta property="og:image" content="https://machinedpens.github.io/maker-map-still.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%23c2410c'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%231b1612' stroke-width='2.5'/%3E%3C/svg%3E">
   <script>
@@ -19,7 +19,7 @@
       if (["light", "dark", "bold"].indexOf(t) >= 0) document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261119i">
+  <link rel="stylesheet" href="style.css?v=20261120a">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -48,6 +48,8 @@
         <svg id="map" role="group" aria-label="Map of the United States and Canada with one marker per maker"></svg>
 
         <div class="still-tag" aria-hidden="true">Machined Pens Maker Map</div>
+        <button type="button" class="world-btn" id="world-btn">World</button>
+        <button type="button" class="world-back" id="world-back" hidden>← World</button>
 
         <div class="legend" id="legend" aria-label="Legend">
           <div class="legend-set" id="legend-timeline">
@@ -136,17 +138,7 @@
           <svg class="fav-star-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.47 5.01 5.53.8-4 3.9.94 5.5L12 16.2l-4.94 2.6.94-5.5-4-3.9 5.53-.8z"/></svg>
           <span id="fav-toggle-label">Favorites (0/5)</span>
         </button>
-        <div class="fav-actions">
-          <button class="fav-btn" id="fav-share" type="button" disabled>
-            <svg class="fav-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></svg>
-            <span class="fav-btn-label">Share link</span>
-          </button>
-          <button class="fav-btn fav-btn-primary" id="fav-image" type="button" disabled>
-            <svg class="fav-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M4 17.5l5-4.5 4 3.5 3-2.5 4.5 3.5"/></svg>
-            <span class="fav-btn-label">Share image</span>
-          </button>
-          <button class="fav-edit" id="fav-manage" type="button" disabled aria-expanded="false" aria-controls="fav-panel">Edit</button>
-        </div>
+
         <p class="fav-limit-note" id="fav-limit-note" hidden role="status">You can pick up to 5 favorites. Remove one to add another.</p>
         <div class="fav-panel" id="fav-panel" hidden role="dialog" aria-label="Manage favorites">
           <p class="fav-panel-empty" id="fav-panel-empty">No favorites yet. Tap the star on a maker’s card to add one.</p>
@@ -162,6 +154,21 @@
         <label class="list-search-wrap" for="list-search">
           <span class="sr-only">Find a maker</span>
           <input type="search" id="list-search" class="list-search" placeholder="Find a maker" autocomplete="off" spellcheck="false" enterkeyhint="search">
+        </label>
+        <label class="list-filter-wrap" for="list-country">
+          <span class="sr-only">Filter by country</span>
+          <select id="list-country" class="list-filter" aria-label="Filter by country">
+            <option value="">All countries</option>
+          </select>
+        </label>
+        <label class="list-filter-wrap" for="list-price">
+          <span class="sr-only">Filter by price</span>
+          <select id="list-price" class="list-filter" aria-label="Filter by price">
+            <option value="">All prices</option>
+            <option value="under-100">Under $100</option>
+            <option value="100-250">$100–250</option>
+            <option value="over-250">Over $250</option>
+          </select>
         </label>
         <div class="list-sort" id="list-sort" role="group" aria-label="Sort makers">
           <button type="button" class="list-sort-btn" data-sort="state" aria-pressed="true">By state</button>
@@ -191,10 +198,10 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261119i"></script>
-  <script src="vendor/topojson-client.min.js?v=20261119i"></script>
-  <script src="vendor/qrcode-generator.js?v=20261119i"></script>
-  <script src="map.js?v=20261119i"></script>
+  <script src="vendor/d3.min.js?v=20261120a"></script>
+  <script src="vendor/topojson-client.min.js?v=20261120a"></script>
+  <script src="vendor/qrcode-generator.js?v=20261120a"></script>
+  <script src="map.js?v=20261120a"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;

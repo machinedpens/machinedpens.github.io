@@ -18,8 +18,10 @@
   }
 
   var MAX_YEAR = 2026;
-  var COUNTRY_NAMES = { US: "United States", CA: "Canada" };
-  var COUNTRY_ORDER = ["US", "CA"];
+  var COUNTRY_NAMES = { US: "United States", CA: "Canada", UK: "United Kingdom", JP: "Japan" };
+  var COUNTRY_ORDER = ["US", "CA", "UK", "JP"];
+  var COUNTRY_LABELS = { US: "US", CA: "Canada", UK: "UK", JP: "Japan" };
+  var WORLD_ISO = { "840": "US", "124": "CA", "826": "UK", "392": "JP" };
   var REGION_ABBR = {
     // Used in "City, ST" lines
     AL:"AL",AK:"AK",AZ:"AZ",AR:"AR",CA:"CA",CO:"CO",CT:"CT",DE:"DE",FL:"FL",GA:"GA",HI:"HI",ID:"ID",IL:"IL",IN:"IN",IA:"IA",
@@ -37,16 +39,19 @@
   var playBtn = document.getElementById("play");
   var mqMobile = window.matchMedia("(max-width: 640px)");
 
-  var state = { makers: [], features: null, topo: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, mapMode: "timeline", priceFilter: null, shared: false, listSort: "state", listQuery: "" };
+  var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, mapMode: "timeline", priceFilter: null, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
-  Promise.all([d3.json("makers.json?v=20261119i"), d3.json("data/us-canada.topo.json?v=20261119i")])
-    .then(function (res) { init(res[0].makers, res[1]); })
+  Promise.all([
+    d3.json("makers.json?v=20261120a"),
+    d3.json("data/us-canada.topo.json?v=20261120a"),
+    d3.json("data/world-110m.topo.json?v=20261120a")
+  ]).then(function (res) { init(res[0].makers, res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
       wrap.insertAdjacentHTML("beforeend", '<p class="noscript">The map could not load. Please refresh.</p>');
     });
 
-  function init(makers, topo) {
+  function init(makers, topo, worldTopo) {
     makers.forEach(function (m, i) {
       m.id = "m" + i;
       if (!m.slug) m.slug = slugify(m.name);
@@ -64,6 +69,12 @@
     state.innerBorders = topojson.mesh(topo, obj, function (a, b) { return a !== b && a.properties.country === b.properties.country; });
     state.countryBorder = topojson.mesh(topo, obj, function (a, b) { return a !== b && a.properties.country !== b.properties.country; });
     state.lakes = topo.objects.lakes ? topojson.feature(topo, topo.objects.lakes) : null;
+    state.worldTopo = worldTopo || null;
+    if (worldTopo && worldTopo.objects && worldTopo.objects.countries) {
+      state.worldFeatures = topojson.feature(worldTopo, worldTopo.objects.countries);
+    }
+    state.view = "home";
+    state.focusCountry = null;
 
     var years = makers.map(function (m) { return m.est_year; }).filter(Boolean);
     var minY = years.length ? Math.min(d3.min(years), MAX_YEAR - 1) : MAX_YEAR - 10;
@@ -96,11 +107,258 @@
   /* ---------- Map ---------- */
 
   function frame() {
-    // Frame: the lower 48 plus southern Canada, where makers are. Wider screens show more around it.
+    // Original home frame: the lower 48 plus southern Canada, where makers are.
     var pts = [];
     for (var lon = -127; lon <= -64; lon += 1) { pts.push([lon, 24.5], [lon, 57.5]); }
     for (var lat = 24.5; lat <= 57.5; lat += 1) { pts.push([-127, lat], [-64, lat]); }
     return { type: "MultiPoint", coordinates: pts };
+  }
+
+  function syncMapButtons() {
+    var back = document.getElementById("world-back");
+    var world = document.getElementById("world-btn");
+    var hideChrome = STILL || PRINT;
+    if (back) back.hidden = hideChrome || state.view !== "country";
+    if (world) world.hidden = hideChrome || state.view !== "home";
+  }
+  function showHome() {
+    state.view = "home";
+    state.focusCountry = null;
+    document.body.setAttribute("data-view", "home");
+    closeCard(true);
+    render();
+  }
+  function showWorld() {
+    state.view = "world";
+    state.focusCountry = null;
+    document.body.setAttribute("data-view", "world");
+    closeCard(true);
+    render();
+  }
+  function showCountry(code) {
+    if (!code || code === "US" || code === "CA") return showHome();
+    state.view = "country";
+    state.focusCountry = code;
+    document.body.setAttribute("data-view", "country");
+    closeCard(true);
+    render();
+  }
+  function makersOnMap() {
+    return state.makers.filter(function (m) {
+      if (m.unmapped || m.lat == null || m.lon == null) return false;
+      if (state.view === "home" && m.country !== "US" && m.country !== "CA") return false;
+      if (state.view === "country" && state.focusCountry && m.country !== state.focusCountry) return false;
+      return true;
+    });
+  }
+  function countryVisibleCount(code) {
+    return state.makers.filter(function (m) {
+      return m.country === code && !isHidden(m) && !m.unmapped && m.lat != null;
+    }).length;
+  }
+  function worldCountryFeature(code) {
+    if (!state.worldFeatures) return null;
+    var iso = null;
+    Object.keys(WORLD_ISO).forEach(function (k) { if (WORLD_ISO[k] === code) iso = k; });
+    return state.worldFeatures.features.find(function (f) { return String(f.id) === String(iso); }) || null;
+  }
+  function renderWorld() {
+    var el = svg.node();
+    var W = el.clientWidth;
+    if (!W) return;
+    if (mqMobile.matches && !STILL) {
+      el.style.height = Math.round(Math.max(320, W * 0.9)) + "px";
+    } else {
+      el.style.height = "";
+    }
+    var H = el.clientHeight;
+    if (!H) return;
+    var S = sizes();
+    svg.attr("viewBox", "0 0 " + W + " " + H).attr("width", W).attr("height", H);
+    svg.selectAll("*").remove();
+    document.body.setAttribute("data-view", "world");
+    syncMapButtons();
+    if (!state.worldFeatures) return;
+
+    var pad = W < 500 ? { t: 28, r: 10, b: 16, l: 10 } : { t: 28, r: 28, b: 24, l: 28 };
+    var land = { type: "FeatureCollection", features: state.worldFeatures.features.filter(function (f) { return String(f.id) !== "010"; }) };
+    var projection = d3.geoNaturalEarth1().fitExtent([[pad.l, pad.t], [W - pad.r, H - pad.b]], land);
+    var path = d3.geoPath(projection);
+    state.projection = projection;
+
+    var gLand = svg.append("g").attr("class", "land-layer");
+    gLand.selectAll("path").data(land.features).join("path")
+      .attr("class", function (d) { return WORLD_ISO[String(d.id)] ? "land land-us" : "land land-ca"; })
+      .attr("d", path)
+      .style("cursor", function (d) { return WORLD_ISO[String(d.id)] ? "pointer" : "default"; })
+      .on("click", function (ev, d) {
+        ev.stopPropagation();
+        var code = WORLD_ISO[String(d.id)];
+        if (code && countryVisibleCount(code)) showCountry(code);
+        else closeCard();
+      });
+
+    svg.on("click", function (ev) { if (!ev.target.closest(".country-pin") && !ev.target.closest(".land")) closeCard(); });
+
+    var pins = [];
+    COUNTRY_ORDER.forEach(function (code) {
+      var n = countryVisibleCount(code);
+      if (!n) return;
+      var feat = worldCountryFeature(code);
+      if (!feat) return;
+      var c = path.centroid(feat);
+      if (!c || isNaN(c[0]) || isNaN(c[1])) return;
+      // Keep the US pin in the lower 48 (full-country centroid is pulled north by Alaska).
+      // On a narrow world map, nudge the two North American pins apart so they stay tappable.
+      if (code === "US") c = projection(W < 500 ? [-98, 36.2] : [-98.3, 39.8]);
+      if (code === "CA") c = projection(W < 500 ? [-97, 62] : [-96, 56]);
+      pins.push({ code: code, n: n, x: c[0], y: c[1] });
+    });
+
+    var gPins = svg.append("g").attr("class", "country-pins");
+    var groups = gPins.selectAll("g.country-pin").data(pins).join("g")
+      .attr("class", "country-pin")
+      .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; })
+      .attr("role", "button")
+      .attr("tabindex", 0)
+      .attr("aria-label", function (d) { return COUNTRY_NAMES[d.code] + ", " + d.n + (d.n === 1 ? " maker" : " makers"); })
+      .attr("data-tier", function (d) {
+        var lows = state.makers.filter(function (m) { return m.country === d.code && !isHidden(m); }).map(function (m) { return m.priceLow; }).filter(function (v) { return v != null; });
+        if (!lows.length) return "none";
+        return priceTintTier({ priceLow: d3.min(lows), priceHigh: d3.min(lows) });
+      })
+      .on("click", function (ev, d) { ev.stopPropagation(); showCountry(d.code); })
+      .on("keydown", function (ev, d) {
+        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); showCountry(d.code); }
+      });
+    var narrow = W < 500;
+    var labelAt = narrow ? {
+      US: { x: 0, y: 20, anchor: "middle" },
+      CA: { x: 11, y: -8, anchor: "start" },
+      UK: { x: 11, y: 4, anchor: "start" },
+      JP: { x: 11, y: 4, anchor: "start" }
+    } : {
+      US: { x: 14, y: 4, anchor: "start" },
+      CA: { x: 14, y: 4, anchor: "start" },
+      UK: { x: 14, y: 4, anchor: "start" },
+      JP: { x: 14, y: 4, anchor: "start" }
+    };
+    groups.append("circle").attr("class", "hit").attr("r", narrow ? 22 : 28);
+    groups.append("circle").attr("class", "pin-halo").attr("r", narrow ? 11 : 16);
+    groups.append("circle").attr("class", "dot").attr("r", narrow ? 7 : 9);
+    groups.append("text").attr("class", "country-pin-label")
+      .attr("x", function (d) { return (labelAt[d.code] || labelAt.US).x; })
+      .attr("y", function (d) { return (labelAt[d.code] || labelAt.US).y; })
+      .attr("text-anchor", function (d) { return (labelAt[d.code] || labelAt.US).anchor; })
+      .attr("font-size", narrow ? 12 : 14)
+      .text(function (d) { return COUNTRY_LABELS[d.code] + " " + d.n; });
+
+    applyYear();
+  }
+  function renderSimpleCountry() {
+    var el = svg.node();
+    var W = el.clientWidth;
+    if (!W) return;
+    if (mqMobile.matches && !STILL) {
+      el.style.height = Math.round(Math.max(340, W * 0.95)) + "px";
+    } else {
+      el.style.height = "";
+    }
+    var H = el.clientHeight;
+    if (!H) return;
+    var S = sizes();
+    svg.attr("viewBox", "0 0 " + W + " " + H).attr("width", W).attr("height", H);
+    svg.selectAll("*").remove();
+    document.body.setAttribute("data-view", "country");
+    syncMapButtons();
+    var feat = worldCountryFeature(state.focusCountry);
+    if (!feat) return;
+    var pad = W < 500 ? { t: 52, r: 18, b: 20, l: 18 } : { t: 56, r: 80, b: 40, l: 80 };
+    var projection = d3.geoMercator().fitExtent([[pad.l, pad.t], [W - pad.r, H - pad.b]], feat);
+    var path = d3.geoPath(projection);
+    state.projection = projection;
+
+    var gLand = svg.append("g").attr("class", "land-layer");
+    gLand.append("path").datum(feat).attr("class", "land land-us").attr("d", path);
+
+    svg.on("click", function (ev) { if (!ev.target.closest(".pin")) closeCard(); });
+
+    var nodes = [];
+    makersOnMap().forEach(function (m) {
+      var p = projection([m.lon, m.lat]);
+      if (!p) return;
+      nodes.push({ m: m, ax: p[0], ay: p[1], x: p[0], y: p[1], inset: false });
+    });
+    var sim = d3.forceSimulation(nodes)
+      .force("x", d3.forceX(function (d) { return d.ax; }).strength(0.25))
+      .force("y", d3.forceY(function (d) { return d.ay; }).strength(0.25))
+      .force("collide", d3.forceCollide(S.ring + S.gap).strength(1).iterations(4))
+      .stop();
+    for (var i = 0; i < 200; i++) sim.tick();
+    nodes.forEach(function (n) {
+      n.x = Math.max(S.ring + 2, Math.min(W - S.ring - 2, n.x));
+      n.y = Math.max(S.ring + 2, Math.min(H - S.ring - 2, n.y));
+      n.m._x = n.x; n.m._y = n.y; n.m._node = n;
+      n.moved = Math.hypot(n.x - n.ax, n.y - n.ay) > 2;
+    });
+    state.nodes = nodes;
+    drawMakerPins(nodes, S, W, H, path, projection);
+  }
+  function drawMakerPins(nodes, S, W, H, path, projection) {
+    var gLead = svg.append("g").attr("class", "leaders").attr("aria-hidden", "true");
+    var leads = gLead.selectAll("g").data(nodes.filter(function (n) { return n.moved; })).join("g")
+      .attr("data-id", function (d) { return d.m.id; });
+    leads.append("line").attr("class", "leader")
+      .attr("x1", function (d) { return d.ax; }).attr("y1", function (d) { return d.ay; })
+      .attr("x2", function (d) { return d.x; }).attr("y2", function (d) { return d.y; });
+    leads.append("circle").attr("class", "anchor").attr("r", STILL ? 2.4 : 1.8)
+      .attr("cx", function (d) { return d.ax; }).attr("cy", function (d) { return d.ay; });
+    var ordered = nodes.slice().sort(function (a, b) { return a.x - b.x; });
+    var gPins = svg.append("g").attr("class", "pins");
+    var pins = gPins.selectAll("g.pin").data(ordered, function (d) { return d.m.id; }).join("g")
+      .attr("class", "pin")
+      .attr("data-id", function (d) { return d.m.id; })
+      .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; })
+      .attr("role", "button")
+      .attr("tabindex", 0)
+      .attr("aria-haspopup", "dialog")
+      .attr("aria-label", function (d) { return ariaLabel(d.m); })
+      .classed("inactive", function (d) { return !!d.m.status; })
+      .classed("fav", function (d) { return !STILL && isFav(d.m); });
+    pins.append("circle").attr("class", "hit").attr("r", S.hit);
+    var body = pins.append("g").attr("class", "body");
+    body.append("circle").attr("class", "focus-ring").attr("r", function (d) { return focusRingRadius(d, S); });
+    body.filter(function (d) { return d.m.in_maker_index; })
+      .append("circle").attr("class", "ring").attr("r", S.ring);
+    body.append("circle").attr("class", "dot").attr("r", S.dot);
+    if (!STILL) {
+      var mark = body.append("g").attr("class", "star-mark");
+      mark.append("path").attr("class", "star-border")
+        .attr("d", function (d) { return starPath(favBorderRadius(d, S)); });
+      mark.append("path").attr("class", "star").attr("d", starPath(S.star));
+    }
+    pins.on("click", function (ev, d) { ev.stopPropagation(); openCard(d.m, this); })
+      .on("keydown", function (ev, d) {
+        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); openCard(d.m, this); }
+      });
+    var gNames = svg.append("g").attr("class", "names").attr("aria-hidden", "true");
+    var taken = STILL ? drawLabels(nodes, S, W, H) : [];
+    if (path && projection && (state.focusCountry === "US" || state.focusCountry === "CA")) {
+      drawNames(gNames, path, projection, nodes, S, W, H, taken);
+    } else if (!STILL) {
+      // Short city labels next to pins on simple country views.
+      var gLab = svg.append("g").attr("class", "labels");
+      nodes.forEach(function (n) {
+        gLab.append("text").attr("class", "simple-label")
+          .attr("x", n.x + S.ring + 5).attr("y", n.y + 4)
+          .attr("font-size", 12).attr("font-weight", 600)
+          .attr("text-anchor", "start")
+          .text(n.m.name);
+      });
+    }
+    applyYear();
+    applyFavMarkers();
+    if (state.active) positionCard(state.active);
   }
 
   function sizes() {
@@ -179,16 +437,25 @@
   }
 
   function render() {
+    syncMapButtons();
+    if (!STILL && !PRINT && state.view === "world") { renderWorld(); return; }
+    if (state.focusCountry === "UK" || state.focusCountry === "JP") { renderSimpleCountry(); return; }
+    renderDetailed();
+  }
+  function renderDetailed() {
     var el = svg.node();
     var W = el.clientWidth;
     if (!W) return;
     var mobileInsetBand = 0;
+    var backBand = 0;
     if (mqMobile.matches && !STILL) {
-      // On phones the map takes the frame's natural shape, plus a bottom band for Hawaii.
+      // On phones the map takes the frame's natural shape, plus a bottom band for Hawaii on the US view.
       var probe = d3.geoConicConformal().rotate([96, 0]).parallels([33, 58]).fitWidth(W - 24, frame());
       var b = d3.geoPath(probe).bounds(frame());
-      mobileInsetBand = 98;
-      el.style.height = Math.round(b[1][1] - b[0][1] + 28 + mobileInsetBand) + "px";
+      mobileInsetBand = (!state.focusCountry || state.focusCountry === "US") ? 98 : 0;
+      // Extra top room so the back-to-World control doesn't sit on Washington / the Yukon.
+      backBand = (!STILL && state.focusCountry) ? 34 : 0;
+      el.style.height = Math.round(b[1][1] - b[0][1] + 28 + mobileInsetBand + backBand) + "px";
     } else {
       el.style.height = "";
     }
@@ -198,15 +465,20 @@
     svg.attr("viewBox", "0 0 " + W + " " + H).attr("width", W).attr("height", H);
     svg.selectAll("*").remove();
 
-    var pad = STILL ? { t: 110, r: 40, b: 40, l: 40 } : (W < 500 ? { t: 14, r: 12, b: 14 + mobileInsetBand, l: 12 } : { t: 24, r: 24, b: 24, l: 24 });
+    backBand = (!STILL && state.focusCountry) ? 34 : 0;
+    var pad = STILL ? { t: 110, r: 40, b: 40, l: 40 } : (W < 500 ? { t: 14 + backBand, r: 12, b: 14 + mobileInsetBand, l: 12 } : { t: 24, r: 24, b: 24, l: 24 });
     var projection = d3.geoConicConformal()
       .rotate([96, 0]).parallels([33, 58])
       .fitExtent([[pad.l, pad.t], [W - pad.r, H - pad.b]], frame());
     var path = d3.geoPath(projection);
     state.projection = projection;
 
+    document.body.setAttribute("data-view", state.focusCountry ? "country" : "home");
+    var landFeats = state.features.features;
+    if (state.focusCountry === "US") landFeats = landFeats.filter(function (d) { return d.properties.country === "USA"; });
+    if (state.focusCountry === "CA") landFeats = landFeats.filter(function (d) { return d.properties.country === "CAN"; });
     var gLand = svg.append("g").attr("class", "land-layer");
-    gLand.selectAll("path").data(state.features.features).join("path")
+    gLand.selectAll("path").data(landFeats).join("path")
       .attr("class", function (d) { return "land " + (d.properties.country === "CAN" ? "land-ca" : "land-us"); })
       .attr("d", path)
       .append("title").text(function (d) { return d.properties.name; });
@@ -223,7 +495,8 @@
     svg.on("click", function (ev) { if (!ev.target.closest(".pin")) closeCard(); });
 
     // Hawaii inset, drawn under the pins so the Ti2 pin sits on Oahu.
-    var hiBox = state.hawaii ? hawaiiBox(W, H) : null;
+    var showHawaii = !state.focusCountry || state.focusCountry === "US";
+    var hiBox = (showHawaii && state.hawaii) ? hawaiiBox(W, H) : null;
     var hiProj = hiBox ? hawaiiProjection(hiBox) : null;
     if (hiBox && hiProj) drawHawaiiInset(hiBox, hiProj);
     else state.hawaiiBox = null;
@@ -232,7 +505,7 @@
     // Hawaii makers use the inset projection and are kept out of the mainland collision sim.
     var mainland = [];
     var insetNodes = [];
-    state.makers.forEach(function (m) {
+    makersOnMap().forEach(function (m) {
       if (m.unmapped || m.lat == null || m.lon == null) return;
       if (isHawaii(m) && hiProj) {
         var hp = hiProj([m.lon, m.lat]);
@@ -430,14 +703,19 @@
       return { t: t, bb: bb, box: box };
     }
     // Country names first so they get the room they need.
-    // Shown as a pair or not at all.
-    var cl = ["CA", "US"].map(function (c) {
-      var p = projection(COUNTRY_AT[c]);
-      return p ? put("country-name-label", c === "US" ? "UNITED STATES" : "CANADA", p, cfs, mobile ? "0.22em" : "0.3em") : null;
-    });
-    if (!cl[0] || !cl[1]) cl.forEach(function (r) { if (r) { r.t.remove(); placed.splice(placed.indexOf(r.box), 1); } });
+    // Shown as a pair on the combined map, or omitted when a single country is in focus.
+    if (!state.focusCountry) {
+      var cl = ["CA", "US"].map(function (c) {
+        var p = projection(COUNTRY_AT[c]);
+        return p ? put("country-name-label", c === "US" ? "UNITED STATES" : "CANADA", p, cfs, mobile ? "0.22em" : "0.3em") : null;
+      });
+      if (!cl[0] || !cl[1]) cl.forEach(function (r) { if (r) { r.t.remove(); placed.splice(placed.indexOf(r.box), 1); } });
+    }
     // Then regions, largest first; skip any that would not sit comfortably inside its own shape.
     var feats = state.features.features.filter(function (f) { return !SKIP_NAMES[f.properties.code]; })
+    if (state.focusCountry === "US") feats = feats.filter(function (o) { return o.properties.country === "USA"; });
+    if (state.focusCountry === "CA") feats = feats.filter(function (o) { return o.properties.country === "CAN"; });
+    feats = feats
       .map(function (f) { return { f: f, area: path.area(f) }; })
       .sort(function (a, b) { return b.area - a.area; });
     feats.forEach(function (o) {
@@ -563,6 +841,7 @@
       }
     }
     applyYear();
+    if (state.view === "world") render();
   }
 
   function isYearHidden(m) {
@@ -837,9 +1116,13 @@
     return row;
   }
   function matchesListQuery(m) {
+    if (state.listCountry && m.country !== state.listCountry) return false;
     var q = (state.listQuery || "").trim().toLowerCase();
     if (!q) return true;
-    return (m.name || "").toLowerCase().indexOf(q) !== -1;
+    return (m.name || "").toLowerCase().indexOf(q) !== -1
+      || (m.city || "").toLowerCase().indexOf(q) !== -1
+      || (m.region_name || "").toLowerCase().indexOf(q) !== -1
+      || (COUNTRY_NAMES[m.country] || "").toLowerCase().indexOf(q) !== -1;
   }
   function compareName(a, b) {
     return d3.ascending((a.name || "").toLowerCase(), (b.name || "").toLowerCase());
@@ -960,6 +1243,39 @@
         setListSort(btn.getAttribute("data-sort"));
       });
     }
+    var countrySel = document.getElementById("list-country");
+    if (countrySel) {
+      COUNTRY_ORDER.forEach(function (c) {
+        if (!countrySel.querySelector('option[value="' + c + '"]')) {
+          var opt = document.createElement("option");
+          opt.value = c; opt.textContent = COUNTRY_NAMES[c] || c;
+          countrySel.appendChild(opt);
+        }
+      });
+      countrySel.value = state.listCountry || "";
+      countrySel.addEventListener("change", function () {
+        state.listCountry = countrySel.value || "";
+        buildList();
+      });
+    }
+    var priceSel = document.getElementById("list-price");
+    if (priceSel) {
+      priceSel.value = state.priceFilter || "";
+      priceSel.addEventListener("change", function () {
+        var v = priceSel.value || "";
+        if (v) {
+          if (state.mapMode !== "price") setMapMode("price");
+          state.priceFilter = v;
+          syncPriceChips();
+          setYear(state.year);
+        } else {
+          state.priceFilter = null;
+          syncPriceChips();
+          setYear(state.year);
+        }
+        if (priceSel) priceSel.value = state.priceFilter || "";
+      });
+    }
   }
   function swatch(m) {
     var dot = m.status
@@ -970,6 +1286,13 @@
   }
   function focusMaker(m, btn) {
     if (isHidden(m)) { stopPlay(); setYear(MAX_YEAR); }
+    if (!STILL) {
+      if (m.country === "UK" || m.country === "JP") {
+        if (state.view !== "country" || state.focusCountry !== m.country) showCountry(m.country);
+      } else if (state.view !== "home") {
+        showHome();
+      }
+    }
     var rect = wrap.getBoundingClientRect();
     var needScroll = rect.top < 0 || rect.bottom > window.innerHeight;
     var go = function () {
@@ -2036,6 +2359,8 @@
     var turningOn = !!next && next !== state.priceFilter;
     state.priceFilter = next;
     syncPriceChips();
+    var priceSel = document.getElementById("list-price");
+    if (priceSel) priceSel.value = state.priceFilter || "";
     if (state.active && isHidden(state.active)) closeCard(true);
     setYear(state.year);
     if (turningOn) track("filter-price/" + next, "Filter price");
@@ -2106,6 +2431,10 @@
   /* ---------- Wiring ---------- */
 
   function bindUI() {
+    var back = document.getElementById("world-back");
+    if (back) back.addEventListener("click", function (ev) { ev.preventDefault(); showWorld(); });
+    var worldBtn = document.getElementById("world-btn");
+    if (worldBtn) worldBtn.addEventListener("click", function (ev) { ev.preventDefault(); ev.stopPropagation(); showWorld(); });
     bindListControls();
     slider.addEventListener("input", function () { if (state.playing) stopPlay(); setYear(+slider.value); });
     playBtn.addEventListener("click", togglePlay);

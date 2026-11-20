@@ -578,6 +578,7 @@ input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px 
 body.still { background: var(--paper); }
 body.still .skip, body.still .site-header, body.still .timeline, body.still .map-mode-bar, body.still .price-controls, body.still .list-panel, body.still .site-footer, body.still .card,
 body.still .card-update, body.still .suggest-wrap, body.still .fav-banner, body.still .fav-bar, body.still .print-toolbar,
+body.still .world-btn, body.still .world-back,
 body.still .print-list, body.still .print-footer, body.still .title-print, body.still .card-star, body.still .maker-star, body.still .fav-limit-note, body.still .share-toast,
 body.still .list-controls, body.still .list-empty, body.still .map-mode-bar, body.still .price-controls { display: none !important; }
 body.still main { max-width: none; padding: 0; margin: 0; }
@@ -867,4 +868,83 @@ body.print .print-footer[hidden] { display: block; }
   body.print .site-header, body.print main, body.print .print-footer { max-width: none; padding-left: 16px; padding-right: 16px; }
   body.print .map-wrap { height: 62vw; min-height: 260px; }
   body.print .print-list { grid-template-columns: 1fr; }
+}
+
+
+/* World view */
+.world-btn,
+.world-back {
+  position: absolute; z-index: 6;
+  border: 1px solid var(--ink); border-radius: 999px;
+  background: var(--paper); color: var(--ink);
+  font-weight: 700; cursor: pointer;
+  box-shadow: var(--shadow, 0 4px 16px rgba(0,0,0,.08));
+}
+.world-btn {
+  top: 12px; right: 12px;
+  min-height: 28px; padding: 0 10px;
+  font-size: 12px; letter-spacing: 0.03em;
+}
+.world-back {
+  top: 12px; left: 12px;
+  min-height: 36px; padding: 0 12px;
+  font-size: 13px; font-weight: 600;
+}
+.world-btn:hover, .world-btn:focus-visible {
+  background: var(--accent); border-color: var(--accent); color: #fff; outline: none;
+}
+.world-back:hover { background: var(--ink); color: var(--on-ink); }
+.world-btn[hidden], .world-back[hidden] { display: none !important; }
+.country-pin { cursor: pointer; }
+.country-pin .hit { fill: transparent; }
+.country-pin .dot { fill: var(--pin); stroke: none; }
+.country-pin .pin-halo { fill: var(--pin); opacity: .16; }
+.country-pin-label {
+  font-family: inherit; font-weight: 700; fill: var(--ink);
+  paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round;
+  pointer-events: none;
+}
+.country-pin:hover .dot, .country-pin:focus .dot { fill: var(--ink); }
+.country-pin:focus { outline: none; }
+.country-pin:focus-visible .pin-halo { opacity: .28; }
+body[data-view="world"] .legend { display: none; }
+.list-filter-wrap { display: flex; min-width: 0; }
+.list-filter {
+  min-height: 36px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--paper); color: var(--ink);
+  font: inherit; font-size: 13px; font-weight: 600;
+  max-width: 100%;
+}
+@media (max-width: 640px) {
+  .world-btn { top: 10px; right: 10px; min-height: 26px; font-size: 11.5px; padding: 0 9px; }
+  .world-back { top: 10px; left: 10px; min-height: 34px; font-size: 12.5px; }
+  .list-filter { width: 100%; }
+}
+
+[data-map-mode="price"] .country-pin[data-tier="under-100"] .dot { fill: var(--pin-lo); }
+[data-map-mode="price"] .country-pin[data-tier="100-250"] .dot { fill: var(--pin-mid); }
+[data-map-mode="price"] .country-pin[data-tier="over-250"] .dot { fill: var(--pin-hi); }
+[data-map-mode="price"] .country-pin[data-tier="none"] .dot { fill: var(--ink-3); }
+[data-map-mode="price"] .country-pin[data-tier="under-100"] .pin-halo { fill: var(--pin-lo); }
+[data-map-mode="price"] .country-pin[data-tier="100-250"] .pin-halo { fill: var(--pin-mid); }
+[data-map-mode="price"] .country-pin[data-tier="over-250"] .pin-halo { fill: var(--pin-hi); }
+.list-filter-wrap { flex: 1 1 140px; }
+@media (max-width: 640px) {
+  .list-filter-wrap { flex: none; width: 100%; }
+}
+.fav-bar:has(.fav-toggle:only-child),
+.fav-bar { justify-content: flex-start; }
+
+.simple-label {
+  font-size: 12px; font-weight: 600; fill: var(--ink);
+  paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round;
+  pointer-events: none;
+}
+@media (min-width: 641px) {
+  body[data-view="world"] .map-wrap {
+    aspect-ratio: auto;
+    height: min(520px, calc(100vh - 370px));
+    min-height: 360px;
+  }
 }
