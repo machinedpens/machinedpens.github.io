@@ -43,9 +43,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, mapMode: "timeline", priceFilter: null, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261120b"),
-    d3.json("data/us-canada.topo.json?v=20261120b"),
-    d3.json("data/world-110m.topo.json?v=20261120b")
+    d3.json("makers.json?v=20261120c"),
+    d3.json("data/us-canada.topo.json?v=20261120c"),
+    d3.json("data/world-110m.topo.json?v=20261120c")
   ]).then(function (res) { init(res[0].makers, res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -118,9 +118,12 @@
   function syncMapButtons() {
     var back = document.getElementById("world-back");
     var world = document.getElementById("world-btn");
+    var usca = document.getElementById("usca-btn");
     var hideChrome = STILL || PRINT;
     if (back) back.hidden = hideChrome || state.view !== "country";
     if (world) world.hidden = hideChrome || state.view !== "home";
+    // Same top-right spot as the World pill: on the world view and on country zooms.
+    if (usca) usca.hidden = hideChrome || state.view === "home";
   }
   function showHome() {
     state.view = "home";
@@ -2442,6 +2445,8 @@
     if (back) back.addEventListener("click", function (ev) { ev.preventDefault(); showWorld(); });
     var worldBtn = document.getElementById("world-btn");
     if (worldBtn) worldBtn.addEventListener("click", function (ev) { ev.preventDefault(); ev.stopPropagation(); showWorld(); });
+    var uscaBtn = document.getElementById("usca-btn");
+    if (uscaBtn) uscaBtn.addEventListener("click", function (ev) { ev.preventDefault(); ev.stopPropagation(); showHome(); });
     bindListControls();
     slider.addEventListener("input", function () { if (state.playing) stopPlay(); setYear(+slider.value); });
     playBtn.addEventListener("click", togglePlay);

@@ -884,6 +884,7 @@ body.print .print-footer[hidden] { display: block; }
   top: 12px; right: 12px;
   min-height: 28px; padding: 0 10px;
   font-size: 12px; letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 .world-back {
   top: 12px; left: 12px;
