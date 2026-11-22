@@ -76,9 +76,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, mapMode: "timeline", priceFilter: null, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261120e"),
-    d3.json("data/us-canada.topo.json?v=20261120e"),
-    d3.json("data/world-110m.topo.json?v=20261120e")
+    d3.json("makers.json?v=20261122a"),
+    d3.json("data/us-canada.topo.json?v=20261122a"),
+    d3.json("data/world-110m.topo.json?v=20261122a")
   ]).then(function (res) { init(res[0].makers, res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -146,6 +146,42 @@
     for (var lon = -127; lon <= -64; lon += 1) { pts.push([lon, 24.5], [lon, 57.5]); }
     for (var lat = 24.5; lat <= 57.5; lat += 1) { pts.push([-127, lat], [-64, lat]); }
     return { type: "MultiPoint", coordinates: pts };
+  }
+
+  function worldFrame() {
+    // Crop the world view to the band that holds every country pin
+    // (US, Canada, Europe, Japan, South Africa). This trims Antarctica,
+    // Australia, and unused ocean so the land fills the frame more like
+    // the US home map. Hawaii is off this crop; the US pin sits in the lower 48.
+    var west = -130, east = 150, south = -38, north = 72;
+    var pts = [];
+    for (var lon = west; lon <= east; lon += 2) { pts.push([lon, south], [lon, north]); }
+    for (var lat = south; lat <= north; lat += 2) { pts.push([west, lat], [east, lat]); }
+    return { type: "MultiPoint", coordinates: pts };
+  }
+
+  // Phone map height for the US home landing view (Hawaii inset band included).
+  // World and country zooms reuse this so the enclosing panel does not change size.
+  function homeMapMobileHeight(W) {
+    var probe = d3.geoConicConformal().rotate([96, 0]).parallels([33, 58]).fitWidth(W - 24, frame());
+    var b = d3.geoPath(probe).bounds(frame());
+    return Math.round(b[1][1] - b[0][1] + 28 + 98);
+  }
+
+  var cachedLegendH = 0;
+  function cacheLegendHeight() {
+    if (!mqMobile.matches) return;
+    var legend = document.getElementById("legend");
+    if (legend && legend.offsetHeight) cachedLegendH = legend.offsetHeight;
+  }
+  function mobileLegendSlotHeight() {
+    if (cachedLegendH) return cachedLegendH;
+    var legend = document.getElementById("legend");
+    if (legend && legend.offsetHeight) {
+      cachedLegendH = legend.offsetHeight;
+      return cachedLegendH;
+    }
+    return 69;
   }
 
   function syncMapButtons() {
@@ -224,7 +260,7 @@
     var W = el.clientWidth;
     if (!W) return;
     if (mqMobile.matches && !STILL) {
-      el.style.height = Math.round(Math.max(320, W * 0.9)) + "px";
+      el.style.height = (homeMapMobileHeight(W) + mobileLegendSlotHeight()) + "px";
     } else {
       el.style.height = "";
     }
@@ -237,9 +273,11 @@
     syncMapButtons();
     if (!state.worldFeatures) return;
 
-    var pad = W < 500 ? { t: 28, r: 10, b: 16, l: 10 } : { t: 28, r: 28, b: 24, l: 28 };
+    var pad = W < 500 ? { t: 28, r: 22, b: 16, l: 10 } : { t: 28, r: 28, b: 24, l: 28 };
     var land = { type: "FeatureCollection", features: state.worldFeatures.features.filter(function (f) { return String(f.id) !== "010"; }) };
-    var projection = d3.geoNaturalEarth1().fitExtent([[pad.l, pad.t], [W - pad.r, H - pad.b]], land);
+    var projection = d3.geoNaturalEarth1()
+      .fitExtent([[pad.l, pad.t], [W - pad.r, H - pad.b]], worldFrame())
+      .clipExtent([[0, 0], [W, H]]);
     var path = d3.geoPath(projection);
     state.projection = projection;
 
@@ -299,7 +337,7 @@
       US: { x: 0, y: 20, anchor: "middle" },
       CA: { x: 11, y: -8, anchor: "start" },
       EU: { x: 11, y: 4, anchor: "start" },
-      JP: { x: 11, y: 4, anchor: "start" },
+      JP: { x: -11, y: 4, anchor: "end" },
       ZA: { x: 11, y: 4, anchor: "start" }
     } : {
       US: { x: 14, y: 4, anchor: "start" },
@@ -325,7 +363,7 @@
     var W = el.clientWidth;
     if (!W) return;
     if (mqMobile.matches && !STILL) {
-      el.style.height = Math.round(Math.max(340, W * 0.95)) + "px";
+      el.style.height = homeMapMobileHeight(W) + "px";
     } else {
       el.style.height = "";
     }
@@ -521,8 +559,9 @@
   function render() {
     syncMapButtons();
     if (!STILL && !PRINT && state.view === "world") { renderWorld(); return; }
-    if (SIMPLE_COUNTRIES[state.focusCountry]) { renderSimpleCountry(); return; }
+    if (SIMPLE_COUNTRIES[state.focusCountry]) { renderSimpleCountry(); cacheLegendHeight(); return; }
     renderDetailed();
+    cacheLegendHeight();
   }
   function renderDetailed() {
     var el = svg.node();
