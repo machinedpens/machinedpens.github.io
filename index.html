@@ -19,7 +19,7 @@
       if (["light", "dark", "bold"].indexOf(t) >= 0) document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261125a">
+  <link rel="stylesheet" href="style.css?v=20261125b">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -150,6 +150,12 @@
           <button type="button" class="clear-btn" id="filters-reset" disabled>Reset</button>
         </div>
         <div class="drawer-body">
+          <div class="filter-search-wrap">
+            <label class="sr-only" for="filter-search">Search makers and filters</label>
+            <input type="search" id="filter-search" class="filter-search" placeholder="Try “fountain pens under 250”" autocomplete="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="filter-suggest">
+            <p class="filter-showing" id="filter-showing" hidden></p>
+            <ul class="filter-suggest" id="filter-suggest" role="listbox" hidden></ul>
+          </div>
           <section class="fg">
             <h3 class="fg-label" id="price-filter-label">Price</h3>
             <div class="fg-chips" id="price-chips" role="group" aria-labelledby="price-filter-label"></div>
@@ -206,10 +212,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261125a"></script>
-  <script src="vendor/topojson-client.min.js?v=20261125a"></script>
-  <script src="vendor/qrcode-generator.js?v=20261125a"></script>
-  <script src="map.js?v=20261125a"></script>
+  <script src="vendor/d3.min.js?v=20261125b"></script>
+  <script src="vendor/topojson-client.min.js?v=20261125b"></script>
+  <script src="vendor/qrcode-generator.js?v=20261125b"></script>
+  <script src="vendor/fuse.min.js?v=20261125b"></script>
+  <script src="map.js?v=20261125b"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;

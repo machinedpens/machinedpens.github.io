@@ -21,6 +21,7 @@
   var COUNTRY_NAMES = {
     US: "United States", CA: "Canada", EU: "Europe",
     UK: "United Kingdom", GB: "United Kingdom", JP: "Japan", ZA: "South Africa",
+    AU: "Australia", NZ: "New Zealand",
     AL: "Albania", AD: "Andorra", AT: "Austria", BY: "Belarus", BE: "Belgium",
     BA: "Bosnia and Herzegovina", BG: "Bulgaria", HR: "Croatia", CY: "Cyprus",
     CZ: "Czechia", DK: "Denmark", EE: "Estonia", FI: "Finland", FR: "France",
@@ -32,8 +33,8 @@
     SI: "Slovenia", ES: "Spain", SE: "Sweden", CH: "Switzerland", UA: "Ukraine",
     VA: "Vatican City"
   };
-  var COUNTRY_ORDER = ["US", "CA", "EU", "JP", "ZA"];
-  var COUNTRY_LABELS = { US: "US", CA: "Canada", EU: "Europe", JP: "Japan", ZA: "South Africa" };
+  var COUNTRY_ORDER = ["US", "CA", "EU", "JP", "ZA", "AU", "NZ"];
+  var COUNTRY_LABELS = { US: "US", CA: "Canada", EU: "Europe", JP: "Japan", ZA: "South Africa", AU: "Australia", NZ: "New Zealand" };
   // Alpha-2 codes in the Europe unit. Future makers with these country codes
   // automatically join the Europe pin, Europe zoom, and Europe list group.
   var EUROPE_COUNTRIES = {
@@ -50,9 +51,9 @@
     "440":1, "442":1, "498":1, "499":1, "528":1, "578":1, "616":1, "620":1, "642":1, "688":1,
     "703":1, "705":1, "724":1, "752":1, "756":1, "804":1, "826":1
   };
-  var WORLD_ISO = { "840": "US", "124": "CA", "392": "JP", "710": "ZA" };
+  var WORLD_ISO = { "840": "US", "124": "CA", "392": "JP", "710": "ZA", "036": "AU", "554": "NZ" };
   Object.keys(EUROPE_ISO).forEach(function (id) { WORLD_ISO[id] = "EU"; });
-  var SIMPLE_COUNTRIES = { EU: 1, JP: 1, ZA: 1 };
+  var SIMPLE_COUNTRIES = { EU: 1, JP: 1, ZA: 1, AU: 1, NZ: 1 };
   function isEuropeCountry(code) { return !!EUROPE_COUNTRIES[code]; }
   function isEuropeMaker(m) { return !!(m && isEuropeCountry(m.country)); }
   function unitCode(m) { return isEuropeMaker(m) ? "EU" : (m && m.country); }
@@ -76,9 +77,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261125a"),
-    d3.json("data/us-canada.topo.json?v=20261125a"),
-    d3.json("data/world-110m.topo.json?v=20261125a")
+    d3.json("makers.json?v=20261125b"),
+    d3.json("data/us-canada.topo.json?v=20261125b"),
+    d3.json("data/world-110m.topo.json?v=20261125b")
   ]).then(function (res) { init(res[0].makers, res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -151,10 +152,11 @@
 
   function worldFrame() {
     // Crop the world view to the band that holds every country pin
-    // (US, Canada, Europe, Japan, South Africa). This trims Antarctica,
-    // Australia, and unused ocean so the land fills the frame more like
-    // the US home map. Hawaii is off this crop; the US pin sits in the lower 48.
-    var west = -130, east = 150, south = -38, north = 72;
+    // (US, Canada, Europe, Japan, South Africa, Australia, New Zealand).
+    // Extended east and a little south so New Zealand (and Tasmania) sit
+    // comfortably inside; Antarctica and unused ocean stay trimmed. Hawaii
+    // is off this crop; the US pin sits in the lower 48.
+    var west = -130, east = 182, south = -50, north = 72;
     var pts = [];
     for (var lon = west; lon <= east; lon += 2) { pts.push([lon, south], [lon, north]); }
     for (var lat = south; lat <= north; lat += 2) { pts.push([west, lat], [east, lat]); }
@@ -334,13 +336,17 @@
       CA: { x: 11, y: -8, anchor: "start" },
       EU: { x: 11, y: 4, anchor: "start" },
       JP: { x: -11, y: 4, anchor: "end" },
-      ZA: { x: 11, y: 4, anchor: "start" }
+      ZA: { x: -11, y: 4, anchor: "end" },
+      AU: { x: 0, y: -12, anchor: "middle" },
+      NZ: { x: -11, y: 16, anchor: "end" }
     } : {
       US: { x: 14, y: 4, anchor: "start" },
       CA: { x: 14, y: 4, anchor: "start" },
       EU: { x: 14, y: 4, anchor: "start" },
       JP: { x: 14, y: 4, anchor: "start" },
-      ZA: { x: 14, y: 4, anchor: "start" }
+      ZA: { x: 14, y: 4, anchor: "start" },
+      AU: { x: 14, y: 4, anchor: "start" },
+      NZ: { x: -14, y: 4, anchor: "end" }
     };
     groups.append("circle").attr("class", "hit").attr("r", narrow ? 22 : 28);
     groups.append("circle").attr("class", "pin-halo").attr("r", narrow ? 11 : 16);
@@ -351,6 +357,68 @@
       .attr("text-anchor", function (d) { return (labelAt[d.code] || labelAt.US).anchor; })
       .attr("font-size", narrow ? 12 : 14)
       .text(function (d) { return COUNTRY_LABELS[d.code] + " " + d.n; });
+    // Keep labels inside the SVG and off each other (AU/ZA/NZ are tight on a phone).
+    (function placeCountryLabels() {
+      var pad = 4, gap = 3;
+      var alts = narrow ? [
+        { x: 11, y: 4, anchor: "start" },
+        { x: -11, y: 4, anchor: "end" },
+        { x: 0, y: -12, anchor: "middle" },
+        { x: 0, y: 18, anchor: "middle" },
+        { x: 11, y: -12, anchor: "start" },
+        { x: -11, y: -12, anchor: "end" },
+        { x: 11, y: 18, anchor: "start" },
+        { x: -11, y: 18, anchor: "end" }
+      ] : [
+        { x: 14, y: 4, anchor: "start" },
+        { x: -14, y: 4, anchor: "end" },
+        { x: 0, y: -12, anchor: "middle" },
+        { x: 0, y: 22, anchor: "middle" }
+      ];
+      function boxOf(node, d) {
+        var bb = node.getBBox();
+        return { l: d.x + bb.x, r: d.x + bb.x + bb.width, t: d.y + bb.y, b: d.y + bb.y + bb.height };
+      }
+      function inBounds(b) {
+        return b.l >= pad && b.t >= pad && b.r <= W - pad && b.b <= H - pad;
+      }
+      function overlap(a, b) {
+        return a.l < b.r + gap && a.r > b.l - gap && a.t < b.b + gap && a.b > b.t - gap;
+      }
+      function apply(el, pos) {
+        el.attr("x", pos.x).attr("y", pos.y).attr("text-anchor", pos.anchor);
+      }
+      var items = [];
+      groups.each(function (d) {
+        items.push({ d: d, el: d3.select(this).select("text.country-pin-label"), node: this.querySelector("text.country-pin-label") });
+      });
+      items.sort(function (a, b) { return b.d.x - a.d.x; });
+      var placed = [];
+      items.forEach(function (it) {
+        var preferred = {
+          x: +it.el.attr("x"),
+          y: +it.el.attr("y"),
+          anchor: it.el.attr("text-anchor") || "start"
+        };
+        var tries = [preferred].concat(alts.filter(function (p) {
+          return p.x !== preferred.x || p.y !== preferred.y || p.anchor !== preferred.anchor;
+        }));
+        var best = null;
+        for (var i = 0; i < tries.length; i++) {
+          apply(it.el, tries[i]);
+          var b = boxOf(it.node, it.d);
+          if (!inBounds(b)) continue;
+          if (placed.some(function (p) { return overlap(b, p); })) continue;
+          best = b;
+          break;
+        }
+        if (!best) {
+          apply(it.el, preferred);
+          best = boxOf(it.node, it.d);
+        }
+        placed.push(best);
+      });
+    })();
 
     applyYear();
   }
@@ -2553,8 +2621,10 @@
     }
     var btn = document.getElementById("filters-btn");
     if (btn) btn.classList.toggle("has-filters", n > 0);
+    var searchEl = document.getElementById("filter-search");
+    var canReset = n > 0 || !!(searchEl && searchEl.value.trim());
     document.querySelectorAll(".clear-btn").forEach(function (el) {
-      if (n) el.removeAttribute("disabled");
+      if (canReset) el.removeAttribute("disabled");
       else el.setAttribute("disabled", "");
     });
     var mapEmpty = document.getElementById("map-empty");
@@ -2575,6 +2645,9 @@
   function toggleFilter(group, value) {
     if (STILL || PRINT || !value) return;
     var arr = group === "price" ? state.priceFilters : state.typeFilters;
+    var owned = group === "price" ? searchOwned.price : searchOwned.type;
+    var o = owned.indexOf(value);
+    if (o >= 0) owned.splice(o, 1);
     var i = arr.indexOf(value);
     if (i >= 0) arr.splice(i, 1);
     else {
@@ -2585,9 +2658,14 @@
     applyFilters();
   }
   function resetFilters() {
-    if (!hasFacetFilters()) return;
+    var searchEl = document.getElementById("filter-search");
+    var hadSearch = !!(searchEl && searchEl.value);
+    if (!hasFacetFilters() && !hadSearch) return;
     state.priceFilters = [];
     state.typeFilters = [];
+    searchOwned = { price: [], type: [] };
+    if (searchEl) searchEl.value = "";
+    renderSearchFeedback({ showing: [], suggestions: [] });
     applyFilters();
   }
   function setFiltersOpen(open) {
@@ -2601,12 +2679,362 @@
     if (btn) btn.setAttribute("aria-expanded", state.filtersOpen ? "true" : "false");
     document.body.classList.toggle("filters-open", state.filtersOpen);
     if (state.filtersOpen) {
-      var closeBtn = document.getElementById("filters-close");
-      if (closeBtn) closeBtn.focus();
+      var searchEl = document.getElementById("filter-search");
+      if (searchEl) searchEl.focus();
+      else {
+        var closeBtn = document.getElementById("filters-close");
+        if (closeBtn) closeBtn.focus();
+      }
     } else if (btn) {
       btn.focus();
     }
   }
+  /* ---------- Filter search (Fuse.js, no AI) ---------- */
+
+  // Teach the Filters search a new word or typo by adding a term here.
+  // `terms` match as whole words or phrases, and strings of 4+ characters
+  // also match fuzzily via Fuse.js. `group` is "price" or "type"; `value`
+  // must be a chip id from PRICE_CHIPS or TYPE_CHIPS.
+  var SEARCH_SYNONYMS = [
+    { group: "type", value: "fountain", terms: ["fountain", "fountain pen", "fountain pens", "fp"] },
+    { group: "type", value: "regular", terms: ["regular", "ballpoint", "ball point", "rollerball", "roller ball", "gel", "bolt", "click"] },
+    { group: "type", value: "multi-pen", terms: ["multi pen", "multi pens", "multipen", "multi-pen", "multi"] },
+    { group: "type", value: "marker", terms: ["marker", "markers", "sharpie"] },
+    { group: "price", value: "under-100", terms: ["cheap", "budget", "inexpensive"] },
+    { group: "price", value: "over-250", terms: ["expensive", "premium", "high end", "high-end"] }
+  ];
+  var SEARCH_STOP = {
+    pen: 1, pens: 1, a: 1, an: 1, the: 1, for: 1, and: 1, or: 1, of: 1, with: 1,
+    in: 1, at: 1, to: 1, from: 1, maker: 1, makers: 1, looking: 1, want: 1,
+    show: 1, me: 1, please: 1, some: 1, any: 1, that: 1
+  };
+  var keywordFuse = null;
+  var makerFuse = null;
+  var makerNameFuse = null;
+  var makerLocFuse = null;
+  var searchSuggestIndex = -1;
+  var searchOwned = { price: [], type: [] };
+
+  function searchTermIndex() {
+    var items = [];
+    SEARCH_SYNONYMS.forEach(function (syn) {
+      syn.terms.forEach(function (term) {
+        items.push({ term: term, group: syn.group, value: syn.value, len: term.length });
+      });
+    });
+    items.sort(function (a, b) { return b.len - a.len; });
+    return items;
+  }
+  function ensureSearchIndexes() {
+    if (typeof Fuse !== "function") return;
+    if (!keywordFuse) {
+      keywordFuse = new Fuse(searchTermIndex(), {
+        keys: ["term"], includeScore: true, threshold: 0.4,
+        ignoreLocation: true, minMatchCharLength: 4
+      });
+    }
+    if (!makerFuse) {
+      var docs = state.makers.map(function (m) {
+        return {
+          m: m,
+          name: m.name || "",
+          city: m.city || "",
+          region: m.region || "",
+          region_name: m.region_name || "",
+          country: m.country || "",
+          countryName: COUNTRY_NAMES[m.country] || ""
+        };
+      });
+      var shared = { includeScore: true, ignoreLocation: true, threshold: 0.5 };
+      makerFuse = new Fuse(docs, Object.assign({ keys: ["name", "city", "region", "region_name", "country", "countryName"], minMatchCharLength: 2 }, shared));
+      makerNameFuse = new Fuse(docs, Object.assign({ keys: ["name"], minMatchCharLength: 2 }, shared));
+      makerLocFuse = new Fuse(docs, Object.assign({ keys: ["city", "region", "region_name", "country", "countryName"], minMatchCharLength: 4 }, shared));
+    }
+  }
+  function uniqPush(arr, v) {
+    if (v && arr.indexOf(v) < 0) arr.push(v);
+  }
+  function bucketsUnder(n) {
+    var out = [];
+    if (n > 0) out.push("under-100");
+    if (n > 100) out.push("100-250");
+    if (n > 250) out.push("over-250");
+    return out;
+  }
+  function bucketsOver(n) {
+    var out = [];
+    if (n < 100) out.push("under-100");
+    if (n < 250) out.push("100-250");
+    out.push("over-250");
+    return out;
+  }
+  function bucketsBetween(a, b) {
+    var lo = Math.min(a, b), hi = Math.max(a, b);
+    var out = [];
+    if (lo < 100 && hi > 0) out.push("under-100");
+    if (lo <= 250 && hi >= 100) out.push("100-250");
+    if (hi > 250) out.push("over-250");
+    return out;
+  }
+  function parsePricePatterns(text) {
+    var prices = [];
+    function take(re, fn) {
+      text = text.replace(re, function () {
+        var vals = fn.apply(null, arguments);
+        if (vals) vals.forEach(function (v) { uniqPush(prices, v); });
+        return " ";
+      });
+    }
+    take(/between\s*\$?\s*(\d+)\s*(?:and|-|–|—)\s*\$?\s*(\d+)/gi, function (full, a, b) { return bucketsBetween(+a, +b); });
+    take(/\$?\s*(\d+)\s*(?:to|-|–|—)\s*\$?\s*(\d+)/gi, function (full, a, b) { return bucketsBetween(+a, +b); });
+    take(/(?:under|below|less\s+than|cheaper\s+than|<)\s*\$?\s*(\d+)/gi, function (full, n) { return bucketsUnder(+n); });
+    take(/(?:over|above|more\s+than|greater\s+than|>)\s*\$?\s*(\d+)/gi, function (full, n) { return bucketsOver(+n); });
+    take(/\$?\s*(\d+)\s*\+/gi, function (full, n) { return bucketsOver(+n); });
+    return { prices: prices, leftover: text };
+  }
+  function wordRe(term) {
+    var esc = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+    return new RegExp("(?:^|[^a-z0-9])(" + esc + ")(?=$|[^a-z0-9])", "i");
+  }
+  function suggestMakers(nameQ) {
+    if (!nameQ || nameQ.length < 2) return [];
+    function uniqueMakers(list) {
+      var seen = {};
+      var out = [];
+      list.forEach(function (m) {
+        if (!m || seen[m.id]) return;
+        seen[m.id] = 1;
+        out.push(m);
+      });
+      return out;
+    }
+    function take(results, maxScore) {
+      return (results || []).filter(function (r) { return r.score <= maxScore; }).map(function (r) { return r.item.m; });
+    }
+    if (makerFuse) {
+      var nameHits = take(makerNameFuse ? makerNameFuse.search(nameQ) : makerFuse.search(nameQ), 0.4);
+      var locHits = [];
+      if (nameQ.length >= 4 && makerLocFuse) locHits = take(makerLocFuse.search(nameQ), 0.3);
+      return uniqueMakers(nameHits.concat(locHits)).slice(0, 5);
+    }
+    var lq = nameQ.toLowerCase();
+    return state.makers.filter(function (m) {
+      return (m.name || "").toLowerCase().indexOf(lq) !== -1
+        || (m.city || "").toLowerCase().indexOf(lq) !== -1
+        || (m.region || "").toLowerCase().indexOf(lq) !== -1
+        || (m.region_name || "").toLowerCase().indexOf(lq) !== -1
+        || (m.country || "").toLowerCase().indexOf(lq) !== -1
+        || (COUNTRY_NAMES[m.country] || "").toLowerCase().indexOf(lq) !== -1;
+    }).slice(0, 5);
+  }
+  function parseFilterSearch(query) {
+    var raw = String(query || "").replace(/[\u201c\u201d]/g, '"').replace(/[\u2018\u2019]/g, "'");
+    var q = raw.trim().toLowerCase().replace(/\s+/g, " ");
+    var prices = [];
+    var types = [];
+    var suggestions = [];
+    if (!q) return { prices: prices, types: types, suggestions: suggestions, showing: [] };
+
+    var priced = parsePricePatterns(q);
+    priced.prices.forEach(function (v) { uniqPush(prices, v); });
+    var leftover = priced.leftover.replace(/\s+/g, " ").trim();
+    var terms = searchTermIndex();
+
+    terms.forEach(function (it) {
+      var re = wordRe(it.term);
+      if (re.test(leftover)) {
+        leftover = leftover.replace(re, " ").replace(/\s+/g, " ").trim();
+        if (it.group === "price") uniqPush(prices, it.value);
+        else uniqPush(types, it.value);
+      }
+    });
+
+    ensureSearchIndexes();
+    var tokens = leftover ? leftover.split(/[^a-z0-9]+/).filter(Boolean) : [];
+    var remain = [];
+    tokens.forEach(function (tok) {
+      if (SEARCH_STOP[tok]) return;
+      var hit = null;
+      for (var i = 0; i < terms.length; i++) {
+        if (terms[i].term === tok) { hit = terms[i]; break; }
+      }
+      if (!hit && keywordFuse && tok.length >= 4) {
+        var res = keywordFuse.search(tok);
+        if (res.length && res[0].score <= 0.4) hit = res[0].item;
+      }
+      if (hit) {
+        if (hit.group === "price") uniqPush(prices, hit.value);
+        else uniqPush(types, hit.value);
+      } else {
+        remain.push(tok);
+      }
+    });
+
+    var nameQ = remain.join(" ").trim();
+    if (nameQ.length >= 2) suggestions = suggestMakers(nameQ);
+
+    var showing = [];
+    PRICE_CHIPS.forEach(function (c) { if (prices.indexOf(c.value) >= 0) showing.push(c.label); });
+    TYPE_CHIPS.forEach(function (c) { if (types.indexOf(c.value) >= 0) showing.push(c.label); });
+    return { prices: prices, types: types, suggestions: suggestions, showing: showing };
+  }
+  function applyParsedSearch(parsed) {
+    var changed = false;
+    function syncGroup(arr, owned, wanted, group) {
+      owned.slice().forEach(function (v) {
+        if (wanted.indexOf(v) < 0) {
+          var i = arr.indexOf(v);
+          if (i >= 0) { arr.splice(i, 1); changed = true; }
+          var o = owned.indexOf(v);
+          if (o >= 0) owned.splice(o, 1);
+        }
+      });
+      wanted.forEach(function (v) {
+        if (arr.indexOf(v) < 0) {
+          arr.push(v);
+          changed = true;
+          if (owned.indexOf(v) < 0) owned.push(v);
+          if (group === "price") track("filter-price/" + v, "Filter price");
+          else track("filter-type/" + v, "Filter type");
+        }
+      });
+    }
+    syncGroup(state.priceFilters, searchOwned.price, parsed.prices, "price");
+    syncGroup(state.typeFilters, searchOwned.type, parsed.types, "type");
+    if (changed) applyFilters();
+    else syncFilterUI();
+    renderSearchFeedback(parsed);
+  }
+  function renderSearchFeedback(parsed) {
+    var show = document.getElementById("filter-showing");
+    var input = document.getElementById("filter-search");
+    if (!show) return;
+    var q = input && input.value.trim();
+    if (!q) {
+      show.hidden = true;
+      show.textContent = "";
+      hideSuggestions();
+      return;
+    }
+    if (parsed.showing.length) {
+      show.hidden = false;
+      show.textContent = "Showing: " + parsed.showing.join(", ");
+    } else if (!parsed.suggestions.length) {
+      show.hidden = false;
+      show.textContent = "No matching filters";
+    } else {
+      show.hidden = true;
+      show.textContent = "";
+    }
+    renderSuggestions(parsed.suggestions || []);
+  }
+  function hideSuggestions() {
+    var list = document.getElementById("filter-suggest");
+    var input = document.getElementById("filter-search");
+    searchSuggestIndex = -1;
+    if (list) { list.hidden = true; list.innerHTML = ""; }
+    if (input) {
+      input.setAttribute("aria-expanded", "false");
+      input.removeAttribute("aria-activedescendant");
+    }
+  }
+  function renderSuggestions(makers) {
+    var list = document.getElementById("filter-suggest");
+    var input = document.getElementById("filter-search");
+    if (!list) return;
+    searchSuggestIndex = -1;
+    list.innerHTML = "";
+    if (!makers.length) {
+      list.hidden = true;
+      if (input) {
+        input.setAttribute("aria-expanded", "false");
+        input.removeAttribute("aria-activedescendant");
+      }
+      return;
+    }
+    makers.forEach(function (m, i) {
+      var li = document.createElement("li");
+      li.id = "filter-suggest-" + i;
+      li.setAttribute("role", "option");
+      var name = document.createElement("span");
+      name.className = "filter-suggest-name";
+      name.textContent = m.name;
+      li.appendChild(name);
+      var loc = locationLine(m);
+      if (loc) {
+        var place = document.createElement("span");
+        place.className = "filter-suggest-place";
+        place.textContent = loc;
+        li.appendChild(place);
+      }
+      li.addEventListener("mousedown", function (ev) {
+        ev.preventDefault();
+        pickSuggestedMaker(m);
+      });
+      list.appendChild(li);
+    });
+    list.hidden = false;
+    if (input) input.setAttribute("aria-expanded", "true");
+  }
+  function pickSuggestedMaker(m) {
+    hideSuggestions();
+    setFiltersOpen(false);
+    focusMaker(m);
+  }
+  function onFilterSearchInput() {
+    var input = document.getElementById("filter-search");
+    var q = input ? input.value : "";
+    if (!String(q).trim()) {
+      searchOwned = { price: [], type: [] };
+      renderSearchFeedback({ showing: [], suggestions: [] });
+      syncFilterUI();
+      return;
+    }
+    applyParsedSearch(parseFilterSearch(q));
+  }
+  function moveSuggest(dir) {
+    var list = document.getElementById("filter-suggest");
+    if (!list || list.hidden) return;
+    var items = list.querySelectorAll('[role="option"]');
+    if (!items.length) return;
+    searchSuggestIndex += dir;
+    if (searchSuggestIndex < 0) searchSuggestIndex = items.length - 1;
+    if (searchSuggestIndex >= items.length) searchSuggestIndex = 0;
+    items.forEach(function (el, i) {
+      el.setAttribute("aria-selected", i === searchSuggestIndex ? "true" : "false");
+    });
+    var input = document.getElementById("filter-search");
+    if (input) input.setAttribute("aria-activedescendant", items[searchSuggestIndex].id);
+    items[searchSuggestIndex].scrollIntoView({ block: "nearest" });
+  }
+  function bindFilterSearch() {
+    var input = document.getElementById("filter-search");
+    if (!input) return;
+    ensureSearchIndexes();
+    input.addEventListener("input", onFilterSearchInput);
+    input.addEventListener("keydown", function (ev) {
+      var list = document.getElementById("filter-suggest");
+      var open = list && !list.hidden;
+      if (ev.key === "ArrowDown") {
+        if (open) { ev.preventDefault(); moveSuggest(1); }
+      } else if (ev.key === "ArrowUp") {
+        if (open) { ev.preventDefault(); moveSuggest(-1); }
+      } else if (ev.key === "Enter") {
+        ev.preventDefault();
+        if (open && searchSuggestIndex >= 0) {
+          var parsed = parseFilterSearch(input.value);
+          if (parsed.suggestions[searchSuggestIndex]) pickSuggestedMaker(parsed.suggestions[searchSuggestIndex]);
+        }
+      } else if (ev.key === "Escape") {
+        if (open) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          hideSuggestions();
+        }
+      }
+    });
+  }
+
   function bindFilters() {
     if (STILL || PRINT) {
       var modeBar = document.getElementById("map-mode-bar");
@@ -2657,6 +3085,7 @@
         resetFilters();
       });
     });
+    bindFilterSearch();
   }
 
 

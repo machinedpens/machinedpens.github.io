@@ -19,7 +19,9 @@
       "lon": -123.114,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Confounded Machine",
@@ -40,7 +42,9 @@
       "lon": -113.4912,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Q3D",
@@ -60,7 +64,9 @@
       "lon": -89.1541,
       "location_precision": "region",
       "geocode_source": "Illinois centroid (Natural Earth polygon)",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "FocusWorks",
@@ -81,7 +87,9 @@
       "lon": -123.7631,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) town centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Seguin",
@@ -101,7 +109,9 @@
       "lon": -113.6507,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) town centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Grimsmo",
@@ -122,7 +132,9 @@
       "lon": -79.7568,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) community centroid (Hamilton, ON)",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "MaxMadCo",
@@ -144,7 +156,9 @@
       "lon": -122.4075,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "SPP",
@@ -166,7 +180,9 @@
       "lon": -99.4937,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) village centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "MachineWise",
@@ -187,7 +203,9 @@
       "lon": -112.0741,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Schon DSGN",
@@ -208,7 +226,10 @@
       "lon": -75.1635,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular", "fountain"]
+      "pen_types": [
+        "regular",
+        "fountain"
+      ]
     },
     {
       "name": "The Right Choice Painting Company",
@@ -228,7 +249,9 @@
       "lon": -110.9748,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Modern Fuel",
@@ -250,7 +273,10 @@
       "lon": -98.4951,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular", "fountain"]
+      "pen_types": [
+        "regular",
+        "fountain"
+      ]
     },
     {
       "name": "Tactile Turn",
@@ -270,7 +296,9 @@
       "lon": -96.7969,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Inventery",
@@ -290,7 +318,9 @@
       "lon": -118.2428,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Matthew Martin Makes",
@@ -311,7 +341,10 @@
       "lon": -82.6506,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular", "fountain"]
+      "pen_types": [
+        "regular",
+        "fountain"
+      ]
     },
     {
       "name": "Maverick Customs",
@@ -332,7 +365,9 @@
       "lon": -85.9069,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "OG Brad",
@@ -352,7 +387,9 @@
       "lon": -90.6957,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Billetspin",
@@ -373,7 +410,9 @@
       "lon": -88.5409,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Fellhoelter",
@@ -393,7 +432,9 @@
       "lon": -114.3286,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Nottingham Tactical",
@@ -414,7 +455,9 @@
       "lon": -90.3959,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Karas Pen Co",
@@ -435,7 +478,10 @@
       "lon": -111.8315,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular", "fountain"]
+      "pen_types": [
+        "regular",
+        "fountain"
+      ]
     },
     {
       "name": "Machine Era",
@@ -456,7 +502,10 @@
       "lon": -77.4343,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular", "fountain"]
+      "pen_types": [
+        "regular",
+        "fountain"
+      ]
     },
     {
       "name": "Big Idea Design",
@@ -478,7 +527,10 @@
       "lon": -85.3095,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular", "fountain"]
+      "pen_types": [
+        "regular",
+        "fountain"
+      ]
     },
     {
       "name": "Honey Badger Arsenal",
@@ -498,7 +550,9 @@
       "lon": -115.1484,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Aerocrafted",
@@ -519,7 +573,9 @@
       "lon": -120.6596,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid (not the county)",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Spoke Design",
@@ -541,7 +597,9 @@
       "lon": -82.3985,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Koenig",
@@ -562,7 +620,9 @@
       "lon": -116.2009,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Ti2 Design",
@@ -582,7 +642,9 @@
       "lon": -157.9694,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) locality centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Melrose Machine Works",
@@ -602,7 +664,9 @@
       "lon": -122.4075,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Pencestry",
@@ -622,7 +686,9 @@
       "lon": -80.1936,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "CW&T",
@@ -643,7 +709,9 @@
       "lon": -73.9497,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Studio Neat",
@@ -665,7 +733,9 @@
       "lon": -97.7474,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "OZ Machine Company",
@@ -686,7 +756,9 @@
       "lon": -87.2488,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Hypercut MFG",
@@ -707,7 +779,9 @@
       "lon": -82.461,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "AJOTO",
@@ -729,7 +803,9 @@
       "lon": -2.2451,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Wingback",
@@ -751,7 +827,9 @@
       "lon": -0.1278,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Araki F Machine",
@@ -772,7 +850,9 @@
       "lon": 134.8601,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Arno Bernard Pens",
@@ -793,7 +873,9 @@
       "lon": 28.3089,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Herman Knives",
@@ -814,7 +896,9 @@
       "lon": 19.457,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Sunderland Machine Works",
@@ -835,7 +919,9 @@
       "lon": -75.3903,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Tuff Writer",
@@ -856,7 +942,9 @@
       "lon": -111.6561,
       "location_precision": "state",
       "geocode_source": "Arizona centroid (US-Canada map polygon)",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Prometheus Writes",
@@ -877,7 +965,9 @@
       "lon": -122.0832,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Baronfig",
@@ -898,7 +988,9 @@
       "lon": -74.006,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
     },
     {
       "name": "Ensso",
@@ -919,7 +1011,55 @@
       "lon": -118.2428,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
-      "pen_types": ["regular"]
+      "pen_types": [
+        "regular"
+      ]
+    },
+    {
+      "name": "Magnus Pens",
+      "slug": "magnus-pens",
+      "website": "https://magnuspens.com",
+      "city": "Mount Maunganui",
+      "region": "Bay of Plenty",
+      "region_name": "Bay of Plenty",
+      "country": "NZ",
+      "est_year": 2013,
+      "shop_founded": "2013",
+      "priceLow": 300,
+      "priceHigh": 300,
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": -37.638,
+      "lon": 176.1839,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid",
+      "pen_types": [
+        "regular"
+      ]
+    },
+    {
+      "name": "MIG Shed",
+      "slug": "mig-shed",
+      "website": "https://migshed.com.au",
+      "city": null,
+      "region": "SA",
+      "region_name": "South Australia",
+      "country": "AU",
+      "est_year": 2015,
+      "shop_founded": "2015",
+      "priceLow": 90,
+      "priceHigh": 90,
+      "first_pen": "2014",
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": -30.5344,
+      "lon": 135.6301,
+      "location_precision": "state",
+      "geocode_source": "Nominatim (OSM) state centroid",
+      "pen_types": [
+        "regular",
+        "fountain"
+      ]
     }
   ]
 }
