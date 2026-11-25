@@ -73,12 +73,12 @@
   var playBtn = document.getElementById("play");
   var mqMobile = window.matchMedia("(max-width: 640px)");
 
-  var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, mapMode: "timeline", priceFilter: null, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
+  var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261122a"),
-    d3.json("data/us-canada.topo.json?v=20261122a"),
-    d3.json("data/world-110m.topo.json?v=20261122a")
+    d3.json("makers.json?v=20261125a"),
+    d3.json("data/us-canada.topo.json?v=20261125a"),
+    d3.json("data/world-110m.topo.json?v=20261125a")
   ]).then(function (res) { init(res[0].makers, res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -89,6 +89,7 @@
     makers.forEach(function (m, i) {
       m.id = "m" + i;
       if (!m.slug) m.slug = slugify(m.name);
+      if (!Array.isArray(m.pen_types) || !m.pen_types.length) m.pen_types = ["regular"];
     });
     state.makers = makers;
     if (!STILL) initFavorites();
@@ -123,7 +124,7 @@
     bindUI();
     setupSuggestLink();
     if (!STILL) bindFavorites();
-    else applyMapMode();
+    bindFilters();
 
     if (window.ResizeObserver) {
       var el = svg.node();
@@ -323,11 +324,6 @@
       .attr("role", "button")
       .attr("tabindex", 0)
       .attr("aria-label", function (d) { return COUNTRY_NAMES[d.code] + ", " + d.n + (d.n === 1 ? " maker" : " makers"); })
-      .attr("data-tier", function (d) {
-        var lows = state.makers.filter(function (m) { return belongsToUnit(m, d.code) && !isHidden(m); }).map(function (m) { return m.priceLow; }).filter(function (v) { return v != null; });
-        if (!lows.length) return "none";
-        return priceTintTier({ priceLow: d3.min(lows), priceHigh: d3.min(lows) });
-      })
       .on("click", function (ev, d) { ev.stopPropagation(); showCountry(d.code); })
       .on("keydown", function (ev, d) {
         if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); showCountry(d.code); }
@@ -915,15 +911,65 @@
     if (tier === "over-250") return m.priceHigh > 250;
     return false;
   }
-  function priceTintTier(m) {
-    if (!hasPrice(m)) return "none";
-    if (m.priceLow < 100) return "under-100";
-    if (m.priceLow <= 250) return "100-250";
-    return "over-250";
+  var PRICE_CHIPS = [
+    { value: "under-100", label: "Under $100" },
+    { value: "100-250", label: "$100–250" },
+    { value: "over-250", label: "Over $250" }
+  ];
+  var TYPE_CHIPS = [
+    { value: "regular", label: "Regular" },
+    { value: "fountain", label: "Fountain" },
+    { value: "multi-pen", label: "Multi pen" },
+    { value: "marker", label: "Marker" }
+  ];
+  function makerTypes(m) {
+    return (m && Array.isArray(m.pen_types) && m.pen_types.length) ? m.pen_types : ["regular"];
   }
-  function isPriceHidden(m) {
-    return !STILL && state.mapMode === "price" && !!state.priceFilter && !matchesPriceTier(m, state.priceFilter);
+  function matchesType(m, type) {
+    return makerTypes(m).indexOf(type) >= 0;
   }
+  function hasFacetFilters() {
+    return state.priceFilters.length > 0 || state.typeFilters.length > 0;
+  }
+  function activeFilterCount() {
+    return state.priceFilters.length + state.typeFilters.length;
+  }
+  function matchesFacets(m) {
+    if (state.priceFilters.length && !state.priceFilters.some(function (tier) { return matchesPriceTier(m, tier); })) return false;
+    if (state.typeFilters.length && !state.typeFilters.some(function (type) { return matchesType(m, type); })) return false;
+    return true;
+  }
+  function isFacetHidden(m) {
+    return !STILL && !matchesFacets(m);
+  }
+  function chipCount(group, value) {
+    return state.makers.filter(function (m) {
+      if (isFavHidden(m)) return false;
+      if (group === "price") {
+        if (state.typeFilters.length && !state.typeFilters.some(function (type) { return matchesType(m, type); })) return false;
+        return matchesPriceTier(m, value);
+      }
+      if (state.priceFilters.length && !state.priceFilters.some(function (tier) { return matchesPriceTier(m, tier); })) return false;
+      return matchesType(m, value);
+    }).length;
+  }
+  function filteredMakers() {
+    return state.makers.filter(function (m) {
+      if (isFavHidden(m)) return false;
+      return matchesFacets(m);
+    });
+  }
+  function filterCountText() {
+    var n = filteredMakers().length;
+    var total = state.makers.length;
+    return n + " of " + total + " maker" + (total === 1 ? "" : "s");
+  }
+  function chipLabel(group, value) {
+    var list = group === "price" ? PRICE_CHIPS : TYPE_CHIPS;
+    var hit = list.find(function (c) { return c.value === value; });
+    return hit ? hit.label : value;
+  }
+
   function ariaLabel(m) {
     var loc = locationLine(m);
     var s = m.name + (loc ? ", " + loc : "");
@@ -946,18 +992,11 @@
     slider.style.setProperty("--fill", pct + "%");
     slider.setAttribute("aria-valuetext", "Founded by " + y);
     document.getElementById("year-value").textContent = y;
-    var pool = state.makers.filter(function (m) {
-      if (state.favOnly && !isFav(m)) return false;
-      if (isPriceHidden(m)) return false;
-      return true;
-    });
-    if (state.mapMode === "price") {
-      var priceCount = document.getElementById("price-count");
-      if (priceCount) priceCount.textContent = pool.length + (pool.length === 1 ? " maker" : " makers");
-    } else {
-      var known = pool.filter(function (m) { return m.est_year && m.est_year <= y; }).length;
-      var unknown = pool.filter(function (m) { return !m.est_year; }).length;
-      var el = document.getElementById("year-count");
+    var pool = filteredMakers();
+    var known = pool.filter(function (m) { return m.est_year && m.est_year <= y; }).length;
+    var unknown = pool.filter(function (m) { return !m.est_year; }).length;
+    var el = document.getElementById("year-count");
+    if (el) {
       el.textContent = known + (known === 1 ? " maker" : " makers");
       if (unknown) {
         var ex = document.createElement("span");
@@ -970,19 +1009,17 @@
   }
 
   function isYearHidden(m) {
-    if (state.mapMode === "price") return false;
     return !!m.est_year && m.est_year > state.year;
   }
   function isFavHidden(m) { return !STILL && state.favOnly && !isFav(m); }
-  function isFilterHidden(m) { return isFavHidden(m) || isPriceHidden(m); }
+  function isFilterHidden(m) { return isFavHidden(m) || isFacetHidden(m); }
   function isHidden(m) { return isYearHidden(m) || isFilterHidden(m); }
 
   function applyYear() {
     var full = state.year >= MAX_YEAR;
     svg.selectAll("g.pin")
       .classed("hidden", function (d) { return isHidden(d.m); })
-      .classed("faded", function (d) { return state.mapMode !== "price" && !isHidden(d.m) && !d.m.est_year && !full; })
-      .attr("data-tier", function (d) { return priceTintTier(d.m); })
+      .classed("faded", function (d) { return !isHidden(d.m) && !d.m.est_year && !full; })
       .attr("tabindex", function (d) { return isHidden(d.m) ? -1 : 0; })
       .attr("aria-hidden", function (d) { return isHidden(d.m) ? "true" : null; });
     svg.selectAll(".leaders g").classed("hidden", function (d) { return isHidden(d.m); });
@@ -994,7 +1031,7 @@
       var m = btn && byId(btn.getAttribute("data-id"));
       return !!(m && isFilterHidden(m));
     });
-    var filtering = state.favOnly || (state.mapMode === "price" && !!state.priceFilter);
+    var filtering = state.favOnly || hasFacetFilters();
     document.querySelectorAll(".region").forEach(function (reg) {
       var any = reg.querySelector(".maker-row:not(.fav-hidden)");
       reg.hidden = filtering && !any;
@@ -1007,6 +1044,7 @@
     if (title && !PRINT) title.textContent = state.favOnly ? "Favorite makers" : "All makers";
     if (state.active && isHidden(state.active)) closeCard(true);
     updateListEmpty();
+    syncFilterUI();
   }
 
   function togglePlay() {
@@ -1279,8 +1317,10 @@
     if (!empty) return;
     var q = (state.listQuery || "").trim();
     var visible = document.querySelectorAll("#list .maker-row:not(.fav-hidden)");
-    var filtering = !!(q || state.favOnly || (state.mapMode === "price" && state.priceFilter));
+    var filtering = !!(q || state.favOnly || hasFacetFilters());
     empty.hidden = !filtering || visible.length > 0;
+    var reset = document.getElementById("list-empty-reset");
+    if (reset) reset.hidden = !hasFacetFilters();
   }
   function syncListActive() {
     var id = state.active && state.active.id;
@@ -1392,24 +1432,6 @@
       countrySel.addEventListener("change", function () {
         state.listCountry = countrySel.value || "";
         buildList();
-      });
-    }
-    var priceSel = document.getElementById("list-price");
-    if (priceSel) {
-      priceSel.value = state.priceFilter || "";
-      priceSel.addEventListener("change", function () {
-        var v = priceSel.value || "";
-        if (v) {
-          if (state.mapMode !== "price") setMapMode("price");
-          state.priceFilter = v;
-          syncPriceChips();
-          setYear(state.year);
-        } else {
-          state.priceFilter = null;
-          syncPriceChips();
-          setYear(state.year);
-        }
-        if (priceSel) priceSel.value = state.priceFilter || "";
       });
     }
   }
@@ -2459,7 +2481,10 @@
       closeManage();
     });
     document.addEventListener("keydown", function (ev) {
-      if (ev.key === "Escape") closeManage();
+      if (ev.key === "Escape") {
+        if (state.filtersOpen) { setFiltersOpen(false); ev.stopPropagation(); return; }
+        closeManage();
+      }
     });
     window.addEventListener("hashchange", function () {
       if (STILL || PRINT) return;
@@ -2482,89 +2507,158 @@
     });
     syncFavBar();
     buildPrintList();
-    bindMapMode();
   }
 
-  function syncPriceChips() {
-    document.querySelectorAll(".price-chip").forEach(function (btn) {
-      var on = btn.getAttribute("data-price") === state.priceFilter;
-      btn.setAttribute("aria-pressed", on ? "true" : "false");
-    });
+  function renderFilterChips() {
+    function fill(el, chips, group) {
+      if (!el) return;
+      el.innerHTML = chips.map(function (c) {
+        var on = (group === "price" ? state.priceFilters : state.typeFilters).indexOf(c.value) >= 0;
+        var n = chipCount(group, c.value);
+        var cls = "filter-chip" + (n === 0 ? " is-zero" : "");
+        return '<button type="button" class="' + cls + '" data-filter-group="' + group + '" data-filter="' + c.value + '" aria-pressed="' + (on ? "true" : "false") + '">' +
+          c.label + ' <span class="chip-n">' + n + "</span></button>";
+      }).join("");
+    }
+    fill(document.getElementById("price-chips"), PRICE_CHIPS, "price");
+    fill(document.getElementById("type-chips"), TYPE_CHIPS, "type");
   }
-  function setPriceFilter(tier) {
-    if (STILL || PRINT || state.mapMode !== "price") return;
-    var next = (tier && tier === state.priceFilter) ? null : (tier || null);
-    var turningOn = !!next && next !== state.priceFilter;
-    state.priceFilter = next;
-    syncPriceChips();
-    var priceSel = document.getElementById("list-price");
-    if (priceSel) priceSel.value = state.priceFilter || "";
+  function renderActiveChips() {
+    var wrap = document.getElementById("af-chips");
+    if (!wrap) return;
+    var xIcon = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+    var items = [];
+    state.priceFilters.forEach(function (v) { items.push({ group: "price", value: v, label: chipLabel("price", v) }); });
+    state.typeFilters.forEach(function (v) { items.push({ group: "type", value: v, label: chipLabel("type", v) }); });
+    wrap.innerHTML = items.map(function (it) {
+      return '<span class="af-chip">' + it.label +
+        ' <button type="button" class="af-x" data-filter-group="' + it.group + '" data-filter="' + it.value + '" aria-label="Remove ' + it.label + '">' + xIcon + "</button></span>";
+    }).join("");
+  }
+  var lastFilterSig = "";
+  function filterSig() {
+    return state.priceFilters.join(",") + "|" + state.typeFilters.join(",") + "|" + (state.favOnly ? "1" : "0");
+  }
+  function syncFilterUI() {
+    var countText = filterCountText();
+    var countEl = document.getElementById("filter-count");
+    var drawerCount = document.getElementById("drawer-count");
+    if (countEl) countEl.textContent = countText;
+    if (drawerCount) drawerCount.textContent = countText;
+    var n = activeFilterCount();
+    var badge = document.getElementById("filters-badge");
+    if (badge) {
+      badge.textContent = String(n);
+      badge.hidden = n === 0;
+    }
+    var btn = document.getElementById("filters-btn");
+    if (btn) btn.classList.toggle("has-filters", n > 0);
+    document.querySelectorAll(".clear-btn").forEach(function (el) {
+      if (n) el.removeAttribute("disabled");
+      else el.setAttribute("disabled", "");
+    });
+    var mapEmpty = document.getElementById("map-empty");
+    if (mapEmpty) {
+      var none = hasFacetFilters() && filteredMakers().length === 0;
+      mapEmpty.hidden = !none;
+    }
+    var sig = filterSig();
+    if (sig === lastFilterSig && document.querySelector("#price-chips .filter-chip")) return;
+    lastFilterSig = sig;
+    renderFilterChips();
+    renderActiveChips();
+  }
+  function applyFilters() {
     if (state.active && isHidden(state.active)) closeCard(true);
     setYear(state.year);
-    if (turningOn) track("filter-price/" + next, "Filter price");
   }
-  function applyMapMode() {
-    var price = state.mapMode === "price";
-    if (!STILL && !PRINT) document.body.setAttribute("data-map-mode", state.mapMode);
-    else document.body.removeAttribute("data-map-mode");
-    var timeline = document.getElementById("timeline");
-    var priceControls = document.getElementById("price-controls");
-    var priceReadout = document.getElementById("price-readout");
-    var modeBar = document.getElementById("map-mode-bar");
-    var legendTime = document.getElementById("legend-timeline");
-    var legendPrice = document.getElementById("legend-price");
+  function toggleFilter(group, value) {
+    if (STILL || PRINT || !value) return;
+    var arr = group === "price" ? state.priceFilters : state.typeFilters;
+    var i = arr.indexOf(value);
+    if (i >= 0) arr.splice(i, 1);
+    else {
+      arr.push(value);
+      if (group === "price") track("filter-price/" + value, "Filter price");
+      else track("filter-type/" + value, "Filter type");
+    }
+    applyFilters();
+  }
+  function resetFilters() {
+    if (!hasFacetFilters()) return;
+    state.priceFilters = [];
+    state.typeFilters = [];
+    applyFilters();
+  }
+  function setFiltersOpen(open) {
+    if (STILL || PRINT) open = false;
+    state.filtersOpen = !!open;
+    var panel = document.getElementById("filter-panel");
+    var scrim = document.getElementById("filter-scrim");
+    var btn = document.getElementById("filters-btn");
+    if (panel) panel.hidden = !state.filtersOpen;
+    if (scrim) scrim.hidden = !state.filtersOpen;
+    if (btn) btn.setAttribute("aria-expanded", state.filtersOpen ? "true" : "false");
+    document.body.classList.toggle("filters-open", state.filtersOpen);
+    if (state.filtersOpen) {
+      var closeBtn = document.getElementById("filters-close");
+      if (closeBtn) closeBtn.focus();
+    } else if (btn) {
+      btn.focus();
+    }
+  }
+  function bindFilters() {
     if (STILL || PRINT) {
+      var modeBar = document.getElementById("map-mode-bar");
+      var active = document.getElementById("active-filters");
+      var panel = document.getElementById("filter-panel");
+      var scrim = document.getElementById("filter-scrim");
+      var empty = document.getElementById("map-empty");
       if (modeBar) modeBar.hidden = true;
-      if (priceControls) priceControls.hidden = true;
-      if (priceReadout) priceReadout.hidden = true;
-      if (timeline) timeline.hidden = !!PRINT;
-      if (legendTime) legendTime.hidden = false;
-      if (legendPrice) legendPrice.hidden = true;
+      if (active) active.hidden = true;
+      if (panel) panel.hidden = true;
+      if (scrim) scrim.hidden = true;
+      if (empty) empty.hidden = true;
       return;
     }
-    if (modeBar) modeBar.hidden = false;
-    if (timeline) timeline.hidden = price;
-    if (priceControls) priceControls.hidden = !price;
-    if (priceReadout) priceReadout.hidden = !price;
-    if (legendTime) legendTime.hidden = price;
-    if (legendPrice) legendPrice.hidden = !price;
-    document.querySelectorAll(".map-mode-btn").forEach(function (btn) {
-      var on = btn.getAttribute("data-mode") === state.mapMode;
-      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    renderFilterChips();
+    syncFilterUI();
+    var btn = document.getElementById("filters-btn");
+    if (btn) btn.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      setFiltersOpen(!state.filtersOpen);
     });
-    syncPriceChips();
-  }
-  function setMapMode(mode) {
-    if (STILL || PRINT) return;
-    if (mode !== "price") mode = "timeline";
-    if (state.mapMode === mode) return;
-    state.mapMode = mode;
-    if (mode === "price" && state.playing) stopPlay();
-    applyMapMode();
-    if (state.active && isHidden(state.active)) closeCard(true);
-    setYear(state.year);
-    track("mode/" + mode, mode === "price" ? "Price mode" : "Timeline mode");
-  }
-  function bindMapMode() {
-    applyMapMode();
-    if (STILL || PRINT) return;
-    var mode = document.getElementById("map-mode");
-    if (mode) {
-      mode.addEventListener("click", function (ev) {
-        var btn = ev.target.closest("[data-mode]");
-        if (!btn) return;
-        setMapMode(btn.getAttribute("data-mode"));
+    var closeBtn = document.getElementById("filters-close");
+    if (closeBtn) closeBtn.addEventListener("click", function () { setFiltersOpen(false); });
+    var scrim = document.getElementById("filter-scrim");
+    if (scrim) scrim.addEventListener("click", function () { setFiltersOpen(false); });
+    var panel = document.getElementById("filter-panel");
+    if (panel) {
+      panel.addEventListener("click", function (ev) {
+        var chip = ev.target.closest("[data-filter]");
+        if (!chip || !panel.contains(chip)) return;
+        ev.preventDefault();
+        toggleFilter(chip.getAttribute("data-filter-group"), chip.getAttribute("data-filter"));
       });
     }
-    var wrap = document.getElementById("price-filters");
-    if (wrap) {
-      wrap.addEventListener("click", function (ev) {
-        var btn = ev.target.closest("[data-price]");
-        if (!btn) return;
-        setPriceFilter(btn.getAttribute("data-price"));
+    var af = document.getElementById("af-chips");
+    if (af) {
+      af.addEventListener("click", function (ev) {
+        var x = ev.target.closest("[data-filter]");
+        if (!x) return;
+        ev.preventDefault();
+        toggleFilter(x.getAttribute("data-filter-group"), x.getAttribute("data-filter"));
       });
     }
+    ["filters-reset", "map-empty-reset", "list-empty-reset"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        resetFilters();
+      });
+    });
   }
+
 
   /* ---------- Wiring ---------- */
 
@@ -2579,10 +2673,15 @@
     slider.addEventListener("input", function () { if (state.playing) stopPlay(); setYear(+slider.value); });
     playBtn.addEventListener("click", togglePlay);
     document.getElementById("card-close").addEventListener("click", function () { closeCard(); });
-    document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") closeCard(); });
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key !== "Escape") return;
+      if (state.filtersOpen) { setFiltersOpen(false); return; }
+      closeCard();
+    });
     document.addEventListener("click", function (ev) {
       if (card.hidden) return;
       if (card.contains(ev.target) || ev.target.closest(".pin") || ev.target.closest(".maker-btn")) return;
+      if (ev.target.closest("#filter-panel") || ev.target.closest("#filters-btn") || ev.target.closest("#af-chips")) return;
       if (wrap.contains(ev.target)) return; // handled by the svg handler
       closeCard(true);
     });

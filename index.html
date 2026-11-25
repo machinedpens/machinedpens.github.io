@@ -19,7 +19,7 @@
       if (["light", "dark", "bold"].indexOf(t) >= 0) document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261122a">
+  <link rel="stylesheet" href="style.css?v=20261125a">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -53,34 +53,23 @@
         <button type="button" class="world-back" id="world-back" hidden>← World</button>
 
         <div class="legend" id="legend" aria-label="Legend">
-          <div class="legend-set" id="legend-timeline">
-            <div class="legend-row">
-              <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--pin)"/></svg>
-              <span>Maker</span>
-            </div>
-            <div class="legend-row">
-              <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--pin)"/><circle cx="12" cy="12" r="9" fill="none" stroke="var(--ring)" stroke-width="1.6"/></svg>
-              <span>Featured in The Maker Index</span>
-            </div>
-            <div class="legend-row">
-              <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--paper)" stroke="var(--pin)" stroke-width="1.8"/></svg>
-              <span>Inactive or closed</span>
-            </div>
+          <div class="legend-row">
+            <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--pin)"/></svg>
+            <span>Maker</span>
           </div>
-          <div class="legend-set" id="legend-price" hidden>
-            <div class="legend-row">
-              <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--pin-lo)"/></svg>
-              <span>Under $100</span>
-            </div>
-            <div class="legend-row">
-              <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--pin-mid)"/></svg>
-              <span>$100–250</span>
-            </div>
-            <div class="legend-row">
-              <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--pin-hi)"/></svg>
-              <span>Over $250</span>
-            </div>
+          <div class="legend-row">
+            <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--pin)"/><circle cx="12" cy="12" r="9" fill="none" stroke="var(--ring)" stroke-width="1.6"/></svg>
+            <span>Featured in The Maker Index</span>
           </div>
+          <div class="legend-row">
+            <svg class="legend-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--paper)" stroke="var(--pin)" stroke-width="1.8"/></svg>
+            <span>Inactive or closed</span>
+          </div>
+        </div>
+
+        <div class="map-empty" id="map-empty" hidden>
+          <p class="map-empty-text">No makers match</p>
+          <button type="button" class="map-empty-reset" id="map-empty-reset">Reset</button>
         </div>
 
         <div class="card" id="card" role="dialog" aria-modal="false" aria-labelledby="card-name" hidden>
@@ -101,39 +90,36 @@
       </div>
 
       <div class="map-mode-bar" id="map-mode-bar">
-        <div class="map-mode" id="map-mode" role="group" aria-label="Map mode">
-          <button type="button" class="map-mode-btn" data-mode="timeline" aria-pressed="true">Timeline</button>
-          <button type="button" class="map-mode-btn" data-mode="price" aria-pressed="false">Price</button>
-        </div>
-        <div class="price-readout" id="price-readout" hidden>
-          <span class="price-count" id="price-count"></span>
-        </div>
+        <button type="button" class="filters-btn" id="filters-btn" aria-expanded="false" aria-controls="filter-panel">
+          <svg class="funnel" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 5h16l-6.2 7.4V19l-3.6 2v-8.6L4 5z"/>
+          </svg>
+          Filters
+          <span class="filters-badge" id="filters-badge" hidden>0</span>
+        </button>
+        <div class="filter-count" id="filter-count" aria-live="polite">44 of 44 makers</div>
       </div>
 
       <div class="map-controls" id="map-controls">
-      <div class="timeline" id="timeline">
-        <button class="play" id="play" type="button" aria-label="Play timeline">
-          <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>
-          <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>
-        </button>
-        <div class="slider-wrap">
-          <label class="sr-only" for="year">Show makers founded by year</label>
-          <input type="range" id="year" min="2008" max="2026" step="1" value="2026">
-          <div class="slider-ends" aria-hidden="true"><span id="year-min"></span><span id="year-max"></span></div>
-        </div>
-        <div class="year-readout" aria-live="polite">
-          <span class="year-value" id="year-value">2026</span>
-          <span class="year-count" id="year-count"></span>
+        <div class="timeline" id="timeline">
+          <button class="play" id="play" type="button" aria-label="Play timeline">
+            <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>
+          </button>
+          <div class="slider-wrap">
+            <label class="sr-only" for="year">Show makers founded by year</label>
+            <input type="range" id="year" min="2008" max="2026" step="1" value="2026">
+            <div class="slider-ends" aria-hidden="true"><span id="year-min"></span><span id="year-max"></span></div>
+          </div>
+          <div class="year-readout" aria-live="polite">
+            <span class="year-value" id="year-value">2026</span>
+            <span class="year-count" id="year-count"></span>
+          </div>
         </div>
       </div>
 
-      <div class="price-controls" id="price-controls" hidden>
-        <div class="price-filters" id="price-filters" role="group" aria-label="Filter by price">
-          <button type="button" class="price-chip" data-price="under-100" aria-pressed="false">Under $100</button>
-          <button type="button" class="price-chip" data-price="100-250" aria-pressed="false">$100–250</button>
-          <button type="button" class="price-chip" data-price="over-250" aria-pressed="false">Over $250</button>
-        </div>
-      </div>
+      <div class="active-filters" id="active-filters">
+        <div class="af-chips" id="af-chips"></div>
       </div>
 
       <div class="fav-bar" id="fav-bar">
@@ -149,6 +135,31 @@
           <button class="fav-clear" id="fav-clear" type="button">Clear favorites</button>
         </div>
       </div>
+
+      <div class="filter-scrim" id="filter-scrim" hidden></div>
+      <aside class="filter-panel" id="filter-panel" role="dialog" aria-modal="true" aria-labelledby="filter-panel-title" hidden>
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="drawer-head">
+          <h2 class="drawer-title" id="filter-panel-title">Filters</h2>
+          <button type="button" class="icon-btn" id="filters-close" aria-label="Close filters">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="drawer-sub">
+          <span class="drawer-count" id="drawer-count">44 of 44 makers</span>
+          <button type="button" class="clear-btn" id="filters-reset" disabled>Reset</button>
+        </div>
+        <div class="drawer-body">
+          <section class="fg">
+            <h3 class="fg-label" id="price-filter-label">Price</h3>
+            <div class="fg-chips" id="price-chips" role="group" aria-labelledby="price-filter-label"></div>
+          </section>
+          <section class="fg">
+            <h3 class="fg-label" id="type-filter-label">Pen type</h3>
+            <div class="fg-chips" id="type-chips" role="group" aria-labelledby="type-filter-label"></div>
+          </section>
+        </div>
+      </aside>
     </section>
 
     <section class="list-panel" id="maker-list" aria-labelledby="list-title">
@@ -164,15 +175,6 @@
             <option value="">All countries</option>
           </select>
         </label>
-        <label class="list-filter-wrap" for="list-price">
-          <span class="sr-only">Filter by price</span>
-          <select id="list-price" class="list-filter" aria-label="Filter by price">
-            <option value="">All prices</option>
-            <option value="under-100">Under $100</option>
-            <option value="100-250">$100–250</option>
-            <option value="over-250">Over $250</option>
-          </select>
-        </label>
         <div class="list-sort" id="list-sort" role="group" aria-label="Sort makers">
           <button type="button" class="list-sort-btn" data-sort="state" aria-pressed="true">By state</button>
           <button type="button" class="list-sort-btn" data-sort="az" aria-pressed="false">A–Z</button>
@@ -181,7 +183,10 @@
         </div>
       </div>
       <div id="list"></div>
-      <p class="list-empty" id="list-empty" hidden>No makers match</p>
+            <p class="list-empty" id="list-empty" hidden>
+        No makers match
+        <button type="button" class="list-empty-reset" id="list-empty-reset">Reset</button>
+      </p>
     </section>
 
     <section class="print-list" id="print-list" aria-label="Favorite makers" hidden></section>
@@ -201,10 +206,10 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261122a"></script>
-  <script src="vendor/topojson-client.min.js?v=20261122a"></script>
-  <script src="vendor/qrcode-generator.js?v=20261122a"></script>
-  <script src="map.js?v=20261122a"></script>
+  <script src="vendor/d3.min.js?v=20261125a"></script>
+  <script src="vendor/topojson-client.min.js?v=20261125a"></script>
+  <script src="vendor/qrcode-generator.js?v=20261125a"></script>
+  <script src="map.js?v=20261125a"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;
