@@ -84,9 +84,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], listFilters: [], lists: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261125h"),
-    d3.json("data/us-canada.topo.json?v=20261125h"),
-    d3.json("data/world-110m.topo.json?v=20261125h")
+    d3.json("makers.json?v=20261125i"),
+    d3.json("data/us-canada.topo.json?v=20261125i"),
+    d3.json("data/world-110m.topo.json?v=20261125i")
   ]).then(function (res) { init(res[0], res[1], res[2]); })
     .catch(function (err) {
       console.error(err);

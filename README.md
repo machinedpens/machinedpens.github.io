@@ -165,7 +165,7 @@ The list panel’s “Find a maker” box is unchanged: it is a simple substring
 
 Owner approval is required before any push. Show preview screenshots first and wait. Do not publish, force-push, or go live unasked.
 
-**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125h`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
+**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125i`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
 
 - `style.css`, `vendor/d3.min.js`, `vendor/topojson-client.min.js`, `vendor/qrcode-generator.js`, `vendor/fuse.min.js`, `map.js` (in `index.html`)
 - `makers.json`, `data/us-canada.topo.json`, `data/world-110m.topo.json` (in `map.js`)
