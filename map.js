@@ -84,9 +84,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], listFilters: [], lists: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261125f"),
-    d3.json("data/us-canada.topo.json?v=20261125f"),
-    d3.json("data/world-110m.topo.json?v=20261125f")
+    d3.json("makers.json?v=20261125g"),
+    d3.json("data/us-canada.topo.json?v=20261125g"),
+    d3.json("data/world-110m.topo.json?v=20261125g")
   ]).then(function (res) { init(res[0], res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -205,6 +205,7 @@
     if (world) world.hidden = hideChrome || state.view !== "home";
     // Same top-right spot as the World pill: on the world view and on country zooms.
     if (usca) usca.hidden = hideChrome || state.view === "home";
+    if (!hideChrome) syncDiscoverStatus();
   }
   function showHome() {
     state.view = "home";
@@ -1076,6 +1077,17 @@
       if (isFavHidden(m)) return false;
       return matchesFacets(m);
     });
+  }
+  function hasMappedLocation(m) {
+    return !!(m && !m.unmapped && m.lat != null && m.lon != null);
+  }
+  function isOutsideUsCa(m) {
+    return hasMappedLocation(m) && m.country !== "US" && m.country !== "CA";
+  }
+  function offMapMatchingCount() {
+    // Only the US & Canada landing view hides these pins; World / country zooms do not need the note.
+    if (state.view !== "home") return 0;
+    return filteredMakers().filter(isOutsideUsCa).length;
   }
   function filterCountText() {
     var n = filteredMakers().length;
@@ -2791,6 +2803,20 @@
       hint.hidden = false;
       hint.textContent = state.makers.length + " makers · tap a list to explore";
     }
+    var offmap = document.getElementById("showing-offmap");
+    if (offmap) {
+      // Default / no-facet hint stays an explore prompt (it already fills the slot).
+      // The off-map note is for active filters or Favorites, when matching mapped
+      // makers sit outside the US & Canada view.
+      var nOut = ((hasFacets || hasFav) && !showing.hidden) ? offMapMatchingCount() : 0;
+      if (nOut > 0) {
+        offmap.hidden = false;
+        offmap.querySelectorAll(".offmap-count").forEach(function (el) { el.textContent = String(nOut); });
+        offmap.setAttribute("aria-label", nOut + (nOut === 1 ? " maker" : " makers") + " outside US and Canada. See World view");
+      } else {
+        offmap.hidden = true;
+      }
+    }
   }
   var lastFilterSig = "";
   function filterSig() {
@@ -3376,6 +3402,14 @@
         ev.preventDefault();
         if (state.favOnly && !hasFacetFilters()) setFavOnly(false);
         else resetFilters();
+      });
+    }
+    var offmapBtn = document.getElementById("showing-offmap");
+    if (offmapBtn) {
+      offmapBtn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        showWorld();
       });
     }
     var searchClear = document.getElementById("discover-search-clear");

@@ -19,7 +19,7 @@
       if (["light", "dark", "bold"].indexOf(t) >= 0) document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261125f">
+  <link rel="stylesheet" href="style.css?v=20261125g">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -75,6 +75,10 @@
             <span class="showing-count" id="showing-count"></span>
             <span class="showing-dot" id="showing-dot" aria-hidden="true">·</span>
             <div class="af-chips" id="af-chips"></div>
+            <button type="button" class="showing-offmap" id="showing-offmap" hidden>
+              <span class="offmap-full">· <span class="offmap-count">0</span> outside US &amp; Canada · See World</span>
+              <span class="offmap-short">+<span class="offmap-count">0</span> abroad · World</span>
+            </button>
             <span class="showing-dot showing-dot-clear" id="showing-dot-clear" aria-hidden="true">·</span>
             <button type="button" class="showing-clear" id="showing-clear">Clear</button>
           </div>
@@ -232,11 +236,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261125f"></script>
-  <script src="vendor/topojson-client.min.js?v=20261125f"></script>
-  <script src="vendor/qrcode-generator.js?v=20261125f"></script>
-  <script src="vendor/fuse.min.js?v=20261125f"></script>
-  <script src="map.js?v=20261125f"></script>
+  <script src="vendor/d3.min.js?v=20261125g"></script>
+  <script src="vendor/topojson-client.min.js?v=20261125g"></script>
+  <script src="vendor/qrcode-generator.js?v=20261125g"></script>
+  <script src="vendor/fuse.min.js?v=20261125g"></script>
+  <script src="map.js?v=20261125g"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;
