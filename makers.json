@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-25",
+  "updated": "2026-11-26",
   "lists": [
     {
       "id": "lyfls-favs",
@@ -1173,7 +1173,8 @@
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
-        "regular"
+        "regular",
+        "fountain"
       ]
     },
     {
@@ -1309,6 +1310,74 @@
       "geocode_source": "Nominatim (OSM) country centroid",
       "pen_types": [
         "regular"
+      ]
+    },
+    {
+      "name": "Blackside Customs",
+      "slug": "blackside-customs",
+      "website": "https://blacksidecustoms.com",
+      "city": "Oceanside",
+      "region": "NY",
+      "region_name": "New York",
+      "country": "US",
+      "est_year": 2015,
+      "shop_founded": "2015",
+      "priceLow": 175,
+      "priceHigh": 175,
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 40.6391,
+      "lon": -73.6400,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid",
+      "pen_types": [
+        "regular"
+      ]
+    },
+    {
+      "name": "Makar Tools",
+      "slug": "makar-tools",
+      "website": "https://makartools.eu",
+      "city": "Olsztyn",
+      "region": "Warmińsko-Mazurskie",
+      "region_name": "Warmińsko-Mazurskie",
+      "country": "PL",
+      "est_year": 2019,
+      "shop_founded": "2019",
+      "priceLow": 800,
+      "priceHigh": 1500,
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 53.7767,
+      "lon": 20.4765,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid",
+      "pen_types": [
+        "regular",
+        "fountain"
+      ]
+    },
+    {
+      "name": "Kasama",
+      "slug": "kasama",
+      "website": "https://www.instagram.com/kasamaph/",
+      "city": null,
+      "region": null,
+      "region_name": null,
+      "country": "PH",
+      "est_year": 2018,
+      "shop_founded": "2018",
+      "priceLow": null,
+      "priceHigh": null,
+      "first_pen": "2018",
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 12.7503,
+      "lon": 122.7312,
+      "location_precision": "country",
+      "geocode_source": "Nominatim (OSM) country centroid",
+      "pen_types": [
+        "fountain"
       ]
     }
   ]

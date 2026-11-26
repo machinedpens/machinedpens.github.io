@@ -21,7 +21,7 @@
   var COUNTRY_NAMES = {
     US: "United States", CA: "Canada", EU: "Europe",
     UK: "United Kingdom", GB: "United Kingdom", JP: "Japan", ZA: "South Africa",
-    AU: "Australia", NZ: "New Zealand",
+    AU: "Australia", NZ: "New Zealand", PH: "Philippines",
     AL: "Albania", AD: "Andorra", AT: "Austria", BY: "Belarus", BE: "Belgium",
     BA: "Bosnia and Herzegovina", BG: "Bulgaria", HR: "Croatia", CY: "Cyprus",
     CZ: "Czechia", DK: "Denmark", EE: "Estonia", FI: "Finland", FR: "France",
@@ -34,8 +34,8 @@
     VA: "Vatican City",
     unknown: "Location unknown"
   };
-  var COUNTRY_ORDER = ["US", "CA", "EU", "HU", "JP", "ZA", "AU", "NZ"];
-  var COUNTRY_LABELS = { US: "US", CA: "Canada", EU: "Europe", HU: "Hungary", JP: "Japan", ZA: "South Africa", AU: "Australia", NZ: "New Zealand" };
+  var COUNTRY_ORDER = ["US", "CA", "EU", "HU", "JP", "PH", "ZA", "AU", "NZ"];
+  var COUNTRY_LABELS = { US: "US", CA: "Canada", EU: "Europe", HU: "Hungary", JP: "Japan", PH: "Philippines", ZA: "South Africa", AU: "Australia", NZ: "New Zealand" };
   // Alpha-2 codes in the Europe unit. Future makers with these country codes
   // automatically join the Europe pin, Europe zoom, and Europe list group.
   var EUROPE_COUNTRIES = {
@@ -52,12 +52,12 @@
     "440":1, "442":1, "498":1, "499":1, "528":1, "578":1, "616":1, "620":1, "642":1, "688":1,
     "703":1, "705":1, "724":1, "752":1, "756":1, "804":1, "826":1
   };
-  var WORLD_ISO = { "840": "US", "124": "CA", "392": "JP", "710": "ZA", "036": "AU", "554": "NZ" };
+  var WORLD_ISO = { "840": "US", "124": "CA", "392": "JP", "608": "PH", "710": "ZA", "036": "AU", "554": "NZ" };
   Object.keys(EUROPE_ISO).forEach(function (id) { WORLD_ISO[id] = "EU"; });
   // Hungary has its own World pin and country zoom (same pattern as AU/NZ),
   // so it is not folded into the Europe unit.
   WORLD_ISO["348"] = "HU";
-  var SIMPLE_COUNTRIES = { EU: 1, HU: 1, JP: 1, ZA: 1, AU: 1, NZ: 1 };
+  var SIMPLE_COUNTRIES = { EU: 1, HU: 1, JP: 1, PH: 1, ZA: 1, AU: 1, NZ: 1 };
   function isEuropeCountry(code) { return !!EUROPE_COUNTRIES[code]; }
   function isEuropeMaker(m) { return !!(m && isEuropeCountry(m.country)); }
   function unitCode(m) {
@@ -84,9 +84,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], listFilters: [], lists: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261125k"),
-    d3.json("data/us-canada.topo.json?v=20261125k"),
-    d3.json("data/world-110m.topo.json?v=20261125k")
+    d3.json("makers.json?v=20261125l"),
+    d3.json("data/us-canada.topo.json?v=20261125l"),
+    d3.json("data/world-110m.topo.json?v=20261125l")
   ]).then(function (res) { init(res[0], res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -161,7 +161,7 @@
 
   function worldFrame() {
     // Crop the world view to the band that holds every country pin
-    // (US, Canada, Europe, Hungary, Japan, South Africa, Australia, New Zealand).
+    // (US, Canada, Europe, Hungary, Japan, the Philippines, South Africa, Australia, New Zealand).
     // Extended east and a little south so New Zealand (and Tasmania) sit
     // comfortably inside; Antarctica and unused ocean stay trimmed. Hawaii
     // is off this crop; the US pin sits in the lower 48.
@@ -350,6 +350,7 @@
       JP: { x: -11, y: 4, anchor: "end" },
       ZA: { x: -11, y: 4, anchor: "end" },
       HU: { x: 11, y: 16, anchor: "start" },
+      PH: { x: 11, y: 16, anchor: "start" },
       AU: { x: 0, y: -12, anchor: "middle" },
       NZ: { x: -11, y: 16, anchor: "end" }
     } : {
@@ -358,6 +359,7 @@
       EU: { x: 14, y: 4, anchor: "start" },
       HU: { x: 14, y: 16, anchor: "start" },
       JP: { x: 14, y: 4, anchor: "start" },
+      PH: { x: 14, y: 4, anchor: "start" },
       ZA: { x: 14, y: 4, anchor: "start" },
       AU: { x: 14, y: 4, anchor: "start" },
       NZ: { x: -14, y: 4, anchor: "end" }
@@ -3025,6 +3027,39 @@
     var esc = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
     return new RegExp("(?:^|[^a-z0-9])(" + esc + ")(?=$|[^a-z0-9])", "i");
   }
+  function nameWords(name) {
+    return String(name || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  }
+  function nameHasWordPrefix(name, q) {
+    var lq = String(q || "").toLowerCase().trim();
+    if (!lq) return false;
+    var words = nameWords(name);
+    if (!words.length) return false;
+    if (words.join(" ").indexOf(lq) === 0) return true;
+    return words.some(function (w) { return w.indexOf(lq) === 0; });
+  }
+  function prefixRank(name, q) {
+    var lq = String(q || "").toLowerCase().trim();
+    var words = nameWords(name);
+    var joined = words.join(" ");
+    if (joined === lq) return 0;
+    if (joined.indexOf(lq) === 0) return 1;
+    var i, w;
+    for (i = 0; i < words.length; i++) {
+      w = words[i];
+      if (w === lq) return 2;
+      if (w.indexOf(lq) === 0) return 3 + (w.length - lq.length);
+    }
+    return 100;
+  }
+  function makersWithNamePrefix(q) {
+    return state.makers.filter(function (m) { return nameHasWordPrefix(m.name, q); })
+      .sort(function (a, b) {
+        var ra = prefixRank(a.name, q), rb = prefixRank(b.name, q);
+        if (ra !== rb) return ra - rb;
+        return String(a.name || "").localeCompare(String(b.name || ""));
+      });
+  }
   function suggestMakers(nameQ) {
     if (!nameQ || nameQ.length < 2) return [];
     function uniqueMakers(list) {
@@ -3040,11 +3075,15 @@
     function take(results, maxScore) {
       return (results || []).filter(function (r) { return r.score <= maxScore; }).map(function (r) { return r.item.m; });
     }
+    // A match at the start of the name, or of any word in the name, always
+    // counts, so a query like "Makar" or "Kasa" is not dropped just because
+    // Fuse scored it loosely or a filter synonym was nearby.
+    var prefixHits = makersWithNamePrefix(nameQ);
     if (makerFuse) {
       var nameHits = take(makerNameFuse ? makerNameFuse.search(nameQ) : makerFuse.search(nameQ), 0.4);
       var locHits = [];
       if (nameQ.length >= 4 && makerLocFuse) locHits = take(makerLocFuse.search(nameQ), 0.3);
-      return uniqueMakers(nameHits.concat(locHits)).slice(0, 5);
+      return uniqueMakers(prefixHits.concat(nameHits, locHits)).slice(0, 5);
     }
     var lq = nameQ.toLowerCase();
     return state.makers.filter(function (m) {
@@ -3132,7 +3171,10 @@
       for (var i = 0; i < terms.length; i++) {
         if (terms[i].term === tok) { hit = terms[i]; break; }
       }
-      if (!hit && keywordFuse && tok.length >= 4) {
+      // Fuzzy chip matches (e.g. "fountian" → fountain) stay, but do not
+      // swallow a token that already prefixes a maker name. "Makar" is close
+      // to "marker" in Fuse, and should still suggest Makar Tools.
+      if (!hit && keywordFuse && tok.length >= 4 && !makersWithNamePrefix(tok).length) {
         var res = keywordFuse.search(tok);
         if (res.length && res[0].score <= 0.4) hit = res[0].item;
       }
