@@ -5,12 +5,12 @@
       "id": "pp-top-10-budget-2026",
       "label": "PP Top 10 Budget 2026",
       "credit": "Pocket Priorities",
-      "rank_prefix": "PP",
+      "rank_prefix": "PP Budget",
       "url": "https://www.youtube.com/watch?v=oGYZg2yPHu8",
       "search_terms": [
-        "pp top 10",
-        "pp top ten",
-        "pocket priorities"
+        "pp top 10 budget",
+        "pp budget",
+        "top 10 budget"
       ],
       "makers": [
         {
@@ -51,6 +51,60 @@
         },
         {
           "slug": "modern-fuel",
+          "rank": 10
+        }
+      ]
+    },
+    {
+      "id": "pp-top-10-new-2026",
+      "label": "PP Top 10 New 2026",
+      "credit": "Pocket Priorities",
+      "rank_prefix": "PP New",
+      "url": "https://www.youtube.com/watch?v=2098e9SMM7Q",
+      "search_terms": [
+        "pp new",
+        "top 10 new",
+        "pp top 10 new"
+      ],
+      "makers": [
+        {
+          "slug": "billetspin",
+          "rank": 1
+        },
+        {
+          "slug": "arno-bernard-pens",
+          "rank": 2
+        },
+        {
+          "slug": "focusworks",
+          "rank": 3
+        },
+        {
+          "slug": "seguin",
+          "rank": 4
+        },
+        {
+          "slug": "machinewise",
+          "rank": 5
+        },
+        {
+          "slug": "autmog",
+          "rank": 6
+        },
+        {
+          "slug": "melrose-machine-works",
+          "rank": 7
+        },
+        {
+          "slug": "og-brad",
+          "rank": 8
+        },
+        {
+          "slug": "hungoblin",
+          "rank": 9
+        },
+        {
+          "slug": "big-idea-design",
           "rank": 10
         }
       ]
@@ -1180,6 +1234,28 @@
       "lon": -93.3123,
       "location_precision": "state",
       "geocode_source": "Nominatim (OSM) state centroid",
+      "pen_types": [
+        "regular"
+      ]
+    },
+    {
+      "name": "Hungoblin",
+      "slug": "hungoblin",
+      "website": "https://www.instagram.com/hungoblin/",
+      "city": null,
+      "region": null,
+      "region_name": null,
+      "country": "HU",
+      "est_year": 2026,
+      "shop_founded": "2026",
+      "priceLow": null,
+      "priceHigh": null,
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 47.1818,
+      "lon": 19.5061,
+      "location_precision": "country",
+      "geocode_source": "Nominatim (OSM) country centroid",
       "pen_types": [
         "regular"
       ]

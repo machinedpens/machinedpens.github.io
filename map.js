@@ -31,15 +31,16 @@
     NL: "Netherlands", MK: "North Macedonia", NO: "Norway", PL: "Poland",
     PT: "Portugal", RO: "Romania", SM: "San Marino", RS: "Serbia", SK: "Slovakia",
     SI: "Slovenia", ES: "Spain", SE: "Sweden", CH: "Switzerland", UA: "Ukraine",
-    VA: "Vatican City"
+    VA: "Vatican City",
+    unknown: "Location unknown"
   };
-  var COUNTRY_ORDER = ["US", "CA", "EU", "JP", "ZA", "AU", "NZ"];
-  var COUNTRY_LABELS = { US: "US", CA: "Canada", EU: "Europe", JP: "Japan", ZA: "South Africa", AU: "Australia", NZ: "New Zealand" };
+  var COUNTRY_ORDER = ["US", "CA", "EU", "HU", "JP", "ZA", "AU", "NZ"];
+  var COUNTRY_LABELS = { US: "US", CA: "Canada", EU: "Europe", HU: "Hungary", JP: "Japan", ZA: "South Africa", AU: "Australia", NZ: "New Zealand" };
   // Alpha-2 codes in the Europe unit. Future makers with these country codes
   // automatically join the Europe pin, Europe zoom, and Europe list group.
   var EUROPE_COUNTRIES = {
     AL:1, AD:1, AT:1, BY:1, BE:1, BA:1, BG:1, HR:1, CY:1, CZ:1, DK:1, EE:1, FI:1, FR:1,
-    DE:1, GR:1, HU:1, IS:1, IE:1, IT:1, XK:1, LV:1, LI:1, LT:1, LU:1, MT:1, MD:1, MC:1,
+    DE:1, GR:1, IS:1, IE:1, IT:1, XK:1, LV:1, LI:1, LT:1, LU:1, MT:1, MD:1, MC:1,
     ME:1, NL:1, MK:1, NO:1, PL:1, PT:1, RO:1, SM:1, RS:1, SK:1, SI:1, ES:1, SE:1, CH:1,
     UA:1, GB:1, UK:1, VA:1, FO:1, GI:1, GG:1, IM:1, JE:1, AX:1
   };
@@ -53,10 +54,16 @@
   };
   var WORLD_ISO = { "840": "US", "124": "CA", "392": "JP", "710": "ZA", "036": "AU", "554": "NZ" };
   Object.keys(EUROPE_ISO).forEach(function (id) { WORLD_ISO[id] = "EU"; });
-  var SIMPLE_COUNTRIES = { EU: 1, JP: 1, ZA: 1, AU: 1, NZ: 1 };
+  // Hungary has its own World pin and country zoom (same pattern as AU/NZ),
+  // so it is not folded into the Europe unit.
+  WORLD_ISO["348"] = "HU";
+  var SIMPLE_COUNTRIES = { EU: 1, HU: 1, JP: 1, ZA: 1, AU: 1, NZ: 1 };
   function isEuropeCountry(code) { return !!EUROPE_COUNTRIES[code]; }
   function isEuropeMaker(m) { return !!(m && isEuropeCountry(m.country)); }
-  function unitCode(m) { return isEuropeMaker(m) ? "EU" : (m && m.country); }
+  function unitCode(m) {
+    if (isEuropeMaker(m)) return "EU";
+    return (m && m.country) || "unknown";
+  }
   var REGION_ABBR = {
     // Used in "City, ST" lines
     AL:"AL",AK:"AK",AZ:"AZ",AR:"AR",CA:"CA",CO:"CO",CT:"CT",DE:"DE",FL:"FL",GA:"GA",HI:"HI",ID:"ID",IL:"IL",IN:"IN",IA:"IA",
@@ -77,9 +84,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], listFilters: [], lists: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261125d"),
-    d3.json("data/us-canada.topo.json?v=20261125d"),
-    d3.json("data/world-110m.topo.json?v=20261125d")
+    d3.json("makers.json?v=20261125e"),
+    d3.json("data/us-canada.topo.json?v=20261125e"),
+    d3.json("data/world-110m.topo.json?v=20261125e")
   ]).then(function (res) { init(res[0], res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -154,7 +161,7 @@
 
   function worldFrame() {
     // Crop the world view to the band that holds every country pin
-    // (US, Canada, Europe, Japan, South Africa, Australia, New Zealand).
+    // (US, Canada, Europe, Hungary, Japan, South Africa, Australia, New Zealand).
     // Extended east and a little south so New Zealand (and Tasmania) sit
     // comfortably inside; Antarctica and unused ocean stay trimmed. Hawaii
     // is off this crop; the US pin sits in the lower 48.
@@ -316,6 +323,8 @@
         // On a narrow world map, nudge the two North American pins apart so they stay tappable.
         if (code === "US") c = projection(W < 500 ? [-98, 36.2] : [-98.3, 39.8]);
         if (code === "CA") c = projection(W < 500 ? [-97, 62] : [-96, 56]);
+        // Hungary sits close to the Europe pin; keep the two apart on the world map.
+        if (code === "HU") c = projection(W < 500 ? [21.5, 46.2] : [21, 46.5]);
       }
       if (!c || isNaN(c[0]) || isNaN(c[1])) return;
       pins.push({ code: code, n: n, x: c[0], y: c[1] });
@@ -339,12 +348,14 @@
       EU: { x: 11, y: 4, anchor: "start" },
       JP: { x: -11, y: 4, anchor: "end" },
       ZA: { x: -11, y: 4, anchor: "end" },
+      HU: { x: 11, y: 16, anchor: "start" },
       AU: { x: 0, y: -12, anchor: "middle" },
       NZ: { x: -11, y: 16, anchor: "end" }
     } : {
       US: { x: 14, y: 4, anchor: "start" },
       CA: { x: 14, y: 4, anchor: "start" },
       EU: { x: 14, y: 4, anchor: "start" },
+      HU: { x: 14, y: 16, anchor: "start" },
       JP: { x: 14, y: 4, anchor: "start" },
       ZA: { x: 14, y: 4, anchor: "start" },
       AU: { x: 14, y: 4, anchor: "start" },
@@ -945,7 +956,7 @@
       return line;
     }
     if (isEuropeMaker(m) && COUNTRY_NAMES[m.country]) return COUNTRY_NAMES[m.country];
-    return m.region_name || "";
+    return m.region_name || COUNTRY_NAMES[m.country] || "";
   }
   function foundedDisplay(m) {
     return m.shop_founded || (m.est_year ? String(m.est_year) : null);
@@ -1001,7 +1012,8 @@
     state.lists.forEach(function (l) {
       var terms = (l.search_terms || []).slice();
       if (l.label && terms.indexOf(l.label) < 0) terms.push(l.label);
-      if (l.credit && terms.indexOf(l.credit) < 0) terms.push(l.credit);
+      // Do not auto-tick from a shared credit such as "Pocket Priorities";
+      // ambiguous queries suggest matching lists instead.
       if (!terms.length) return;
       var exists = SEARCH_SYNONYMS.some(function (syn) { return syn.group === "list" && syn.value === l.id; });
       if (!exists) SEARCH_SYNONYMS.push({ group: "list", value: l.id, terms: terms });
@@ -1241,29 +1253,55 @@
 
   function addListCredits(m, meta) {
     if (!meta || !m || !state.listFilters.length) return;
-    state.listFilters.forEach(function (id) {
+    var hits = [];
+    var order = (state.lists || []).map(function (l) { return l.id; });
+    var ids = state.listFilters.slice().sort(function (a, b) {
+      var ia = order.indexOf(a), ib = order.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+    ids.forEach(function (id) {
       var list = findList(id);
       var entry = listEntry(list, m);
       if (!list || !entry || entry.rank == null) return;
-      var p = document.createElement("p");
-      p.className = "list-credit";
       var prefix = list.rank_prefix || "";
-      var rankText = prefix ? (prefix + " #" + entry.rank) : ("#" + entry.rank);
-      p.appendChild(document.createTextNode(rankText));
-      if (list.credit && list.url) {
-        p.appendChild(document.createTextNode(" · "));
+      hits.push({
+        list: list,
+        text: prefix ? (prefix + " #" + entry.rank) : ("#" + entry.rank)
+      });
+    });
+    if (!hits.length) return;
+    var p = document.createElement("p");
+    p.className = "list-credit";
+    hits.forEach(function (hit, i) {
+      if (i) p.appendChild(document.createTextNode(" · "));
+      if (hit.list.url) {
         var a = document.createElement("a");
-        a.href = list.url;
+        a.href = hit.list.url;
         a.target = "_blank";
         a.rel = "noopener";
-        a.textContent = list.credit;
-        a.setAttribute("aria-label", list.credit + " (opens in a new tab)");
+        a.textContent = hit.text;
+        a.setAttribute("aria-label", hit.text + (hit.list.credit ? ", " + hit.list.credit : "") + " (opens in a new tab)");
         p.appendChild(a);
-      } else if (list.credit) {
-        p.appendChild(document.createTextNode(" · " + list.credit));
+      } else {
+        p.appendChild(document.createTextNode(hit.text));
       }
-      meta.appendChild(p);
     });
+    if (hits.length === 1 && hits[0].list.credit) {
+      p.appendChild(document.createTextNode(" · "));
+      var credit = hits[0].list;
+      if (credit.url) {
+        var ca = document.createElement("a");
+        ca.href = credit.url;
+        ca.target = "_blank";
+        ca.rel = "noopener";
+        ca.textContent = credit.credit;
+        ca.setAttribute("aria-label", credit.credit + " (opens in a new tab)");
+        p.appendChild(ca);
+      } else {
+        p.appendChild(document.createTextNode(credit.credit));
+      }
+    }
+    meta.appendChild(p);
   }
   function openCard(m, fromEl) {
     if (state.playing) stopPlay();
@@ -1367,9 +1405,10 @@
       else if (m.city) parts.push(m.city + ", " + (REGION_ABBR[m.region] || m.region));
       else if (isEuropeMaker(m) && COUNTRY_NAMES[m.country]) parts.push(COUNTRY_NAMES[m.country]);
       else if (m.region_name) parts.push(m.region_name);
+      else if (COUNTRY_NAMES[m.country]) parts.push(COUNTRY_NAMES[m.country]);
     } else if (m.city) {
       parts.push(m.city);
-    } else if (isEuropeMaker(m) && COUNTRY_NAMES[m.country]) {
+    } else if (COUNTRY_NAMES[m.country]) {
       parts.push(COUNTRY_NAMES[m.country]);
     }
     var year = listYear(m);
@@ -1476,7 +1515,7 @@
   function appendGroupedList(root, makers) {
     var byCountry = d3.group(makers, function (m) { return unitCode(m); }, function (m) {
       if (isEuropeMaker(m)) return COUNTRY_NAMES[m.country] || m.country;
-      return m.region_name;
+      return m.region_name || COUNTRY_NAMES[m.country] || "Location unknown";
     });
     var countries = Array.from(byCountry.keys()).sort(function (a, b) {
       var ia = COUNTRY_ORDER.indexOf(a), ib = COUNTRY_ORDER.indexOf(b);
@@ -2898,6 +2937,49 @@
         || (COUNTRY_NAMES[m.country] || "").toLowerCase().indexOf(lq) !== -1;
     }).slice(0, 5);
   }
+  var SHARED_LIST_TERMS = ["pp top 10", "pp top ten", "pocket priorities"];
+  function listQueryTerms(list) {
+    var terms = (list.search_terms || []).slice();
+    if (list.label) terms.push(list.label);
+    if (list.credit) terms.push(list.credit);
+    return terms;
+  }
+  function listQueryScore(q, list) {
+    if (!q) return 0;
+    var best = 0;
+    listQueryTerms(list).forEach(function (term) {
+      var t = String(term || "").toLowerCase().replace(/\s+/g, " ").trim();
+      if (!t) return;
+      if (t === q) best = Math.max(best, 1000 + t.length);
+      else if (wordRe(t).test(q)) best = Math.max(best, 500 + t.length);
+      else if (q.length >= 4 && t.indexOf(q) === 0) best = Math.max(best, 100 + q.length);
+    });
+    SHARED_LIST_TERMS.forEach(function (term) {
+      if (!(q === term || wordRe(term).test(q))) return;
+      var label = (list.label || "").toLowerCase();
+      var credit = (list.credit || "").toLowerCase();
+      if (label.indexOf(term) === 0 || wordRe(term).test(label) || credit === term || wordRe(term).test(credit)) {
+        best = Math.max(best, 50 + term.length);
+      }
+    });
+    return best;
+  }
+  function resolveListQuery(q) {
+    var scored = (state.lists || []).map(function (l) {
+      return { list: l, score: listQueryScore(q, l) };
+    }).filter(function (x) { return x.score > 0; });
+    if (!scored.length) return { lists: [], suggestions: [] };
+    var max = 0;
+    scored.forEach(function (x) { if (x.score > max) max = x.score; });
+    var top = scored.filter(function (x) { return x.score === max; });
+    // A unique strong match (exact, term-in-query, or unique label prefix) auto-selects.
+    // A tie, or only a shared phrase such as "pp top 10" / "pocket priorities", suggests
+    // the matching lists instead of ticking one or both.
+    if (top.length === 1 && max >= 100) {
+      return { lists: [top[0].list.id], suggestions: [] };
+    }
+    return { lists: [], suggestions: scored.map(function (x) { return x.list; }) };
+  }
   function parseFilterSearch(query) {
     var raw = String(query || "").replace(/[\u201c\u201d]/g, '"').replace(/[\u2018\u2019]/g, "'");
     var q = raw.trim().toLowerCase().replace(/\s+/g, " ");
@@ -2905,7 +2987,7 @@
     var types = [];
     var lists = [];
     var suggestions = [];
-    if (!q) return { prices: prices, types: types, lists: lists, suggestions: suggestions, showing: [] };
+    if (!q) return { prices: prices, types: types, lists: lists, listSuggestions: [], suggestions: suggestions, showing: [] };
 
     var priced = parsePricePatterns(q);
     priced.prices.forEach(function (v) { uniqPush(prices, v); });
@@ -2944,6 +3026,18 @@
       }
     });
 
+    var listRes = resolveListQuery(q);
+    lists = listRes.lists;
+    var listSuggestions = listRes.suggestions || [];
+    if (listSuggestions.length) {
+      SHARED_LIST_TERMS.forEach(function (term) {
+        leftover = leftover.replace(wordRe(term), " ").replace(/\s+/g, " ").trim();
+      });
+      // Recompute remain without the shared list phrase so we don't also
+      // treat "pp top 10" as a maker name query.
+      remain = leftover ? leftover.split(/[^a-z0-9]+/).filter(function (tok) { return tok && !SEARCH_STOP[tok]; }) : [];
+    }
+
     var nameQ = remain.join(" ").trim();
     if (nameQ.length >= 2) suggestions = suggestMakers(nameQ);
 
@@ -2951,7 +3045,7 @@
     PRICE_CHIPS.forEach(function (c) { if (prices.indexOf(c.value) >= 0) showing.push(c.label); });
     TYPE_CHIPS.forEach(function (c) { if (types.indexOf(c.value) >= 0) showing.push(c.label); });
     LIST_CHIPS.forEach(function (c) { if (lists.indexOf(c.value) >= 0) showing.push(c.label); });
-    return { prices: prices, types: types, lists: lists, suggestions: suggestions, showing: showing };
+    return { prices: prices, types: types, lists: lists, listSuggestions: listSuggestions, suggestions: suggestions, showing: showing };
   }
   function applyParsedSearch(parsed) {
     var changed = false;
@@ -2993,9 +3087,15 @@
       hideSuggestions();
       return;
     }
+    var listSuggestions = parsed.listSuggestions || [];
     if (parsed.showing.length) {
       show.hidden = false;
       show.textContent = "Showing: " + parsed.showing.join(", ");
+    } else if (listSuggestions.length) {
+      show.hidden = false;
+      show.textContent = listSuggestions.length === 1
+        ? "1 matching list — pick below"
+        : listSuggestions.length + " lists match — pick below";
     } else if (!parsed.suggestions.length) {
       show.hidden = false;
       show.textContent = "No matching filters";
@@ -3003,7 +3103,7 @@
       show.hidden = true;
       show.textContent = "";
     }
-    renderSuggestions(parsed.suggestions || []);
+    renderSuggestions(listSuggestions, parsed.suggestions || []);
   }
   function hideSuggestions() {
     var list = document.getElementById("filter-suggest");
@@ -3015,13 +3115,20 @@
       input.removeAttribute("aria-activedescendant");
     }
   }
-  function renderSuggestions(makers) {
+  function suggestionItems(listSuggestions, makers) {
+    var items = [];
+    (listSuggestions || []).forEach(function (l) { items.push({ kind: "list", list: l }); });
+    (makers || []).forEach(function (m) { items.push({ kind: "maker", m: m }); });
+    return items;
+  }
+  function renderSuggestions(listSuggestions, makers) {
     var list = document.getElementById("filter-suggest");
     var input = document.getElementById("filter-search");
     if (!list) return;
     searchSuggestIndex = -1;
     list.innerHTML = "";
-    if (!makers.length) {
+    var items = suggestionItems(listSuggestions, makers);
+    if (!items.length) {
       list.hidden = true;
       if (input) {
         input.setAttribute("aria-expanded", "false");
@@ -3029,29 +3136,55 @@
       }
       return;
     }
-    makers.forEach(function (m, i) {
+    items.forEach(function (item, i) {
       var li = document.createElement("li");
       li.id = "filter-suggest-" + i;
       li.setAttribute("role", "option");
       var name = document.createElement("span");
       name.className = "filter-suggest-name";
-      name.textContent = m.name;
-      li.appendChild(name);
-      var loc = locationLine(m);
-      if (loc) {
-        var place = document.createElement("span");
-        place.className = "filter-suggest-place";
-        place.textContent = loc;
+      var place = document.createElement("span");
+      place.className = "filter-suggest-place";
+      if (item.kind === "list") {
+        name.textContent = item.list.label;
+        place.textContent = "List";
+        li.appendChild(name);
         li.appendChild(place);
+        li.addEventListener("mousedown", function (ev) {
+          ev.preventDefault();
+          pickSuggestedList(item.list);
+        });
+      } else {
+        name.textContent = item.m.name;
+        li.appendChild(name);
+        var loc = locationLine(item.m);
+        if (loc) {
+          place.textContent = loc;
+          li.appendChild(place);
+        }
+        li.addEventListener("mousedown", function (ev) {
+          ev.preventDefault();
+          pickSuggestedMaker(item.m);
+        });
       }
-      li.addEventListener("mousedown", function (ev) {
-        ev.preventDefault();
-        pickSuggestedMaker(m);
-      });
       list.appendChild(li);
     });
     list.hidden = false;
     if (input) input.setAttribute("aria-expanded", "true");
+  }
+  function pickSuggestedList(list) {
+    if (!list) return;
+    if (state.listFilters.indexOf(list.id) < 0) {
+      state.listFilters.push(list.id);
+      track("filter-list/" + list.id, "Filter list");
+      applyFilters();
+    } else {
+      syncFilterUI();
+    }
+    var input = document.getElementById("filter-search");
+    if (input) {
+      input.focus();
+      renderSearchFeedback(parseFilterSearch(input.value));
+    }
   }
   function pickSuggestedMaker(m) {
     hideSuggestions();
@@ -3096,7 +3229,10 @@
         ev.preventDefault();
         if (open && searchSuggestIndex >= 0) {
           var parsed = parseFilterSearch(input.value);
-          if (parsed.suggestions[searchSuggestIndex]) pickSuggestedMaker(parsed.suggestions[searchSuggestIndex]);
+          var items = suggestionItems(parsed.listSuggestions, parsed.suggestions);
+          var pick = items[searchSuggestIndex];
+          if (pick && pick.kind === "list") pickSuggestedList(pick.list);
+          else if (pick && pick.m) pickSuggestedMaker(pick.m);
         }
       } else if (ev.key === "Escape") {
         if (open) {

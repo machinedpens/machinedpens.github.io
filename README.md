@@ -51,7 +51,7 @@ Typical fields on a current entry:
 | `in_maker_index` | boolean | `true` gets the Maker Index ring on the pin |
 | `maker_index_url` | string or `null` | Set only when `in_maker_index` is true |
 | `lat`, `lon` | number | Pin coordinates, usually 4 decimal places |
-| `location_precision` | string | `city`, `state`, or `region` |
+| `location_precision` | string | `city`, `state`, `region`, or `country` |
 | `geocode_source` | string | e.g. `Nominatim (OSM) city centroid` |
 
 Optional, only when they apply: `status` (`inactive` or `closed`), `status_label`, `status_note`, `city_unconfirmed`, `previously`, `shop_founded_short`.
@@ -70,7 +70,7 @@ Curated filter lists live in the top-level `lists` array (not on each maker). Ea
 | `search_terms` | array of strings, optional | Phrases that tick this chip in the Filters search, e.g. `pp top 10`, `pocket priorities`. The list `label` and `credit` are also recognized. |
 | `makers` | array | `{ "slug": "...", "rank": 1 }` entries, best-first. Rank is required for the card credit. |
 
-When that list chip is on, a matching maker’s card shows the rank and a credit link, for example `PP #1 · Pocket Priorities`.
+When one list chip is on, a matching maker’s card shows that list’s rank and a credit link, for example `PP Budget #1 · Pocket Priorities`. When more than one list chip is on, ranks are combined on one line, for example `PP Budget #7 · PP New #8`, and each rank links to its source video.
 
 Example (Hypercut MFG, as stored):
 
@@ -105,7 +105,7 @@ Never invent data. If a field is unverified, leave it off or `null`. If the owne
 1. **Check for a duplicate.** If the maker is already in `makers.json`, do not add a second entry. Report the differences and only change existing fields when asked.
 2. **Fill the fields above.** `est_year` is the start year as a number. `shop_founded` is the string shown on the card. Set `first_pen` only when you have a value; if the owner says to set it equal to the start year, do that and nothing else. `in_maker_index` is `false` unless they are actually featured.
 3. **Geocode.** Look up coordinates for the given city (Nominatim city centroid is the usual method). Round to about 4 decimals. Set `location_precision` to `city` and `geocode_source` to `Nominatim (OSM) city centroid`. If there is no city, a state- or region-level pin is allowed: `city` is `null`, `location_precision` is `state` or `region`, and the pin sits at a state/region centroid (see Tuff Writer in Arizona and Q3D in Illinois). Never use a street address; the site shows cities when known, never addresses.
-4. **Country and grouping.** Use the country alpha-2 code. Every maker whose `country` is in `EUROPE_COUNTRIES` in `map.js` automatically joins the single Europe unit: the World-view “Europe” count pin, the Europe zoom map, the Europe list group, and the Europe country filter. Rows and cards still show that maker’s own country and city. Japan (`JP`), South Africa (`ZA`), Australia (`AU`), and New Zealand (`NZ`) stay their own groups, each with a World-view count pin and a country zoom. US and Canada stay on the home map. You should not need to edit grouping code for a new European maker; if you add a European country code that is not already in `EUROPE_COUNTRIES` / `COUNTRY_NAMES`, add it there so it is included.
+4. **Country and grouping.** Use the country alpha-2 code. Every maker whose `country` is in `EUROPE_COUNTRIES` in `map.js` automatically joins the single Europe unit: the World-view “Europe” count pin, the Europe zoom map, the Europe list group, and the Europe country filter. Rows and cards still show that maker’s own country and city. Japan (`JP`), South Africa (`ZA`), Australia (`AU`), New Zealand (`NZ`), and Hungary (`HU`) stay their own groups, each with a World-view count pin and a country zoom. US and Canada stay on the home map. You should not need to edit grouping code for a new European maker; if you add a European country code that is not already in `EUROPE_COUNTRIES` / `COUNTRY_NAMES`, add it there so it is included.
 5. **Prices, in USD.** Convert any foreign price to USD first, then round the USD amounts:
    - Low = cheapest regular pen, rounded **down**
    - High = highest seen regular pen, rounded **up**
@@ -133,7 +133,7 @@ Preserve these. Keep the site simple. Default colors are orange and black (Warm 
 - **Home** is the detailed US + Canada map, including the Hawaii inset. It is not the world map.
 - A **World** pill sits at the top-right of the home map. It opens the world view (country count pins).
 - A **US & Canada** pill, same style, sits in that same top-right spot on the world view and on regional zooms. It returns to home. It is hidden on home.
-- **← World** sits at the top-left on regional zooms (Europe, Japan, South Africa, Australia, New Zealand) and returns to the world view.
+- **← World** sits at the top-left on regional zooms (Europe, Hungary, Japan, South Africa, Australia, New Zealand) and returns to the world view.
 - Tapping US or Canada (pin or land) from the world view also returns home. Tapping the Europe pin (or any European country with visible makers) zooms to the Europe map, which shows every visible European maker.
 - **Favorites** are a local star list, max 5, stored in `localStorage` under `machinedpens-maker-map-favorites`. Favorite pins are orange stars, about pin-sized, with a star-shaped border (the circle/ring is hidden). Do not change that shape.
 - **Timeline** is the only map view. The year slider (through `MAX_YEAR` in `map.js`, currently 2026) and play button stay. There is no Price mode and no price-colored pins; every pin uses the standard orange.
@@ -153,15 +153,15 @@ A short “Showing: …” line under the box lists the chips parsed from the cu
 
 The list panel’s “Find a maker” box is unchanged: it is a simple substring search on name, city, region name, and country. It does not use this parser or Fuse.js.
 
-**Adding a synonym.** In `map.js`, edit the `SEARCH_SYNONYMS` array. Each entry has `group` (`price`, `type`, or `list`), `value` (a chip id from `PRICE_CHIPS`, `TYPE_CHIPS`, or `LIST_CHIPS`, e.g. `fountain`, `under-100`, or `pp-top-10-budget-2026`), and `terms` (the words or phrases to recognize). List search terms can also be stored on the list in `makers.json` as `search_terms`. Restart is not needed beyond a refresh; bump the cache version if the file will be published. Do not add a CDN copy of Fuse.js — the local `vendor/fuse.min.js` and `vendor/LICENSE-fuse.txt` are the ones to keep.
+**Adding a synonym.** In `map.js`, edit the `SEARCH_SYNONYMS` array. Each entry has `group` (`price`, `type`, or `list`), `value` (a chip id from `PRICE_CHIPS`, `TYPE_CHIPS`, or `LIST_CHIPS`, e.g. `fountain`, `under-100`, or `pp-top-10-budget-2026`), and `terms` (the words or phrases to recognize). List search terms can also be stored on the list in `makers.json` as `search_terms`. Unique terms such as `pp new` or `pp top 10 budget` tick that one list. Shared phrases such as `pp top 10` or `pocket priorities` do not auto-select a list when more than one list matches; the drawer suggests the matching lists instead so the user can pick one or both. Restart is not needed beyond a refresh; bump the cache version if the file will be published. Do not add a CDN copy of Fuse.js — the local `vendor/fuse.min.js` and `vendor/LICENSE-fuse.txt` are the ones to keep.
 - **Do not add Share link or Share image buttons.** They were removed from the UI. Incoming shared-favorite links can still open a “Viewing shared favorites” banner; leave that as is unless asked to change it.
-- Featured Maker Index pins keep the ring. Inactive/closed pins stay hollow. Cards show location, shop founded, price (when present), first pen (when present), website, and “Update this entry” (opens a GitHub issue). When a Lists chip is on, a matching maker’s card also shows that list’s rank and credit link (for example `PP #1 · Pocket Priorities`).
+- Featured Maker Index pins keep the ring. Inactive/closed pins stay hollow. Cards show location, shop founded, price (when present), first pen (when present), website, and “Update this entry” (opens a GitHub issue). When a Lists chip is on, a matching maker’s card also shows that list’s rank and credit (for example `PP Budget #1 · Pocket Priorities`). When two list chips are on, a maker on both shows both ranks (for example `PP Budget #7 · PP New #8`).
 
 ## Release process
 
 Owner approval is required before any push. Show preview screenshots first and wait. Do not publish, force-push, or go live unasked.
 
-**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125d`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
+**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125e`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
 
 - `style.css`, `vendor/d3.min.js`, `vendor/topojson-client.min.js`, `vendor/qrcode-generator.js`, `vendor/fuse.min.js`, `map.js` (in `index.html`)
 - `makers.json`, `data/us-canada.topo.json`, `data/world-110m.topo.json` (in `map.js`)
@@ -183,7 +183,7 @@ Owner approval is required before any push. Show preview screenshots first and w
 
 (`share-link` and `share-image` still exist in JS but have no buttons in the current HTML, so they should not fire.)
 
-**Test locally.** Serve this folder over HTTP (so `makers.json` and the topo files load), then check home, World (including Australia and New Zealand pins; New Zealand must sit comfortably in the frame), a Europe zoom, Japan, South Africa, Australia or New Zealand, a new maker’s card, the list/country filter, the Filters drawer (search at the top, Price, Pen type, and Lists, including a typo query such as `fountian pens over 250`, a list query such as `pp top 10` or `pocket priorities`, a maker-name suggestion such as `shon`, a no-match query, and a zero-count chip), the list “Find a maker” box, the timeline with filters on, and `?still=1`. Confirm the map panel does not change size when Filters opens, search suggestions appear, or a filter is applied.
+**Test locally.** Serve this folder over HTTP (so `makers.json` and the topo files load), then check home, World (including Australia, New Zealand, and Hungary pins; New Zealand must sit comfortably in the frame), a Europe zoom, Japan, South Africa, Australia or New Zealand, a new maker’s card, the list/country filter, the Filters drawer (search at the top, Price, Pen type, and Lists, including a typo query such as `fountian pens over 250`, a unique list query such as `pp new`, and an ambiguous list query such as `pp top 10` or `pocket priorities` (which should suggest both PP lists), a maker-name suggestion such as `shon`, a no-match query, and a zero-count chip), the list “Find a maker” box, the timeline with filters on, and `?still=1`. Confirm the map panel does not change size when Filters opens, search suggestions appear, or a filter is applied.
 
 **Publish**, only after the owner approves the previews: commit to `main` in `machinedpens/machinedpens.github.io`, keep `.nojekyll` and this `README.md`, and verify the live site at https://machinedpens.github.io (hard-refresh so the new `?v=` assets load).
 
