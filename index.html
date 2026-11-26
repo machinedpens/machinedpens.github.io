@@ -19,7 +19,7 @@
       if (["light", "dark", "bold"].indexOf(t) >= 0) document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261125c">
+  <link rel="stylesheet" href="style.css?v=20261125d">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -164,6 +164,10 @@
             <h3 class="fg-label" id="type-filter-label">Pen type</h3>
             <div class="fg-chips" id="type-chips" role="group" aria-labelledby="type-filter-label"></div>
           </section>
+          <section class="fg" id="list-filter">
+            <h3 class="fg-label" id="list-filter-label">Lists</h3>
+            <div class="fg-chips" id="list-chips" role="group" aria-labelledby="list-filter-label"></div>
+          </section>
         </div>
       </aside>
     </section>
@@ -212,11 +216,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261125c"></script>
-  <script src="vendor/topojson-client.min.js?v=20261125c"></script>
-  <script src="vendor/qrcode-generator.js?v=20261125c"></script>
-  <script src="vendor/fuse.min.js?v=20261125c"></script>
-  <script src="map.js?v=20261125c"></script>
+  <script src="vendor/d3.min.js?v=20261125d"></script>
+  <script src="vendor/topojson-client.min.js?v=20261125d"></script>
+  <script src="vendor/qrcode-generator.js?v=20261125d"></script>
+  <script src="vendor/fuse.min.js?v=20261125d"></script>
+  <script src="map.js?v=20261125d"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;

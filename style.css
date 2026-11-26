@@ -195,6 +195,9 @@ button { font: inherit; color: inherit; }
 .card-meta .founded, .card-meta .price, .card-meta .pen { margin: 1px 0 0; }
 .card-meta .prev { margin: 8px 0 0; font-size: 13px; line-height: 1.4; }
 .card-meta .prev .k { font-weight: 600; color: var(--ink-3); }
+.card-meta .list-credit { margin: 6px 0 0; font-size: 13px; color: var(--ink); }
+.card-meta .list-credit a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.card-meta .list-credit a:hover { text-decoration: underline; }
 .card-note { margin: -4px 0 12px; font-size: 13px; color: var(--ink-2); line-height: 1.4; }
 .card-links { display: flex; flex-wrap: wrap; gap: 8px; }
 .card-links a {

@@ -74,19 +74,21 @@
   var playBtn = document.getElementById("play");
   var mqMobile = window.matchMedia("(max-width: 640px)");
 
-  var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
+  var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], listFilters: [], lists: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261125c"),
-    d3.json("data/us-canada.topo.json?v=20261125c"),
-    d3.json("data/world-110m.topo.json?v=20261125c")
-  ]).then(function (res) { init(res[0].makers, res[1], res[2]); })
+    d3.json("makers.json?v=20261125d"),
+    d3.json("data/us-canada.topo.json?v=20261125d"),
+    d3.json("data/world-110m.topo.json?v=20261125d")
+  ]).then(function (res) { init(res[0], res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
       wrap.insertAdjacentHTML("beforeend", '<p class="noscript">The map could not load. Please refresh.</p>');
     });
 
-  function init(makers, topo, worldTopo) {
+  function init(data, topo, worldTopo) {
+    var makers = (data && data.makers) || [];
+    loadLists(data && data.lists);
     makers.forEach(function (m, i) {
       m.id = "m" + i;
       if (!m.slug) m.slug = slugify(m.name);
@@ -990,21 +992,60 @@
     { value: "multi-pen", label: "Multi pen" },
     { value: "marker", label: "Marker" }
   ];
+  var LIST_CHIPS = [];
+  function loadLists(lists) {
+    state.lists = Array.isArray(lists) ? lists : [];
+    LIST_CHIPS = state.lists.map(function (l) {
+      return { value: l.id, label: l.label };
+    });
+    state.lists.forEach(function (l) {
+      var terms = (l.search_terms || []).slice();
+      if (l.label && terms.indexOf(l.label) < 0) terms.push(l.label);
+      if (l.credit && terms.indexOf(l.credit) < 0) terms.push(l.credit);
+      if (!terms.length) return;
+      var exists = SEARCH_SYNONYMS.some(function (syn) { return syn.group === "list" && syn.value === l.id; });
+      if (!exists) SEARCH_SYNONYMS.push({ group: "list", value: l.id, terms: terms });
+    });
+    keywordFuse = null;
+  }
+  function findList(id) {
+    return state.lists.find(function (l) { return l.id === id; }) || null;
+  }
   function makerTypes(m) {
     return (m && Array.isArray(m.pen_types) && m.pen_types.length) ? m.pen_types : ["regular"];
   }
   function matchesType(m, type) {
     return makerTypes(m).indexOf(type) >= 0;
   }
+  function matchesList(m, listId) {
+    var list = findList(listId);
+    if (!list || !m) return false;
+    return (list.makers || []).some(function (e) { return e.slug === m.slug; });
+  }
+  function listEntry(list, m) {
+    if (!list || !m) return null;
+    return (list.makers || []).find(function (e) { return e.slug === m.slug; }) || null;
+  }
+  function filtersFor(group) {
+    if (group === "price") return state.priceFilters;
+    if (group === "list") return state.listFilters;
+    return state.typeFilters;
+  }
   function hasFacetFilters() {
-    return state.priceFilters.length > 0 || state.typeFilters.length > 0;
+    return state.priceFilters.length > 0 || state.typeFilters.length > 0 || state.listFilters.length > 0;
   }
   function activeFilterCount() {
-    return state.priceFilters.length + state.typeFilters.length;
+    return state.priceFilters.length + state.typeFilters.length + state.listFilters.length;
   }
-  function matchesFacets(m) {
-    if (state.priceFilters.length && !state.priceFilters.some(function (tier) { return matchesPriceTier(m, tier); })) return false;
-    if (state.typeFilters.length && !state.typeFilters.some(function (type) { return matchesType(m, type); })) return false;
+  function matchesGroup(m, group, value) {
+    if (group === "price") return matchesPriceTier(m, value);
+    if (group === "list") return matchesList(m, value);
+    return matchesType(m, value);
+  }
+  function matchesFacets(m, exceptGroup) {
+    if (exceptGroup !== "price" && state.priceFilters.length && !state.priceFilters.some(function (tier) { return matchesPriceTier(m, tier); })) return false;
+    if (exceptGroup !== "type" && state.typeFilters.length && !state.typeFilters.some(function (type) { return matchesType(m, type); })) return false;
+    if (exceptGroup !== "list" && state.listFilters.length && !state.listFilters.some(function (id) { return matchesList(m, id); })) return false;
     return true;
   }
   function isFacetHidden(m) {
@@ -1013,12 +1054,8 @@
   function chipCount(group, value) {
     return state.makers.filter(function (m) {
       if (isFavHidden(m)) return false;
-      if (group === "price") {
-        if (state.typeFilters.length && !state.typeFilters.some(function (type) { return matchesType(m, type); })) return false;
-        return matchesPriceTier(m, value);
-      }
-      if (state.priceFilters.length && !state.priceFilters.some(function (tier) { return matchesPriceTier(m, tier); })) return false;
-      return matchesType(m, value);
+      if (!matchesFacets(m, group)) return false;
+      return matchesGroup(m, group, value);
     }).length;
   }
   function filteredMakers() {
@@ -1033,7 +1070,7 @@
     return n + " of " + total + " maker" + (total === 1 ? "" : "s");
   }
   function chipLabel(group, value) {
-    var list = group === "price" ? PRICE_CHIPS : TYPE_CHIPS;
+    var list = group === "price" ? PRICE_CHIPS : (group === "list" ? LIST_CHIPS : TYPE_CHIPS);
     var hit = list.find(function (c) { return c.value === value; });
     return hit ? hit.label : value;
   }
@@ -1202,6 +1239,32 @@
   var RING_ICON = '<svg class="ring-icon" viewBox="0 0 24 24" role="img" aria-label="Featured in The Maker Index"><title>Featured in The Maker Index</title><circle cx="12" cy="12" r="4.5" fill="var(--pin)"/><circle cx="12" cy="12" r="9" fill="none" stroke="var(--ring)" stroke-width="2"/></svg>';
   var ARROW = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11l6-6M6 5h5v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+  function addListCredits(m, meta) {
+    if (!meta || !m || !state.listFilters.length) return;
+    state.listFilters.forEach(function (id) {
+      var list = findList(id);
+      var entry = listEntry(list, m);
+      if (!list || !entry || entry.rank == null) return;
+      var p = document.createElement("p");
+      p.className = "list-credit";
+      var prefix = list.rank_prefix || "";
+      var rankText = prefix ? (prefix + " #" + entry.rank) : ("#" + entry.rank);
+      p.appendChild(document.createTextNode(rankText));
+      if (list.credit && list.url) {
+        p.appendChild(document.createTextNode(" · "));
+        var a = document.createElement("a");
+        a.href = list.url;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = list.credit;
+        a.setAttribute("aria-label", list.credit + " (opens in a new tab)");
+        p.appendChild(a);
+      } else if (list.credit) {
+        p.appendChild(document.createTextNode(" · " + list.credit));
+      }
+      meta.appendChild(p);
+    });
+  }
   function openCard(m, fromEl) {
     if (state.playing) stopPlay();
     state.active = m;
@@ -1236,6 +1299,7 @@
       prev.appendChild(document.createTextNode(m.previously));
       meta.appendChild(prev);
     }
+    addListCredits(m, meta);
     var note = document.getElementById("card-note");
     if (m.status_note) { note.hidden = false; note.textContent = m.status_note; }
     else { note.hidden = true; note.textContent = ""; }
@@ -2581,7 +2645,7 @@
     function fill(el, chips, group) {
       if (!el) return;
       el.innerHTML = chips.map(function (c) {
-        var on = (group === "price" ? state.priceFilters : state.typeFilters).indexOf(c.value) >= 0;
+        var on = filtersFor(group).indexOf(c.value) >= 0;
         var n = chipCount(group, c.value);
         var cls = "filter-chip" + (n === 0 ? " is-zero" : "");
         return '<button type="button" class="' + cls + '" data-filter-group="' + group + '" data-filter="' + c.value + '" aria-pressed="' + (on ? "true" : "false") + '">' +
@@ -2590,6 +2654,9 @@
     }
     fill(document.getElementById("price-chips"), PRICE_CHIPS, "price");
     fill(document.getElementById("type-chips"), TYPE_CHIPS, "type");
+    fill(document.getElementById("list-chips"), LIST_CHIPS, "list");
+    var listFg = document.getElementById("list-filter");
+    if (listFg) listFg.hidden = !LIST_CHIPS.length;
   }
   function renderActiveChips() {
     var wrap = document.getElementById("af-chips");
@@ -2598,6 +2665,7 @@
     var items = [];
     state.priceFilters.forEach(function (v) { items.push({ group: "price", value: v, label: chipLabel("price", v) }); });
     state.typeFilters.forEach(function (v) { items.push({ group: "type", value: v, label: chipLabel("type", v) }); });
+    state.listFilters.forEach(function (v) { items.push({ group: "list", value: v, label: chipLabel("list", v) }); });
     wrap.innerHTML = items.map(function (it) {
       return '<span class="af-chip">' + it.label +
         ' <button type="button" class="af-x" data-filter-group="' + it.group + '" data-filter="' + it.value + '" aria-label="Remove ' + it.label + '">' + xIcon + "</button></span>";
@@ -2605,7 +2673,7 @@
   }
   var lastFilterSig = "";
   function filterSig() {
-    return state.priceFilters.join(",") + "|" + state.typeFilters.join(",") + "|" + (state.favOnly ? "1" : "0");
+    return state.priceFilters.join(",") + "|" + state.typeFilters.join(",") + "|" + state.listFilters.join(",") + "|" + (state.favOnly ? "1" : "0");
   }
   function syncFilterUI() {
     var countText = filterCountText();
@@ -2640,12 +2708,13 @@
   }
   function applyFilters() {
     if (state.active && isHidden(state.active)) closeCard(true);
+    else if (state.active && card && !card.hidden) openCard(state.active, state.returnFocus);
     setYear(state.year);
   }
   function toggleFilter(group, value) {
     if (STILL || PRINT || !value) return;
-    var arr = group === "price" ? state.priceFilters : state.typeFilters;
-    var owned = group === "price" ? searchOwned.price : searchOwned.type;
+    var arr = filtersFor(group);
+    var owned = searchOwned[group] || (searchOwned[group] = []);
     var o = owned.indexOf(value);
     if (o >= 0) owned.splice(o, 1);
     var i = arr.indexOf(value);
@@ -2653,6 +2722,7 @@
     else {
       arr.push(value);
       if (group === "price") track("filter-price/" + value, "Filter price");
+      else if (group === "list") track("filter-list/" + value, "Filter list");
       else track("filter-type/" + value, "Filter type");
     }
     applyFilters();
@@ -2663,7 +2733,8 @@
     if (!hasFacetFilters() && !hadSearch) return;
     state.priceFilters = [];
     state.typeFilters = [];
-    searchOwned = { price: [], type: [] };
+    state.listFilters = [];
+    searchOwned = { price: [], type: [], list: [] };
     if (searchEl) searchEl.value = "";
     renderSearchFeedback({ showing: [], suggestions: [] });
     applyFilters();
@@ -2693,8 +2764,8 @@
 
   // Teach the Filters search a new word or typo by adding a term here.
   // `terms` match as whole words or phrases, and strings of 4+ characters
-  // also match fuzzily via Fuse.js. `group` is "price" or "type"; `value`
-  // must be a chip id from PRICE_CHIPS or TYPE_CHIPS.
+  // also match fuzzily via Fuse.js. `group` is "price", "type", or "list";
+  // `value` must be a chip id from PRICE_CHIPS, TYPE_CHIPS, or LIST_CHIPS.
   var SEARCH_SYNONYMS = [
     { group: "type", value: "fountain", terms: ["fountain", "fountain pen", "fountain pens", "fp"] },
     { group: "type", value: "regular", terms: ["regular", "ballpoint", "ball point", "rollerball", "roller ball", "gel", "bolt", "click"] },
@@ -2713,7 +2784,7 @@
   var makerNameFuse = null;
   var makerLocFuse = null;
   var searchSuggestIndex = -1;
-  var searchOwned = { price: [], type: [] };
+  var searchOwned = { price: [], type: [], list: [] };
 
   function searchTermIndex() {
     var items = [];
@@ -2832,8 +2903,9 @@
     var q = raw.trim().toLowerCase().replace(/\s+/g, " ");
     var prices = [];
     var types = [];
+    var lists = [];
     var suggestions = [];
-    if (!q) return { prices: prices, types: types, suggestions: suggestions, showing: [] };
+    if (!q) return { prices: prices, types: types, lists: lists, suggestions: suggestions, showing: [] };
 
     var priced = parsePricePatterns(q);
     priced.prices.forEach(function (v) { uniqPush(prices, v); });
@@ -2845,6 +2917,7 @@
       if (re.test(leftover)) {
         leftover = leftover.replace(re, " ").replace(/\s+/g, " ").trim();
         if (it.group === "price") uniqPush(prices, it.value);
+        else if (it.group === "list") uniqPush(lists, it.value);
         else uniqPush(types, it.value);
       }
     });
@@ -2864,6 +2937,7 @@
       }
       if (hit) {
         if (hit.group === "price") uniqPush(prices, hit.value);
+        else if (hit.group === "list") uniqPush(lists, hit.value);
         else uniqPush(types, hit.value);
       } else {
         remain.push(tok);
@@ -2876,7 +2950,8 @@
     var showing = [];
     PRICE_CHIPS.forEach(function (c) { if (prices.indexOf(c.value) >= 0) showing.push(c.label); });
     TYPE_CHIPS.forEach(function (c) { if (types.indexOf(c.value) >= 0) showing.push(c.label); });
-    return { prices: prices, types: types, suggestions: suggestions, showing: showing };
+    LIST_CHIPS.forEach(function (c) { if (lists.indexOf(c.value) >= 0) showing.push(c.label); });
+    return { prices: prices, types: types, lists: lists, suggestions: suggestions, showing: showing };
   }
   function applyParsedSearch(parsed) {
     var changed = false;
@@ -2895,12 +2970,14 @@
           changed = true;
           if (owned.indexOf(v) < 0) owned.push(v);
           if (group === "price") track("filter-price/" + v, "Filter price");
+          else if (group === "list") track("filter-list/" + v, "Filter list");
           else track("filter-type/" + v, "Filter type");
         }
       });
     }
-    syncGroup(state.priceFilters, searchOwned.price, parsed.prices, "price");
-    syncGroup(state.typeFilters, searchOwned.type, parsed.types, "type");
+    syncGroup(state.priceFilters, searchOwned.price, parsed.prices || [], "price");
+    syncGroup(state.typeFilters, searchOwned.type, parsed.types || [], "type");
+    syncGroup(state.listFilters, searchOwned.list, parsed.lists || [], "list");
     if (changed) applyFilters();
     else syncFilterUI();
     renderSearchFeedback(parsed);

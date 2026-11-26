@@ -16,11 +16,11 @@ The published site is this folder: HTML, CSS, JS, `makers.json`, map data, and t
 | `index.html` | Page shell, nav pills, Filters drawer, timeline, list, GoatCounter loader, cache-busted asset tags |
 | `map.js` | Map, list, cards, filters, favorites, country grouping |
 | `style.css` | Layout and themes. Default theme is Warm (cream, black text, burnt-orange pins) |
-| `makers.json` | All maker records (`updated` plus a `makers` array) |
+| `makers.json` | All maker records (`updated`, optional `lists`, and a `makers` array) |
 | `maker-map-still.png` | Home-map still, also used as `og:image` |
 | `data/us-canada.topo.json` | Detailed US + Canada land for the home map (object `usca`) |
 | `data/world-110m.topo.json` | World land for the World view and regional zooms |
-| `vendor/` | `d3.min.js`, `topojson-client.min.js`, `qrcode-generator.js`, and their licenses |
+| `vendor/` | `d3.min.js`, `topojson-client.min.js`, `qrcode-generator.js`, `fuse.min.js`, and their licenses |
 | `.nojekyll` | Empty. Required on GitHub Pages |
 | `README.md` | This handoff guide |
 
@@ -30,7 +30,7 @@ The published site is this folder: HTML, CSS, JS, `makers.json`, map data, and t
 
 ## `makers.json` schema
 
-Top level: `{ "updated": "YYYY-MM-DD", "makers": [ ... ] }`. There is no `id` field; `map.js` assigns one at load. Slugs are lowercase, punctuation stripped, spaces to hyphens (see `slugify` in `map.js`).
+Top level: `{ "updated": "YYYY-MM-DD", "lists": [ ... ], "makers": [ ... ] }`. `lists` is optional and may be omitted or `[]`. There is no `id` field on a maker; `map.js` assigns one at load. Slugs are lowercase, punctuation stripped, spaces to hyphens (see `slugify` in `map.js`).
 
 Typical fields on a current entry:
 
@@ -55,6 +55,22 @@ Typical fields on a current entry:
 | `geocode_source` | string | e.g. `Nominatim (OSM) city centroid` |
 
 Optional, only when they apply: `status` (`inactive` or `closed`), `status_label`, `status_note`, `city_unconfirmed`, `previously`, `shop_founded_short`.
+
+### Lists
+
+Curated filter lists live in the top-level `lists` array (not on each maker). Each list is one chip in a **Lists** group in the Filters drawer. More lists can be added later without changing the schema.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | string | Stable chip id, e.g. `pp-top-10-budget-2026` |
+| `label` | string | Chip label, e.g. `PP Top 10 Budget 2026` |
+| `credit` | string, optional | Shown on a maker card with the rank, e.g. `Pocket Priorities` |
+| `rank_prefix` | string, optional | Rank label prefix, e.g. `PP` so the card shows `PP #1` |
+| `url` | string, optional | Credit link (the source video or article) |
+| `search_terms` | array of strings, optional | Phrases that tick this chip in the Filters search, e.g. `pp top 10`, `pocket priorities`. The list `label` and `credit` are also recognized. |
+| `makers` | array | `{ "slug": "...", "rank": 1 }` entries, best-first. Rank is required for the card credit. |
+
+When that list chip is on, a matching maker’s card shows the rank and a credit link, for example `PP #1 · Pocket Priorities`.
 
 Example (Hypercut MFG, as stored):
 
@@ -98,7 +114,7 @@ Never invent data. If a field is unverified, leave it off or `null`. If the owne
    - No price if the maker is discontinued — leave `priceLow` and `priceHigh` null (current examples: MaxMadCo, inactive; SPP, closed)
    - If the owner gives a range, use it (after applying this rounding, unless they give an already-final range and tell you to use it exactly)
 
-   The Filters drawer has two groups, Price and Pen type. Picks inside a group are combined with **or**, picks across groups with **and**. Nothing selected in a group means “any”. Chips show a live count of how many makers you would see if you selected that chip, given the other group. A chip with a count of 0 is greyed but still tappable. Makers that do not match are hidden on the map and in the list, not faded.
+   The Filters drawer has three groups: Price, Pen type, and Lists. Picks inside a group are combined with **or**, picks across groups with **and**. Nothing selected in a group means “any”. Chips show a live count of how many makers you would see if you selected that chip, given the other groups. A chip with a count of 0 is greyed but still tappable. Makers that do not match are hidden on the map and in the list, not faded.
 
    Price chips are **Under $100**, **$100–250**, and **Over $250**. A maker appears under every chip its range touches, as implemented in `matchesPriceTier`:
 
@@ -106,7 +122,7 @@ Never invent data. If a field is unverified, leave it off or `null`. If the owne
    - $100–250: `priceLow <= 250` and `priceHigh >= 100`
    - Over $250: `priceHigh > 250`
 
-   Makers with no price appear in none of the price chips. Pen type chips are **Regular**, **Fountain**, **Multi pen**, and **Marker**, from the maker’s `pen_types` array.
+   Makers with no price appear in none of the price chips. Pen type chips are **Regular**, **Fountain**, **Multi pen**, and **Marker**, from the maker’s `pen_types` array. List chips come from the top-level `lists` array; a maker is on a list when their slug appears in that list’s `makers`.
 6. **Append** the new object to the `makers` array (do not rewrite or reorder existing entries). Update the top-level `updated` date if you are changing data.
 7. **Bump the cache version** (see Release process) and recapture `maker-map-still.png` if the home map (US + Canada pins) changed.
 
@@ -121,11 +137,11 @@ Preserve these. Keep the site simple. Default colors are orange and black (Warm 
 - Tapping US or Canada (pin or land) from the world view also returns home. Tapping the Europe pin (or any European country with visible makers) zooms to the Europe map, which shows every visible European maker.
 - **Favorites** are a local star list, max 5, stored in `localStorage` under `machinedpens-maker-map-favorites`. Favorite pins are orange stars, about pin-sized, with a star-shaped border (the circle/ring is hidden). Do not change that shape.
 - **Timeline** is the only map view. The year slider (through `MAX_YEAR` in `map.js`, currently 2026) and play button stay. There is no Price mode and no price-colored pins; every pin uses the standard orange.
-- **Filters** opens a side drawer on desktop and a bottom sheet on a phone. A search box sits at the top of that drawer/sheet, above the Price and Pen type chip groups (it is not a map overlay). A count such as “12 of 44 makers”, a Reset button, and removable chips under the slider show what is active. The `.map-panel` size must stay the same when the drawer opens or filters are applied (the chips row under the slider is a reserved slot; search lives inside the overlay, so it must not grow the panel).
+- **Filters** opens a side drawer on desktop and a bottom sheet on a phone. A search box sits at the top of that drawer/sheet, above the Price, Pen type, and Lists chip groups (it is not a map overlay). A count such as “12 of 44 makers”, a Reset button, and removable chips under the slider show what is active. The `.map-panel` size must stay the same when the drawer opens or filters are applied (the chips row under the slider is a reserved slot; search lives inside the overlay, so it must not grow the panel).
 
 ### Search in the Filters drawer
 
-The drawer search is a small parser plus [Fuse.js](https://fusejs.io) fuzzy matching. There is no AI. Typing ticks matching chips live; tapping chips by hand edits the same `priceFilters` / `typeFilters` state. Clearing the box leaves chips as they are. **Reset** clears the box, the “Showing:” line, suggestions, and every chip.
+The drawer search is a small parser plus [Fuse.js](https://fusejs.io) fuzzy matching. There is no AI. Typing ticks matching chips live; tapping chips by hand edits the same `priceFilters` / `typeFilters` / `listFilters` state. Clearing the box drops chips the search turned on and leaves chips you picked by hand. **Reset** clears the box, the “Showing:” line, suggestions, and every chip.
 
 How a query is read:
 
@@ -137,15 +153,15 @@ A short “Showing: …” line under the box lists the chips parsed from the cu
 
 The list panel’s “Find a maker” box is unchanged: it is a simple substring search on name, city, region name, and country. It does not use this parser or Fuse.js.
 
-**Adding a synonym.** In `map.js`, edit the `SEARCH_SYNONYMS` array. Each entry has `group` (`price` or `type`), `value` (a chip id from `PRICE_CHIPS` or `TYPE_CHIPS`, e.g. `fountain` or `under-100`), and `terms` (the words or phrases to recognize). Restart is not needed beyond a refresh; bump the cache version if the file will be published. Do not add a CDN copy of Fuse.js — the local `vendor/fuse.min.js` and `vendor/LICENSE-fuse.txt` are the ones to keep.
+**Adding a synonym.** In `map.js`, edit the `SEARCH_SYNONYMS` array. Each entry has `group` (`price`, `type`, or `list`), `value` (a chip id from `PRICE_CHIPS`, `TYPE_CHIPS`, or `LIST_CHIPS`, e.g. `fountain`, `under-100`, or `pp-top-10-budget-2026`), and `terms` (the words or phrases to recognize). List search terms can also be stored on the list in `makers.json` as `search_terms`. Restart is not needed beyond a refresh; bump the cache version if the file will be published. Do not add a CDN copy of Fuse.js — the local `vendor/fuse.min.js` and `vendor/LICENSE-fuse.txt` are the ones to keep.
 - **Do not add Share link or Share image buttons.** They were removed from the UI. Incoming shared-favorite links can still open a “Viewing shared favorites” banner; leave that as is unless asked to change it.
-- Featured Maker Index pins keep the ring. Inactive/closed pins stay hollow. Cards show location, shop founded, price (when present), first pen (when present), website, and “Update this entry” (opens a GitHub issue).
+- Featured Maker Index pins keep the ring. Inactive/closed pins stay hollow. Cards show location, shop founded, price (when present), first pen (when present), website, and “Update this entry” (opens a GitHub issue). When a Lists chip is on, a matching maker’s card also shows that list’s rank and credit link (for example `PP #1 · Pocket Priorities`).
 
 ## Release process
 
 Owner approval is required before any push. Show preview screenshots first and wait. Do not publish, force-push, or go live unasked.
 
-**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125c`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
+**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125d`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
 
 - `style.css`, `vendor/d3.min.js`, `vendor/topojson-client.min.js`, `vendor/qrcode-generator.js`, `vendor/fuse.min.js`, `map.js` (in `index.html`)
 - `makers.json`, `data/us-canada.topo.json`, `data/world-110m.topo.json` (in `map.js`)
@@ -160,13 +176,14 @@ Owner approval is required before any push. Show preview screenshots first and w
 | `unstar/{slug}` | A maker is unstarred, including Clear favorites |
 | `filter-price/{tier}` | A price chip is turned on (`under-100`, `100-250`, `over-250`) |
 | `filter-type/{type}` | A pen type chip is turned on (`regular`, `fountain`, `multi-pen`, `marker`) |
+| `filter-list/{id}` | A Lists chip is turned on (e.g. `pp-top-10-budget-2026`) |
 | `update-entry/{slug}` | “Update this entry” is clicked |
 | `suggest-maker` | “Suggest a maker” is clicked |
 | `opened-shared-link` | A shared-favorites URL is opened |
 
 (`share-link` and `share-image` still exist in JS but have no buttons in the current HTML, so they should not fire.)
 
-**Test locally.** Serve this folder over HTTP (so `makers.json` and the topo files load), then check home, World (including Australia and New Zealand pins; New Zealand must sit comfortably in the frame), a Europe zoom, Japan, South Africa, Australia or New Zealand, a new maker’s card, the list/country filter, the Filters drawer (search at the top, Price and Pen type, including a typo query such as `fountian pens over 250`, a maker-name suggestion such as `shon`, a no-match query, and a zero-count chip), the list “Find a maker” box, the timeline with filters on, and `?still=1`. Confirm the map panel does not change size when Filters opens, search suggestions appear, or a filter is applied.
+**Test locally.** Serve this folder over HTTP (so `makers.json` and the topo files load), then check home, World (including Australia and New Zealand pins; New Zealand must sit comfortably in the frame), a Europe zoom, Japan, South Africa, Australia or New Zealand, a new maker’s card, the list/country filter, the Filters drawer (search at the top, Price, Pen type, and Lists, including a typo query such as `fountian pens over 250`, a list query such as `pp top 10` or `pocket priorities`, a maker-name suggestion such as `shon`, a no-match query, and a zero-count chip), the list “Find a maker” box, the timeline with filters on, and `?still=1`. Confirm the map panel does not change size when Filters opens, search suggestions appear, or a filter is applied.
 
 **Publish**, only after the owner approves the previews: commit to `main` in `machinedpens/machinedpens.github.io`, keep `.nojekyll` and this `README.md`, and verify the live site at https://machinedpens.github.io (hard-refresh so the new `?v=` assets load).
 

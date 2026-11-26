@@ -1,5 +1,61 @@
 {
   "updated": "2026-11-25",
+  "lists": [
+    {
+      "id": "pp-top-10-budget-2026",
+      "label": "PP Top 10 Budget 2026",
+      "credit": "Pocket Priorities",
+      "rank_prefix": "PP",
+      "url": "https://www.youtube.com/watch?v=oGYZg2yPHu8",
+      "search_terms": [
+        "pp top 10",
+        "pp top ten",
+        "pocket priorities"
+      ],
+      "makers": [
+        {
+          "slug": "the-right-choice-painting-company",
+          "rank": 1
+        },
+        {
+          "slug": "tactile-turn",
+          "rank": 2
+        },
+        {
+          "slug": "everyman",
+          "rank": 3
+        },
+        {
+          "slug": "big-idea-design",
+          "rank": 4
+        },
+        {
+          "slug": "everyday-karas",
+          "rank": 5
+        },
+        {
+          "slug": "mig-shed",
+          "rank": 6
+        },
+        {
+          "slug": "og-brad",
+          "rank": 7
+        },
+        {
+          "slug": "that-dutch-pen-guy",
+          "rank": 8
+        },
+        {
+          "slug": "honey-badger-arsenal",
+          "rank": 9
+        },
+        {
+          "slug": "modern-fuel",
+          "rank": 10
+        }
+      ]
+    }
+  ],
   "makers": [
     {
       "name": "Autmog",
@@ -1059,6 +1115,73 @@
       "pen_types": [
         "regular",
         "fountain"
+      ]
+    },
+    {
+      "name": "Everyman",
+      "slug": "everyman",
+      "website": "https://everyman.co",
+      "city": "Cedar Rapids",
+      "region": "IA",
+      "region_name": "Iowa",
+      "country": "US",
+      "est_year": null,
+      "shop_founded": null,
+      "priceLow": 55,
+      "priceHigh": 120,
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 41.9759,
+      "lon": -91.6704,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid",
+      "pen_types": [
+        "regular"
+      ]
+    },
+    {
+      "name": "Everyday Karas",
+      "slug": "everyday-karas",
+      "website": "https://everydaykaras.com",
+      "city": "Mesa",
+      "region": "AZ",
+      "region_name": "Arizona",
+      "country": "US",
+      "est_year": 2017,
+      "shop_founded": "2017",
+      "priceLow": 29,
+      "priceHigh": 29,
+      "first_pen": "2025",
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 33.4151,
+      "lon": -111.8315,
+      "location_precision": "city",
+      "geocode_source": "Nominatim (OSM) city centroid",
+      "pen_types": [
+        "regular"
+      ]
+    },
+    {
+      "name": "That Dutch Pen Guy",
+      "slug": "that-dutch-pen-guy",
+      "website": "https://www.instagram.com/thatdutchpenguy/",
+      "city": null,
+      "region": "IA",
+      "region_name": "Iowa",
+      "country": "US",
+      "est_year": null,
+      "shop_founded": null,
+      "priceLow": 100,
+      "priceHigh": 100,
+      "in_maker_index": false,
+      "maker_index_url": null,
+      "lat": 41.9217,
+      "lon": -93.3123,
+      "location_precision": "state",
+      "geocode_source": "Nominatim (OSM) state centroid",
+      "pen_types": [
+        "regular"
       ]
     }
   ]
