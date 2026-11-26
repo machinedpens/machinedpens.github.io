@@ -77,9 +77,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261125b"),
-    d3.json("data/us-canada.topo.json?v=20261125b"),
-    d3.json("data/world-110m.topo.json?v=20261125b")
+    d3.json("makers.json?v=20261125c"),
+    d3.json("data/us-canada.topo.json?v=20261125c"),
+    d3.json("data/world-110m.topo.json?v=20261125c")
   ]).then(function (res) { init(res[0].makers, res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -2984,12 +2984,8 @@
   function onFilterSearchInput() {
     var input = document.getElementById("filter-search");
     var q = input ? input.value : "";
-    if (!String(q).trim()) {
-      searchOwned = { price: [], type: [] };
-      renderSearchFeedback({ showing: [], suggestions: [] });
-      syncFilterUI();
-      return;
-    }
+    // Empty query goes through the same sync as a query change: drop
+    // search-applied chips, keep ones the user selected by hand.
     applyParsedSearch(parseFilterSearch(q));
   }
   function moveSuggest(dir) {
