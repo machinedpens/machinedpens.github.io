@@ -62,15 +62,19 @@ Curated filter lists live in the top-level `lists` array (not on each maker). Ea
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `id` | string | Stable chip id, e.g. `pp-top-10-budget-2026` |
-| `label` | string | Chip label, e.g. `PP Top 10 Budget 2026` |
-| `credit` | string, optional | Shown on a maker card with the rank, e.g. `Pocket Priorities` |
-| `rank_prefix` | string, optional | Rank label prefix, e.g. `PP` so the card shows `PP #1` |
-| `url` | string, optional | Credit link (the source video or article) |
-| `search_terms` | array of strings, optional | Phrases that tick this chip in the Filters search, e.g. `pp top 10`, `pocket priorities`. The list `label` and `credit` are also recognized. |
-| `makers` | array | `{ "slug": "...", "rank": 1 }` entries, best-first. Rank is required for the card credit. |
+| `id` | string | Stable chip id, e.g. `pp-top-10-budget-2026` or `lyfls-favs` |
+| `label` | string | Chip label, e.g. `PP Top 10 Budget 2026` or `lyfl's favs` |
+| `short_label` | string, optional | Short chip label on phones, e.g. `PP Budget`. If omitted, the full `label` is used. |
+| `credit` | string, optional | Shown on a maker card with the rank or tag, e.g. `Pocket Priorities` or `lyfl` |
+| `rank_prefix` | string, optional | Rank or tag prefix. Ranked lists use this as `PP Budget #1`. Unranked lists use it as the card tag with no number, e.g. `lyfl's fav`. |
+| `icon` | string, optional | Icon on the Lists chip in the Filters panel: `list` (default) or `heart`. The owner’s list uses `heart`. |
+| `url` | string, optional | Credit link (the source video or article). Omit when there is no source; the card then shows the tag as plain text. |
+| `search_terms` | array of strings, optional | Phrases that tick this chip in the Filters search, e.g. `pp top 10`, `pocket priorities`, `lyfl`, `favs`. The list `label` and `credit` are also recognized. |
+| `makers` | array | `{ "slug": "...", "rank": 1 }` entries, best-first. `rank` is optional. Unranked lists list slugs in the intended order, with no `rank` field. |
 
-When one list chip is on, a matching maker’s card shows that list’s rank and a credit link, for example `PP Budget #1 · Pocket Priorities`. When more than one list chip is on, ranks are combined on one line, for example `PP Budget #7 · PP New #8`, and each rank links to its source video.
+The owner’s list (`lyfls-favs`) is first in this array so it leads the **Lists** group in the Filters panel. Those chips stay black with an orange icon (a heart on the owner’s list, a list icon on the others), and turn orange when on. Curated lists are not shown on the homepage discovery bar. The bar keeps Search, a row of light quick-filter chips (Fountain, Under $100, $100–250, and Over $250, each with a count; chips with no matches are hidden), and the Filters button. Those chips use the same Price and Pen type facets as the Filters panel (OR within a group, AND across groups) and turn orange when on. An active list still appears as a removable chip in the status line.
+
+When one list chip is on, a matching maker’s card shows that list’s rank or tag and a credit, for example `PP Budget #1 · Pocket Priorities` or `lyfl's fav · lyfl`. When more than one list chip is on, tags are combined on one line, for example `lyfl's fav · PP New #6`. Ranked tags link to their source video when `url` is set.
 
 Example (Hypercut MFG, as stored):
 
@@ -153,15 +157,15 @@ A short “Showing: …” line under the box lists the chips parsed from the cu
 
 The list panel’s “Find a maker” box is unchanged: it is a simple substring search on name, city, region name, and country. It does not use this parser or Fuse.js.
 
-**Adding a synonym.** In `map.js`, edit the `SEARCH_SYNONYMS` array. Each entry has `group` (`price`, `type`, or `list`), `value` (a chip id from `PRICE_CHIPS`, `TYPE_CHIPS`, or `LIST_CHIPS`, e.g. `fountain`, `under-100`, or `pp-top-10-budget-2026`), and `terms` (the words or phrases to recognize). List search terms can also be stored on the list in `makers.json` as `search_terms`. Unique terms such as `pp new` or `pp top 10 budget` tick that one list. Shared phrases such as `pp top 10` or `pocket priorities` do not auto-select a list when more than one list matches; the drawer suggests the matching lists instead so the user can pick one or both. Restart is not needed beyond a refresh; bump the cache version if the file will be published. Do not add a CDN copy of Fuse.js — the local `vendor/fuse.min.js` and `vendor/LICENSE-fuse.txt` are the ones to keep.
+**Adding a synonym.** In `map.js`, edit the `SEARCH_SYNONYMS` array. Each entry has `group` (`price`, `type`, or `list`), `value` (a chip id from `PRICE_CHIPS`, `TYPE_CHIPS`, or `LIST_CHIPS`, e.g. `fountain`, `under-100`, or `pp-top-10-budget-2026`), and `terms` (the words or phrases to recognize). List search terms can also be stored on the list in `makers.json` as `search_terms`. Unique terms such as `pp new`, `pp top 10 budget`, `lyfl`, or `favs` tick that one list. Shared phrases such as `pp top 10` or `pocket priorities` do not auto-select a list when more than one list matches; the drawer suggests the matching lists instead so the user can pick one or both. Restart is not needed beyond a refresh; bump the cache version if the file will be published. Do not add a CDN copy of Fuse.js — the local `vendor/fuse.min.js` and `vendor/LICENSE-fuse.txt` are the ones to keep.
 - **Do not add Share link or Share image buttons.** They were removed from the UI. Incoming shared-favorite links can still open a “Viewing shared favorites” banner; leave that as is unless asked to change it.
-- Featured Maker Index pins keep the ring. Inactive/closed pins stay hollow. Cards show location, shop founded, price (when present), first pen (when present), website, and “Update this entry” (opens a GitHub issue). When a Lists chip is on, a matching maker’s card also shows that list’s rank and credit (for example `PP Budget #1 · Pocket Priorities`). When two list chips are on, a maker on both shows both ranks (for example `PP Budget #7 · PP New #8`).
+- Featured Maker Index pins keep the ring. Inactive/closed pins stay hollow. Cards show location, shop founded, price (when present), first pen (when present), website, and “Update this entry” (opens a GitHub issue). When a Lists chip is on, a matching maker’s card also shows that list’s rank or unranked tag and credit (for example `PP Budget #1 · Pocket Priorities`, or `lyfl's fav · lyfl`). When two list chips are on, a maker on both shows both tags (for example `lyfl's fav · PP New #6`).
 
 ## Release process
 
 Owner approval is required before any push. Show preview screenshots first and wait. Do not publish, force-push, or go live unasked.
 
-**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125g`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
+**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125h`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
 
 - `style.css`, `vendor/d3.min.js`, `vendor/topojson-client.min.js`, `vendor/qrcode-generator.js`, `vendor/fuse.min.js`, `map.js` (in `index.html`)
 - `makers.json`, `data/us-canada.topo.json`, `data/world-110m.topo.json` (in `map.js`)
@@ -183,7 +187,7 @@ Owner approval is required before any push. Show preview screenshots first and w
 
 (`share-link` and `share-image` still exist in JS but have no buttons in the current HTML, so they should not fire.)
 
-**Test locally.** Serve this folder over HTTP (so `makers.json` and the topo files load), then check home, World (including Australia, New Zealand, and Hungary pins; New Zealand must sit comfortably in the frame), a Europe zoom, Japan, South Africa, Australia or New Zealand, a new maker’s card, the list/country filter, the Filters drawer (search at the top, Price, Pen type, and Lists, including a typo query such as `fountian pens over 250`, a unique list query such as `pp new`, and an ambiguous list query such as `pp top 10` or `pocket priorities` (which should suggest both PP lists), a maker-name suggestion such as `shon`, a no-match query, and a zero-count chip), the list “Find a maker” box, the timeline with filters on, and `?still=1`. Confirm the map panel does not change size when Filters opens, search suggestions appear, or a filter is applied.
+**Test locally.** Serve this folder over HTTP (so `makers.json` and the topo files load), then check home, World (including Australia, New Zealand, and Hungary pins; New Zealand must sit comfortably in the frame), a Europe zoom, Japan, South Africa, Australia or New Zealand, a new maker’s card, the list/country filter, the Filters drawer (search at the top, Price, Pen type, and Lists, including a typo query such as `fountian pens over 250`, a unique list query such as `pp new` or `lyfl`, and an ambiguous list query such as `pp top 10` or `pocket priorities` (which should suggest both PP lists, not the owner’s list), a maker-name suggestion such as `shon`, a no-match query, and a zero-count chip), the list “Find a maker” box, the timeline with filters on, and `?still=1`. Confirm the map panel does not change size when Filters opens, search suggestions appear, or a filter is applied.
 
 **Publish**, only after the owner approves the previews: commit to `main` in `machinedpens/machinedpens.github.io`, keep `.nojekyll` and this `README.md`, and verify the live site at https://machinedpens.github.io (hard-refresh so the new `?v=` assets load).
 

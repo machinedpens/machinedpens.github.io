@@ -2,6 +2,46 @@
   "updated": "2026-11-25",
   "lists": [
     {
+      "id": "lyfls-favs",
+      "label": "lyfl's favs",
+      "short_label": "lyfl's favs",
+      "credit": "lyfl",
+      "rank_prefix": "lyfl's fav",
+      "icon": "heart",
+      "search_terms": [
+        "lyfl",
+        "lyfl favs",
+        "lyfls favs",
+        "favs",
+        "favorites",
+        "teja",
+        "my favs"
+      ],
+      "makers": [
+        {
+          "slug": "matthew-martin-makes"
+        },
+        {
+          "slug": "autmog"
+        },
+        {
+          "slug": "maxmadco"
+        },
+        {
+          "slug": "melrose-machine-works"
+        },
+        {
+          "slug": "hungoblin"
+        },
+        {
+          "slug": "spp"
+        },
+        {
+          "slug": "machinewise"
+        }
+      ]
+    },
+    {
       "id": "pp-top-10-budget-2026",
       "label": "PP Top 10 Budget 2026",
       "short_label": "PP Budget",

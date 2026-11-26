@@ -84,9 +84,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], listFilters: [], lists: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261125g"),
-    d3.json("data/us-canada.topo.json?v=20261125g"),
-    d3.json("data/world-110m.topo.json?v=20261125g")
+    d3.json("makers.json?v=20261125h"),
+    d3.json("data/us-canada.topo.json?v=20261125h"),
+    d3.json("data/world-110m.topo.json?v=20261125h")
   ]).then(function (res) { init(res[0], res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -994,9 +994,9 @@
     return false;
   }
   var PRICE_CHIPS = [
-    { value: "under-100", label: "Under $100" },
-    { value: "100-250", label: "$100–250" },
-    { value: "over-250", label: "Over $250" }
+    { value: "under-100", label: "Under $100", shortLabel: "Under $100" },
+    { value: "100-250", label: "$100–250", shortLabel: "$100–250" },
+    { value: "over-250", label: "Over $250", shortLabel: "$250+" }
   ];
   var TYPE_CHIPS = [
     { value: "regular", label: "Regular" },
@@ -1008,7 +1008,7 @@
   function loadLists(lists) {
     state.lists = Array.isArray(lists) ? lists : [];
     LIST_CHIPS = state.lists.map(function (l) {
-      return { value: l.id, label: l.label, shortLabel: l.short_label || l.label };
+      return { value: l.id, label: l.label, shortLabel: l.short_label || l.label, icon: l.icon || "list" };
     });
     state.lists.forEach(function (l) {
       var terms = (l.search_terms || []).slice();
@@ -1039,6 +1039,11 @@
   function listEntry(list, m) {
     if (!list || !m) return null;
     return (list.makers || []).find(function (e) { return e.slug === m.slug; }) || null;
+  }
+  function listTagText(list, entry) {
+    var prefix = (list && (list.rank_prefix || list.short_label || list.label)) || "";
+    if (!entry || entry.rank == null || entry.rank === "") return prefix;
+    return prefix ? (prefix + " #" + entry.rank) : ("#" + entry.rank);
   }
   function filtersFor(group) {
     if (group === "price") return state.priceFilters;
@@ -1280,12 +1285,10 @@
     ids.forEach(function (id) {
       var list = findList(id);
       var entry = listEntry(list, m);
-      if (!list || !entry || entry.rank == null) return;
-      var prefix = list.rank_prefix || "";
-      hits.push({
-        list: list,
-        text: prefix ? (prefix + " #" + entry.rank) : ("#" + entry.rank)
-      });
+      if (!list || !entry) return;
+      var text = listTagText(list, entry);
+      if (!text) return;
+      hits.push({ list: list, text: text });
     });
     if (!hits.length) return;
     var p = document.createElement("p");
@@ -2702,16 +2705,24 @@
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
   var LIST_CHIP_ICON = '<svg class="chip-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 7h11M9 12h11M9 17h11"/><circle cx="5" cy="7" r="1.15" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1.15" fill="currentColor" stroke="none"/><circle cx="5" cy="17" r="1.15" fill="currentColor" stroke="none"/></svg>';
+  var HEART_CHIP_ICON = '<svg class="chip-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.2-4.4-9.3-8.6C1.2 8.2 3 5 6.6 5c1.8 0 3.2 1 4.1 2.4C11.6 6 13 5 14.8 5c3.6 0 5.4 3.2 3.9 6.4C19.2 15.6 12 20 12 20z"/></svg>';
+  function chipIconSvg(icon) {
+    return icon === "heart" ? HEART_CHIP_ICON : LIST_CHIP_ICON;
+  }
   function quickChipsData() {
+    // Homepage bar: light quick filters from real type/price facets (not curated lists).
+    // Lists stay in the Filters panel. Hide chips with no current matches, except
+    // a chip that's already on so it can be turned off.
     var items = [];
-    LIST_CHIPS.forEach(function (c) {
-      items.push({ group: "list", value: c.value, label: c.label, shortLabel: c.shortLabel || c.label, curated: true });
-    });
     var fountain = TYPE_CHIPS.find(function (c) { return c.value === "fountain"; });
-    if (fountain) items.push({ group: "type", value: fountain.value, label: fountain.label, shortLabel: fountain.label, curated: false });
-    var under100 = PRICE_CHIPS.find(function (c) { return c.value === "under-100"; });
-    if (under100) items.push({ group: "price", value: under100.value, label: under100.label, shortLabel: under100.label, curated: false });
-    return items;
+    if (fountain) items.push({ group: "type", value: fountain.value, label: fountain.label, shortLabel: fountain.shortLabel || fountain.label });
+    PRICE_CHIPS.forEach(function (c) {
+      items.push({ group: "price", value: c.value, label: c.label, shortLabel: c.shortLabel || c.label });
+    });
+    return items.filter(function (c) {
+      var on = filtersFor(c.group).indexOf(c.value) >= 0;
+      return on || chipCount(c.group, c.value) > 0;
+    });
   }
   function chipLabelHtml(fullLabel, shortLabel) {
     if (!shortLabel || shortLabel === fullLabel) return escapeHtml(fullLabel);
@@ -2723,10 +2734,9 @@
     wrap.innerHTML = quickChipsData().map(function (c) {
       var on = filtersFor(c.group).indexOf(c.value) >= 0;
       var n = chipCount(c.group, c.value);
-      var cls = "filter-chip" + (c.curated ? " chip-curated" : "") + (n === 0 ? " is-zero" : "");
-      var ico = c.curated ? LIST_CHIP_ICON + " " : "";
+      var cls = "filter-chip" + (n === 0 ? " is-zero" : "");
       return '<button type="button" class="' + cls + '" data-filter-group="' + c.group + '" data-filter="' + c.value + '" aria-pressed="' + (on ? "true" : "false") + '">' +
-        ico + chipLabelHtml(c.label, c.shortLabel) + ' <span class="chip-n">' + n + "</span></button>";
+        chipLabelHtml(c.label, c.shortLabel) + ' <span class="chip-n">' + n + "</span></button>";
     }).join("");
   }
   function renderFilterChips() {
@@ -2735,9 +2745,11 @@
       el.innerHTML = chips.map(function (c) {
         var on = filtersFor(group).indexOf(c.value) >= 0;
         var n = chipCount(group, c.value);
-        var cls = "filter-chip" + (n === 0 ? " is-zero" : "");
+        var curated = group === "list";
+        var cls = "filter-chip" + (curated ? " chip-curated" : "") + (n === 0 ? " is-zero" : "");
+        var ico = curated ? chipIconSvg(c.icon) + " " : "";
         return '<button type="button" class="' + cls + '" data-filter-group="' + group + '" data-filter="' + c.value + '" aria-pressed="' + (on ? "true" : "false") + '">' +
-          escapeHtml(c.label) + ' <span class="chip-n">' + n + "</span></button>";
+          ico + escapeHtml(c.label) + ' <span class="chip-n">' + n + "</span></button>";
       }).join("");
     }
     fill(document.getElementById("price-chips"), PRICE_CHIPS, "price");
@@ -2801,7 +2813,7 @@
     } else {
       showing.hidden = true;
       hint.hidden = false;
-      hint.textContent = state.makers.length + " makers · tap a list to explore";
+      hint.textContent = state.makers.length + " makers · search or open Filters";
     }
     var offmap = document.getElementById("showing-offmap");
     if (offmap) {
