@@ -84,9 +84,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], listFilters: [], lists: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261125e"),
-    d3.json("data/us-canada.topo.json?v=20261125e"),
-    d3.json("data/world-110m.topo.json?v=20261125e")
+    d3.json("makers.json?v=20261125f"),
+    d3.json("data/us-canada.topo.json?v=20261125f"),
+    d3.json("data/world-110m.topo.json?v=20261125f")
   ]).then(function (res) { init(res[0], res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -177,7 +177,7 @@
   function homeMapMobileHeight(W) {
     var probe = d3.geoConicConformal().rotate([96, 0]).parallels([33, 58]).fitWidth(W - 24, frame());
     var b = d3.geoPath(probe).bounds(frame());
-    return Math.round(b[1][1] - b[0][1] + 28 + 98);
+    return Math.round(b[1][1] - b[0][1] + 20 + 98);
   }
 
   var cachedLegendH = 0;
@@ -653,7 +653,7 @@
       mobileInsetBand = (!state.focusCountry || state.focusCountry === "US") ? 98 : 0;
       // Extra top room so the back-to-World control doesn't sit on Washington / the Yukon.
       backBand = (!STILL && state.focusCountry) ? 34 : 0;
-      el.style.height = Math.round(b[1][1] - b[0][1] + 28 + mobileInsetBand + backBand) + "px";
+      el.style.height = Math.round(b[1][1] - b[0][1] + 20 + mobileInsetBand + backBand) + "px";
     } else {
       el.style.height = "";
     }
@@ -664,7 +664,7 @@
     svg.selectAll("*").remove();
 
     backBand = (!STILL && state.focusCountry) ? 34 : 0;
-    var pad = STILL ? { t: 110, r: 40, b: 40, l: 40 } : (W < 500 ? { t: 14 + backBand, r: 12, b: 14 + mobileInsetBand, l: 12 } : { t: 24, r: 24, b: 24, l: 24 });
+    var pad = STILL ? { t: 110, r: 40, b: 40, l: 40 } : (W < 500 ? { t: 10 + backBand, r: 12, b: 10 + mobileInsetBand, l: 12 } : { t: 24, r: 24, b: 24, l: 24 });
     var projection = d3.geoConicConformal()
       .rotate([96, 0]).parallels([33, 58])
       .fitExtent([[pad.l, pad.t], [W - pad.r, H - pad.b]], frame());
@@ -1007,11 +1007,12 @@
   function loadLists(lists) {
     state.lists = Array.isArray(lists) ? lists : [];
     LIST_CHIPS = state.lists.map(function (l) {
-      return { value: l.id, label: l.label };
+      return { value: l.id, label: l.label, shortLabel: l.short_label || l.label };
     });
     state.lists.forEach(function (l) {
       var terms = (l.search_terms || []).slice();
       if (l.label && terms.indexOf(l.label) < 0) terms.push(l.label);
+      if (l.short_label && terms.indexOf(l.short_label) < 0) terms.push(l.short_label);
       // Do not auto-tick from a shared credit such as "Pocket Priorities";
       // ambiguous queries suggest matching lists instead.
       if (!terms.length) return;
@@ -1085,6 +1086,11 @@
     var list = group === "price" ? PRICE_CHIPS : (group === "list" ? LIST_CHIPS : TYPE_CHIPS);
     var hit = list.find(function (c) { return c.value === value; });
     return hit ? hit.label : value;
+  }
+  function chipShortLabel(group, value) {
+    var list = group === "price" ? PRICE_CHIPS : (group === "list" ? LIST_CHIPS : TYPE_CHIPS);
+    var hit = list.find(function (c) { return c.value === value; });
+    return hit ? (hit.shortLabel || hit.label) : value;
   }
 
   function ariaLabel(m) {
@@ -2680,6 +2686,37 @@
     buildPrintList();
   }
 
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  var LIST_CHIP_ICON = '<svg class="chip-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 7h11M9 12h11M9 17h11"/><circle cx="5" cy="7" r="1.15" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1.15" fill="currentColor" stroke="none"/><circle cx="5" cy="17" r="1.15" fill="currentColor" stroke="none"/></svg>';
+  function quickChipsData() {
+    var items = [];
+    LIST_CHIPS.forEach(function (c) {
+      items.push({ group: "list", value: c.value, label: c.label, shortLabel: c.shortLabel || c.label, curated: true });
+    });
+    var fountain = TYPE_CHIPS.find(function (c) { return c.value === "fountain"; });
+    if (fountain) items.push({ group: "type", value: fountain.value, label: fountain.label, shortLabel: fountain.label, curated: false });
+    var under100 = PRICE_CHIPS.find(function (c) { return c.value === "under-100"; });
+    if (under100) items.push({ group: "price", value: under100.value, label: under100.label, shortLabel: under100.label, curated: false });
+    return items;
+  }
+  function chipLabelHtml(fullLabel, shortLabel) {
+    if (!shortLabel || shortLabel === fullLabel) return escapeHtml(fullLabel);
+    return '<span class="chip-label-full">' + escapeHtml(fullLabel) + '</span><span class="chip-label-short">' + escapeHtml(shortLabel) + '</span>';
+  }
+  function renderDiscoverChips() {
+    var wrap = document.getElementById("discover-chips");
+    if (!wrap) return;
+    wrap.innerHTML = quickChipsData().map(function (c) {
+      var on = filtersFor(c.group).indexOf(c.value) >= 0;
+      var n = chipCount(c.group, c.value);
+      var cls = "filter-chip" + (c.curated ? " chip-curated" : "") + (n === 0 ? " is-zero" : "");
+      var ico = c.curated ? LIST_CHIP_ICON + " " : "";
+      return '<button type="button" class="' + cls + '" data-filter-group="' + c.group + '" data-filter="' + c.value + '" aria-pressed="' + (on ? "true" : "false") + '">' +
+        ico + chipLabelHtml(c.label, c.shortLabel) + ' <span class="chip-n">' + n + "</span></button>";
+    }).join("");
+  }
   function renderFilterChips() {
     function fill(el, chips, group) {
       if (!el) return;
@@ -2688,7 +2725,7 @@
         var n = chipCount(group, c.value);
         var cls = "filter-chip" + (n === 0 ? " is-zero" : "");
         return '<button type="button" class="' + cls + '" data-filter-group="' + group + '" data-filter="' + c.value + '" aria-pressed="' + (on ? "true" : "false") + '">' +
-          c.label + ' <span class="chip-n">' + n + "</span></button>";
+          escapeHtml(c.label) + ' <span class="chip-n">' + n + "</span></button>";
       }).join("");
     }
     fill(document.getElementById("price-chips"), PRICE_CHIPS, "price");
@@ -2696,19 +2733,64 @@
     fill(document.getElementById("list-chips"), LIST_CHIPS, "list");
     var listFg = document.getElementById("list-filter");
     if (listFg) listFg.hidden = !LIST_CHIPS.length;
+    renderDiscoverChips();
   }
   function renderActiveChips() {
     var wrap = document.getElementById("af-chips");
     if (!wrap) return;
     var xIcon = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
     var items = [];
-    state.priceFilters.forEach(function (v) { items.push({ group: "price", value: v, label: chipLabel("price", v) }); });
-    state.typeFilters.forEach(function (v) { items.push({ group: "type", value: v, label: chipLabel("type", v) }); });
-    state.listFilters.forEach(function (v) { items.push({ group: "list", value: v, label: chipLabel("list", v) }); });
+    state.priceFilters.forEach(function (v) { items.push({ group: "price", value: v, label: chipLabel("price", v), shortLabel: chipShortLabel("price", v) }); });
+    state.typeFilters.forEach(function (v) { items.push({ group: "type", value: v, label: chipLabel("type", v), shortLabel: chipShortLabel("type", v) }); });
+    state.listFilters.forEach(function (v) { items.push({ group: "list", value: v, label: chipLabel("list", v), shortLabel: chipShortLabel("list", v) }); });
     wrap.innerHTML = items.map(function (it) {
-      return '<span class="af-chip">' + it.label +
-        ' <button type="button" class="af-x" data-filter-group="' + it.group + '" data-filter="' + it.value + '" aria-label="Remove ' + it.label + '">' + xIcon + "</button></span>";
+      return '<span class="af-chip">' + chipLabelHtml(it.label, it.shortLabel) +
+        ' <button type="button" class="af-x" data-filter-group="' + it.group + '" data-filter="' + it.value + '" aria-label="Remove ' + escapeHtml(it.label) + '">' + xIcon + "</button></span>";
     }).join("");
+  }
+  var lastSearchStatusMsg = "";
+  function syncDiscoverStatus() {
+    var hint = document.getElementById("discover-hint");
+    var showing = document.getElementById("discover-showing");
+    var countEl = document.getElementById("showing-count");
+    var dot = document.getElementById("showing-dot");
+    var af = document.getElementById("af-chips");
+    var dotClear = document.getElementById("showing-dot-clear");
+    var clearBtn = document.getElementById("showing-clear");
+    if (!hint || !showing) return;
+    var hasFacets = hasFacetFilters();
+    var hasFav = !!state.favOnly;
+    var searchEl = document.getElementById("filter-search");
+    var q = searchEl ? searchEl.value.trim() : "";
+    if (hasFacets) {
+      hint.hidden = true;
+      showing.hidden = false;
+      if (countEl) countEl.textContent = "Showing " + filteredMakers().length + " of " + state.makers.length;
+      if (dot) dot.hidden = false;
+      if (af) af.hidden = false;
+      if (dotClear) dotClear.hidden = false;
+      if (clearBtn) { clearBtn.hidden = false; clearBtn.textContent = "Clear"; }
+    } else if (hasFav) {
+      hint.hidden = true;
+      showing.hidden = false;
+      if (countEl) countEl.textContent = "Showing " + filteredMakers().length + " of " + state.makers.length + " favorites";
+      if (dot) dot.hidden = true;
+      if (af) af.hidden = true;
+      if (dotClear) dotClear.hidden = false;
+      if (clearBtn) { clearBtn.hidden = false; clearBtn.textContent = "Show all"; }
+    } else if (q && lastSearchStatusMsg) {
+      hint.hidden = true;
+      showing.hidden = false;
+      if (countEl) countEl.textContent = lastSearchStatusMsg;
+      if (dot) dot.hidden = true;
+      if (af) af.hidden = true;
+      if (dotClear) dotClear.hidden = false;
+      if (clearBtn) { clearBtn.hidden = false; clearBtn.textContent = "Clear"; }
+    } else {
+      showing.hidden = true;
+      hint.hidden = false;
+      hint.textContent = state.makers.length + " makers · tap a list to explore";
+    }
   }
   var lastFilterSig = "";
   function filterSig() {
@@ -2716,9 +2798,7 @@
   }
   function syncFilterUI() {
     var countText = filterCountText();
-    var countEl = document.getElementById("filter-count");
     var drawerCount = document.getElementById("drawer-count");
-    if (countEl) countEl.textContent = countText;
     if (drawerCount) drawerCount.textContent = countText;
     var n = activeFilterCount();
     var badge = document.getElementById("filters-badge");
@@ -2729,6 +2809,8 @@
     var btn = document.getElementById("filters-btn");
     if (btn) btn.classList.toggle("has-filters", n > 0);
     var searchEl = document.getElementById("filter-search");
+    var searchClear = document.getElementById("discover-search-clear");
+    if (searchClear) searchClear.hidden = !(searchEl && searchEl.value.length > 0);
     var canReset = n > 0 || !!(searchEl && searchEl.value.trim());
     document.querySelectorAll(".clear-btn").forEach(function (el) {
       if (canReset) el.removeAttribute("disabled");
@@ -2740,10 +2822,12 @@
       mapEmpty.hidden = !none;
     }
     var sig = filterSig();
-    if (sig === lastFilterSig && document.querySelector("#price-chips .filter-chip")) return;
-    lastFilterSig = sig;
-    renderFilterChips();
-    renderActiveChips();
+    if (sig !== lastFilterSig || !document.querySelector("#price-chips .filter-chip")) {
+      lastFilterSig = sig;
+      renderFilterChips();
+      renderActiveChips();
+    }
+    syncDiscoverStatus();
   }
   function applyFilters() {
     if (state.active && isHidden(state.active)) closeCard(true);
@@ -2775,7 +2859,7 @@
     state.listFilters = [];
     searchOwned = { price: [], type: [], list: [] };
     if (searchEl) searchEl.value = "";
-    renderSearchFeedback({ showing: [], suggestions: [] });
+    renderSearchFeedback({ showing: [], listSuggestions: [], suggestions: [] });
     applyFilters();
   }
   function setFiltersOpen(open) {
@@ -2789,12 +2873,9 @@
     if (btn) btn.setAttribute("aria-expanded", state.filtersOpen ? "true" : "false");
     document.body.classList.toggle("filters-open", state.filtersOpen);
     if (state.filtersOpen) {
-      var searchEl = document.getElementById("filter-search");
-      if (searchEl) searchEl.focus();
-      else {
-        var closeBtn = document.getElementById("filters-close");
-        if (closeBtn) closeBtn.focus();
-      }
+      hideSuggestions();
+      var closeBtn = document.getElementById("filters-close");
+      if (closeBtn) closeBtn.focus();
     } else if (btn) {
       btn.focus();
     }
@@ -3077,32 +3158,27 @@
     renderSearchFeedback(parsed);
   }
   function renderSearchFeedback(parsed) {
-    var show = document.getElementById("filter-showing");
     var input = document.getElementById("filter-search");
-    if (!show) return;
     var q = input && input.value.trim();
     if (!q) {
-      show.hidden = true;
-      show.textContent = "";
+      lastSearchStatusMsg = "";
       hideSuggestions();
+      syncDiscoverStatus();
       return;
     }
     var listSuggestions = parsed.listSuggestions || [];
     if (parsed.showing.length) {
-      show.hidden = false;
-      show.textContent = "Showing: " + parsed.showing.join(", ");
+      lastSearchStatusMsg = "";
     } else if (listSuggestions.length) {
-      show.hidden = false;
-      show.textContent = listSuggestions.length === 1
+      lastSearchStatusMsg = listSuggestions.length === 1
         ? "1 matching list — pick below"
         : listSuggestions.length + " lists match — pick below";
-    } else if (!parsed.suggestions.length) {
-      show.hidden = false;
-      show.textContent = "No matching filters";
+    } else if (parsed.suggestions.length) {
+      lastSearchStatusMsg = state.makers.length + " makers · pick a match below";
     } else {
-      show.hidden = true;
-      show.textContent = "";
+      lastSearchStatusMsg = "No matching filters";
     }
+    syncDiscoverStatus();
     renderSuggestions(listSuggestions, parsed.suggestions || []);
   }
   function hideSuggestions() {
@@ -3188,7 +3264,7 @@
   }
   function pickSuggestedMaker(m) {
     hideSuggestions();
-    setFiltersOpen(false);
+    if (state.filtersOpen) setFiltersOpen(false);
     focusMaker(m);
   }
   function onFilterSearchInput() {
@@ -3246,13 +3322,11 @@
 
   function bindFilters() {
     if (STILL || PRINT) {
-      var modeBar = document.getElementById("map-mode-bar");
-      var active = document.getElementById("active-filters");
+      var discoverBar = document.getElementById("discover-bar");
       var panel = document.getElementById("filter-panel");
       var scrim = document.getElementById("filter-scrim");
       var empty = document.getElementById("map-empty");
-      if (modeBar) modeBar.hidden = true;
-      if (active) active.hidden = true;
+      if (discoverBar) discoverBar.hidden = true;
       if (panel) panel.hidden = true;
       if (scrim) scrim.hidden = true;
       if (empty) empty.hidden = true;
@@ -3278,6 +3352,15 @@
         toggleFilter(chip.getAttribute("data-filter-group"), chip.getAttribute("data-filter"));
       });
     }
+    var discoverChips = document.getElementById("discover-chips");
+    if (discoverChips) {
+      discoverChips.addEventListener("click", function (ev) {
+        var chip = ev.target.closest("[data-filter]");
+        if (!chip || !discoverChips.contains(chip)) return;
+        ev.preventDefault();
+        toggleFilter(chip.getAttribute("data-filter-group"), chip.getAttribute("data-filter"));
+      });
+    }
     var af = document.getElementById("af-chips");
     if (af) {
       af.addEventListener("click", function (ev) {
@@ -3285,6 +3368,26 @@
         if (!x) return;
         ev.preventDefault();
         toggleFilter(x.getAttribute("data-filter-group"), x.getAttribute("data-filter"));
+      });
+    }
+    var showingClear = document.getElementById("showing-clear");
+    if (showingClear) {
+      showingClear.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        if (state.favOnly && !hasFacetFilters()) setFavOnly(false);
+        else resetFilters();
+      });
+    }
+    var searchClear = document.getElementById("discover-search-clear");
+    if (searchClear) {
+      searchClear.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        var input = document.getElementById("filter-search");
+        if (input) {
+          input.value = "";
+          onFilterSearchInput();
+          input.focus();
+        }
       });
     }
     ["filters-reset", "map-empty-reset", "list-empty-reset"].forEach(function (id) {
@@ -3317,9 +3420,10 @@
       closeCard();
     });
     document.addEventListener("click", function (ev) {
+      if (!ev.target.closest("#discover-search-box")) hideSuggestions();
       if (card.hidden) return;
       if (card.contains(ev.target) || ev.target.closest(".pin") || ev.target.closest(".maker-btn")) return;
-      if (ev.target.closest("#filter-panel") || ev.target.closest("#filters-btn") || ev.target.closest("#af-chips")) return;
+      if (ev.target.closest("#filter-panel") || ev.target.closest("#discover-bar")) return;
       if (wrap.contains(ev.target)) return; // handled by the svg handler
       closeCard(true);
     });

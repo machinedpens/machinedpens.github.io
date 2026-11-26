@@ -4,6 +4,7 @@
     {
       "id": "pp-top-10-budget-2026",
       "label": "PP Top 10 Budget 2026",
+      "short_label": "PP Budget",
       "credit": "Pocket Priorities",
       "rank_prefix": "PP Budget",
       "url": "https://www.youtube.com/watch?v=oGYZg2yPHu8",
@@ -58,6 +59,7 @@
     {
       "id": "pp-top-10-new-2026",
       "label": "PP Top 10 New 2026",
+      "short_label": "PP New",
       "credit": "Pocket Priorities",
       "rank_prefix": "PP New",
       "url": "https://www.youtube.com/watch?v=2098e9SMM7Q",

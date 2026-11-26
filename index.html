@@ -19,7 +19,7 @@
       if (["light", "dark", "bold"].indexOf(t) >= 0) document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261125e">
+  <link rel="stylesheet" href="style.css?v=20261125f">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -44,6 +44,43 @@
 
   <main>
     <section class="map-panel" aria-label="Map of makers">
+      <div class="discover-bar" id="discover-bar">
+        <div class="discover-main">
+          <div class="discover-search-row">
+            <div class="discover-search-box" id="discover-search-box">
+              <svg class="discover-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"/>
+                <path d="M20 20l-3.5-3.5"/>
+              </svg>
+              <label class="sr-only" for="filter-search">Search makers and filters</label>
+              <input type="search" id="filter-search" class="discover-search-input" placeholder="Try “fountain under 100” or “pp top 10”" autocomplete="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="filter-suggest">
+              <button type="button" class="discover-search-clear" id="discover-search-clear" aria-label="Clear search" hidden>
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+              </button>
+              <ul class="filter-suggest" id="filter-suggest" role="listbox" hidden></ul>
+            </div>
+            <button type="button" class="filters-btn" id="filters-btn" aria-expanded="false" aria-controls="filter-panel" aria-label="Filters">
+              <svg class="funnel" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 5h16l-6.2 7.4V19l-3.6 2v-8.6L4 5z"/>
+              </svg>
+              <span class="filters-label">Filters</span>
+              <span class="filters-badge" id="filters-badge" hidden>0</span>
+            </button>
+          </div>
+          <div class="discover-chip-scroll" id="discover-chips" role="group" aria-label="Quick filters"></div>
+        </div>
+        <div class="discover-status" id="discover-status" aria-live="polite">
+          <span class="discover-hint" id="discover-hint"></span>
+          <div class="discover-showing" id="discover-showing" hidden>
+            <span class="showing-count" id="showing-count"></span>
+            <span class="showing-dot" id="showing-dot" aria-hidden="true">·</span>
+            <div class="af-chips" id="af-chips"></div>
+            <span class="showing-dot showing-dot-clear" id="showing-dot-clear" aria-hidden="true">·</span>
+            <button type="button" class="showing-clear" id="showing-clear">Clear</button>
+          </div>
+        </div>
+      </div>
+
       <div class="map-wrap" id="map-wrap">
         <svg id="map" role="group" aria-label="Map of the United States and Canada with one marker per maker"></svg>
 
@@ -89,17 +126,6 @@
         </div>
       </div>
 
-      <div class="map-mode-bar" id="map-mode-bar">
-        <button type="button" class="filters-btn" id="filters-btn" aria-expanded="false" aria-controls="filter-panel">
-          <svg class="funnel" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 5h16l-6.2 7.4V19l-3.6 2v-8.6L4 5z"/>
-          </svg>
-          Filters
-          <span class="filters-badge" id="filters-badge" hidden>0</span>
-        </button>
-        <div class="filter-count" id="filter-count" aria-live="polite">44 of 44 makers</div>
-      </div>
-
       <div class="map-controls" id="map-controls">
         <div class="timeline" id="timeline">
           <button class="play" id="play" type="button" aria-label="Play timeline">
@@ -116,10 +142,6 @@
             <span class="year-count" id="year-count"></span>
           </div>
         </div>
-      </div>
-
-      <div class="active-filters" id="active-filters">
-        <div class="af-chips" id="af-chips"></div>
       </div>
 
       <div class="fav-bar" id="fav-bar">
@@ -150,12 +172,6 @@
           <button type="button" class="clear-btn" id="filters-reset" disabled>Reset</button>
         </div>
         <div class="drawer-body">
-          <div class="filter-search-wrap">
-            <label class="sr-only" for="filter-search">Search makers and filters</label>
-            <input type="search" id="filter-search" class="filter-search" placeholder="Try “fountain pens under 250”" autocomplete="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="filter-suggest">
-            <p class="filter-showing" id="filter-showing" hidden></p>
-            <ul class="filter-suggest" id="filter-suggest" role="listbox" hidden></ul>
-          </div>
           <section class="fg">
             <h3 class="fg-label" id="price-filter-label">Price</h3>
             <div class="fg-chips" id="price-chips" role="group" aria-labelledby="price-filter-label"></div>
@@ -216,11 +232,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261125e"></script>
-  <script src="vendor/topojson-client.min.js?v=20261125e"></script>
-  <script src="vendor/qrcode-generator.js?v=20261125e"></script>
-  <script src="vendor/fuse.min.js?v=20261125e"></script>
-  <script src="map.js?v=20261125e"></script>
+  <script src="vendor/d3.min.js?v=20261125f"></script>
+  <script src="vendor/topojson-client.min.js?v=20261125f"></script>
+  <script src="vendor/qrcode-generator.js?v=20261125f"></script>
+  <script src="vendor/fuse.min.js?v=20261125f"></script>
+  <script src="map.js?v=20261125f"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;
