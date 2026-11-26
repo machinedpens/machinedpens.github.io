@@ -39,7 +39,7 @@
             var p = parts.find(function (x) { return x.type === type; });
             return p ? +p.value : 0;
           };
-          on = val("year") === 2026 && val("month") === 11 && (val("day") === 26 || val("day") === 27);
+          on = val("year") === 2026 && val("month") === 11 && (val("day") === 25 || val("day") === 26 || val("day") === 27);
         }
         if (!on) return;
         document.documentElement.setAttribute("data-season", "thanksgiving");
