@@ -1438,3 +1438,122 @@ body[data-view="world"] .legend { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .filter-panel { animation: none; }
 }
+
+/* === Seasonal: Thanksgiving 2026 (removable) ===
+   Auto-on in America/New_York from 26 Nov 2026 00:00 through 27 Nov 2026 23:59.
+   Preview with ?theme=thanksgiving; force off with ?theme=off.
+   Delete this block plus the matching marked blocks in index.html to remove. */
+:root[data-season="thanksgiving"]:not([data-theme]) {
+  --bg: #f4e4cc;
+  --paper: #fbf1e0;
+  --land: #e8c894;
+  --land-ca: #f0d6ae;
+  --water: #fbf1e0;
+  --line: #e8d4b0;
+}
+:root[data-season="thanksgiving"] {
+  --thanks-amber: #c4842a;
+  --thanks-brown: #5c3a22;
+  --thanks-cranberry: #8b2e2e;
+}
+:root[data-season="thanksgiving"] .title-live::after {
+  content: "";
+  display: inline-block;
+  width: .55em;
+  height: .55em;
+  margin-left: .3em;
+  vertical-align: .06em;
+  background-color: var(--thanks-cranberry);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 2.1c.3 1.4.9 2.5 1.8 3.1-.8.5-1.3 1.3-1.3 2.2 1.2-.3 2.4.2 3.2 1.3-.1-1.3.5-2.4 1.5-3.1.3 1.4 1.2 2.5 2.4 2.9-.3-1.2.2-2.5 1.3-3.2-.1 1.5.6 2.9 2 3.5-1.3.5-2.1 1.7-2 3.1 1-.1 2 .3 2.6 1.2-1.5.4-2.4 1.7-2.3 3.2 1.1.1 1.8.7 2.2 1.6-1.8.2-3.1 1.4-3.4 3 .7-.1 1.4 0 2 .6-1.6 1-3.5.8-4.9-1.1-.2 1.2-.9 2.2-1.9 2.8V22h-1.6v-3.4c-1-.6-1.7-1.6-1.9-2.8-1.4 1.9-3.3 2.1-4.9 1.1.6-.6 1.3-.7 2-.6-.3-1.6-1.6-2.8-3.4-3 .4-.9 1.1-1.5 2.2-1.6.1-1.5-.8-2.8-2.3-3.2.6-.9 1.6-1.3 2.6-1.2.1-1.4-.7-2.6-2-3.1 1.4-.6 2.1-2 2-3.5 1.1.7 1.6 2 1.3 3.2 1.2-.4 2.1-1.5 2.4-2.9 1 .7 1.6 1.8 1.5 3.1.8-1.1 2-1.6 3.2-1.3 0-.9-.5-1.7-1.3-2.2.9-.6 1.5-1.7 1.8-3.1z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 2.1c.3 1.4.9 2.5 1.8 3.1-.8.5-1.3 1.3-1.3 2.2 1.2-.3 2.4.2 3.2 1.3-.1-1.3.5-2.4 1.5-3.1.3 1.4 1.2 2.5 2.4 2.9-.3-1.2.2-2.5 1.3-3.2-.1 1.5.6 2.9 2 3.5-1.3.5-2.1 1.7-2 3.1 1-.1 2 .3 2.6 1.2-1.5.4-2.4 1.7-2.3 3.2 1.1.1 1.8.7 2.2 1.6-1.8.2-3.1 1.4-3.4 3 .7-.1 1.4 0 2 .6-1.6 1-3.5.8-4.9-1.1-.2 1.2-.9 2.2-1.9 2.8V22h-1.6v-3.4c-1-.6-1.7-1.6-1.9-2.8-1.4 1.9-3.3 2.1-4.9 1.1.6-.6 1.3-.7 2-.6-.3-1.6-1.6-2.8-3.4-3 .4-.9 1.1-1.5 2.2-1.6.1-1.5-.8-2.8-2.3-3.2.6-.9 1.6-1.3 2.6-1.2.1-1.4-.7-2.6-2-3.1 1.4-.6 2.1-2 2-3.5 1.1.7 1.6 2 1.3 3.2 1.2-.4 2.1-1.5 2.4-2.9 1 .7 1.6 1.8 1.5 3.1.8-1.1 2-1.6 3.2-1.3 0-.9-.5-1.7-1.3-2.2.9-.6 1.5-1.7 1.8-3.1z'/%3E%3C/svg%3E") center / contain no-repeat;
+  pointer-events: none;
+}
+.thanks-banner {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  min-height: 36px;
+  box-sizing: border-box;
+  padding: 6px 44px 6px 16px;
+  background: #f3ddc0;
+  color: #1b1612;
+  border-bottom: 1px solid #e0b56a;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  line-height: 1.3;
+  text-align: center;
+}
+:root[data-season="thanksgiving"]:not([data-thanks-banner="off"]) .thanks-banner {
+  display: flex;
+}
+.thanks-banner-text { margin: 0; }
+.thanks-banner-dismiss {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.thanks-banner-dismiss:hover { background: rgba(92, 58, 34, .1); }
+.thanks-banner-dismiss svg { width: 14px; height: 14px; display: block; }
+.thanks-leaves {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 150px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+:root[data-season="thanksgiving"] .thanks-leaves { display: block; }
+:root[data-season="thanksgiving"] .site-header { position: relative; z-index: 1; }
+.thanks-leaf {
+  position: absolute;
+  top: -18px;
+  width: 16px;
+  height: 16px;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 2.1c.3 1.4.9 2.5 1.8 3.1-.8.5-1.3 1.3-1.3 2.2 1.2-.3 2.4.2 3.2 1.3-.1-1.3.5-2.4 1.5-3.1.3 1.4 1.2 2.5 2.4 2.9-.3-1.2.2-2.5 1.3-3.2-.1 1.5.6 2.9 2 3.5-1.3.5-2.1 1.7-2 3.1 1-.1 2 .3 2.6 1.2-1.5.4-2.4 1.7-2.3 3.2 1.1.1 1.8.7 2.2 1.6-1.8.2-3.1 1.4-3.4 3 .7-.1 1.4 0 2 .6-1.6 1-3.5.8-4.9-1.1-.2 1.2-.9 2.2-1.9 2.8V22h-1.6v-3.4c-1-.6-1.7-1.6-1.9-2.8-1.4 1.9-3.3 2.1-4.9 1.1.6-.6 1.3-.7 2-.6-.3-1.6-1.6-2.8-3.4-3 .4-.9 1.1-1.5 2.2-1.6.1-1.5-.8-2.8-2.3-3.2.6-.9 1.6-1.3 2.6-1.2.1-1.4-.7-2.6-2-3.1 1.4-.6 2.1-2 2-3.5 1.1.7 1.6 2 1.3 3.2 1.2-.4 2.1-1.5 2.4-2.9 1 .7 1.6 1.8 1.5 3.1.8-1.1 2-1.6 3.2-1.3 0-.9-.5-1.7-1.3-2.2.9-.6 1.5-1.7 1.8-3.1z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 2.1c.3 1.4.9 2.5 1.8 3.1-.8.5-1.3 1.3-1.3 2.2 1.2-.3 2.4.2 3.2 1.3-.1-1.3.5-2.4 1.5-3.1.3 1.4 1.2 2.5 2.4 2.9-.3-1.2.2-2.5 1.3-3.2-.1 1.5.6 2.9 2 3.5-1.3.5-2.1 1.7-2 3.1 1-.1 2 .3 2.6 1.2-1.5.4-2.4 1.7-2.3 3.2 1.1.1 1.8.7 2.2 1.6-1.8.2-3.1 1.4-3.4 3 .7-.1 1.4 0 2 .6-1.6 1-3.5.8-4.9-1.1-.2 1.2-.9 2.2-1.9 2.8V22h-1.6v-3.4c-1-.6-1.7-1.6-1.9-2.8-1.4 1.9-3.3 2.1-4.9 1.1.6-.6 1.3-.7 2-.6-.3-1.6-1.6-2.8-3.4-3 .4-.9 1.1-1.5 2.2-1.6.1-1.5-.8-2.8-2.3-3.2.6-.9 1.6-1.3 2.6-1.2.1-1.4-.7-2.6-2-3.1 1.4-.6 2.1-2 2-3.5 1.1.7 1.6 2 1.3 3.2 1.2-.4 2.1-1.5 2.4-2.9 1 .7 1.6 1.8 1.5 3.1.8-1.1 2-1.6 3.2-1.3 0-.9-.5-1.7-1.3-2.2.9-.6 1.5-1.7 1.8-3.1z'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: 0;
+  animation: thanks-fall 16s linear infinite;
+}
+.thanks-leaf-1 { left: 12%; background-color: var(--thanks-amber, #c4842a); animation-duration: 15s; animation-delay: -2s; }
+.thanks-leaf-2 { left: 68%; width: 13px; height: 13px; background-color: var(--thanks-cranberry, #8b2e2e); animation-duration: 18s; animation-delay: -8s; }
+.thanks-leaf-3 { left: 88%; width: 15px; height: 15px; background-color: var(--thanks-brown, #5c3a22); animation-duration: 17s; animation-delay: -5s; }
+@keyframes thanks-fall {
+  0%   { transform: translate3d(0, -8px, 0) rotate(-16deg); opacity: 0; }
+  10%  { opacity: .7; }
+  50%  { transform: translate3d(16px, 64px, 0) rotate(18deg); opacity: .65; }
+  100% { transform: translate3d(-10px, 140px, 0) rotate(-12deg); opacity: 0; }
+}
+@media (max-width: 640px) {
+  .thanks-banner { font-size: 13px; min-height: 34px; padding-right: 40px; }
+  /* Keep the header tidy on small screens; the title leaf is enough. */
+  .thanks-leaves { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .thanks-leaves { display: none !important; }
+  .thanks-leaf { animation: none !important; }
+}
+body.still .thanks-banner,
+body.still .thanks-leaves,
+body.print .thanks-banner,
+body.print .thanks-leaves { display: none !important; }
+@media print {
+  .thanks-banner, .thanks-leaves { display: none !important; }
+}
+/* === End seasonal block === */

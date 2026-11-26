@@ -165,12 +165,14 @@ The list panel’s “Find a maker” box is unchanged: it is a simple substring
 
 Owner approval is required before any push. Show preview screenshots first and wait. Do not publish, force-push, or go live unasked.
 
-**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125j`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
+**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125k`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
 
 - `style.css`, `vendor/d3.min.js`, `vendor/topojson-client.min.js`, `vendor/qrcode-generator.js`, `vendor/fuse.min.js`, `map.js` (in `index.html`)
 - `makers.json`, `data/us-canada.topo.json`, `data/world-110m.topo.json` (in `map.js`)
 
 **`?still=1`.** Opens a chrome-free home map (no header, list, timeline, mode bar, nav pills, cards, or stars; labels are drawn on the map). Used to recapture `maker-map-still.png` and as the Open Graph image. Recapture it whenever US + Canada pins change (the still is the home view, 1600×1000 in the current file). Confirm the still page actually renders, with no UI chrome.
+
+**Seasonal theme (Thanksgiving 2026).** A small, removable holiday treatment in two marked blocks in `index.html` (a head script plus a slim banner and leaf marks in the body) and one marked block at the end of `style.css`. It turns on by itself in `America/New_York` from Nov 26, 2026 00:00 through Nov 27, 2026 23:59, and stays off any other time. Preview with `?theme=thanksgiving`; force the normal theme with `?theme=off`. When it is on, a dismissible “Happy Thanksgiving from Machined Pens” banner appears above the header, a small cranberry maple leaf sits beside the title, a few falling leaves drift in the header area on larger screens only (not across the map, and not on small screens or when `prefers-reduced-motion` is set), and the page and land fill pick up a slight amber tint. Brand orange and black pins, panel sizes, and features are unchanged. The theme does not run on `?still=1` or the print view. To remove it later, delete the three “Seasonal: Thanksgiving 2026” blocks.
 
 **GoatCounter.** The page loads `https://gc.zgo.at/count.js` for `https://machinedpens.goatcounter.com/count`. That script is **not** injected when the URL contains `?still=1`, and `track()` in `map.js` also no-ops on the still page. Custom events (`event: true`) currently fired from `map.js`:
 

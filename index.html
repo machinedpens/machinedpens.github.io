@@ -19,10 +19,65 @@
       if (["light", "dark", "bold"].indexOf(t) >= 0) document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261125j">
+  <!-- === Seasonal: Thanksgiving 2026 (removable) === -->
+  <script>
+    (function () {
+      try {
+        var params = new URLSearchParams(location.search);
+        var theme = (params.get("theme") || "").toLowerCase();
+        if (theme === "off") return;
+        if (params.get("still") === "1" || params.get("print") === "1") return;
+        var on = theme === "thanksgiving";
+        if (!on) {
+          var parts = new Intl.DateTimeFormat("en-US", {
+            timeZone: "America/New_York",
+            year: "numeric",
+            month: "numeric",
+            day: "numeric"
+          }).formatToParts(new Date());
+          var val = function (type) {
+            var p = parts.find(function (x) { return x.type === type; });
+            return p ? +p.value : 0;
+          };
+          on = val("year") === 2026 && val("month") === 11 && (val("day") === 26 || val("day") === 27);
+        }
+        if (!on) return;
+        document.documentElement.setAttribute("data-season", "thanksgiving");
+        try {
+          if (localStorage.getItem("maker-map-thanks-2026") === "1") {
+            document.documentElement.setAttribute("data-thanks-banner", "off");
+          }
+        } catch (e) {}
+      } catch (e) {}
+      document.addEventListener("DOMContentLoaded", function () {
+        var btn = document.getElementById("thanks-banner-dismiss");
+        if (!btn) return;
+        btn.addEventListener("click", function () {
+          document.documentElement.setAttribute("data-thanks-banner", "off");
+          try { localStorage.setItem("maker-map-thanks-2026", "1"); } catch (e) {}
+        });
+      });
+    })();
+  </script>
+  <!-- === End seasonal block === -->
+  <link rel="stylesheet" href="style.css?v=20261125k">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
+
+  <!-- === Seasonal: Thanksgiving 2026 (removable) === -->
+  <div class="thanks-banner" id="thanks-banner" role="region" aria-label="Thanksgiving greeting">
+    <p class="thanks-banner-text">Happy Thanksgiving from Machined Pens 🦃</p>
+    <button type="button" class="thanks-banner-dismiss" id="thanks-banner-dismiss" aria-label="Dismiss greeting">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="thanks-leaves" aria-hidden="true">
+    <span class="thanks-leaf thanks-leaf-1"></span>
+    <span class="thanks-leaf thanks-leaf-2"></span>
+    <span class="thanks-leaf thanks-leaf-3"></span>
+  </div>
+  <!-- === End seasonal block === -->
 
   <header class="site-header">
     <h1 class="title"><span class="title-live">Machined Pens Maker Map</span><span class="title-print">My Machined Pens Makers</span></h1>
@@ -236,11 +291,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261125j"></script>
-  <script src="vendor/topojson-client.min.js?v=20261125j"></script>
-  <script src="vendor/qrcode-generator.js?v=20261125j"></script>
-  <script src="vendor/fuse.min.js?v=20261125j"></script>
-  <script src="map.js?v=20261125j"></script>
+  <script src="vendor/d3.min.js?v=20261125k"></script>
+  <script src="vendor/topojson-client.min.js?v=20261125k"></script>
+  <script src="vendor/qrcode-generator.js?v=20261125k"></script>
+  <script src="vendor/fuse.min.js?v=20261125k"></script>
+  <script src="map.js?v=20261125k"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;
