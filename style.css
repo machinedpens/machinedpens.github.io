@@ -1707,13 +1707,13 @@ body.print .thanks-leaves { display: none !important; }
    Terminal "flavor" and is optional for a simple recolor theme.
    ========================================================================== */
 @font-face { font-family: "IBM Plex Mono"; font-weight: 300; font-style: normal; font-display: swap;
-  src: url("vendor/ibm-plex-mono-latin-300-normal.woff2?v=20261125o") format("woff2"); }
+  src: url("vendor/ibm-plex-mono-latin-300-normal.woff2?v=20261126a") format("woff2"); }
 @font-face { font-family: "IBM Plex Mono"; font-weight: 400; font-style: normal; font-display: swap;
-  src: url("vendor/ibm-plex-mono-latin-400-normal.woff2?v=20261125o") format("woff2"); }
+  src: url("vendor/ibm-plex-mono-latin-400-normal.woff2?v=20261126a") format("woff2"); }
 @font-face { font-family: "IBM Plex Mono"; font-weight: 400; font-style: italic; font-display: swap;
-  src: url("vendor/ibm-plex-mono-latin-400-italic.woff2?v=20261125o") format("woff2"); }
+  src: url("vendor/ibm-plex-mono-latin-400-italic.woff2?v=20261126a") format("woff2"); }
 @font-face { font-family: "IBM Plex Mono"; font-weight: 600; font-style: normal; font-display: swap;
-  src: url("vendor/ibm-plex-mono-latin-600-normal.woff2?v=20261125o") format("woff2"); }
+  src: url("vendor/ibm-plex-mono-latin-600-normal.woff2?v=20261126a") format("woff2"); }
 
 :root[data-theme="terminal"] {
   color-scheme: dark;
@@ -2087,3 +2087,144 @@ body.print .thanks-leaves { display: none !important; }
 }
 :root[data-theme="terminal"] body.still .site-header::before, :root[data-theme="terminal"] body.still .site-header::after { display: none; }
 /* === End fun theme: Terminal === */
+
+/* === Fun themes (more) === */
+/* Shared by every fun theme except Terminal (which has its own flavor block above). */
+.theme-menu { max-height: calc(100vh - 150px); overflow-y: auto; }
+.theme-toggle .theme-icon-palette { display: none; }
+:root[data-fun]:not([data-theme="terminal"]) .theme-toggle .theme-icon-fun { display: none; }
+:root[data-fun]:not([data-theme="terminal"]) .theme-toggle .theme-icon-palette { display: block; }
+/* Wider type must never stretch the phone layout. */
+@media (max-width: 640px) {
+  :root[data-fun]:not([data-theme="terminal"]) .regions,
+  :root[data-fun]:not([data-theme="terminal"]) .maker-flat { grid-template-columns: minmax(0, 1fr); }
+  :root[data-fun]:not([data-theme="terminal"]) .maker-btn { min-width: 0; }
+  :root[data-fun]:not([data-theme="terminal"]) .maker-btn .m-name { min-width: 0; flex: 1 1 auto; overflow-wrap: anywhere; }
+  :root[data-fun]:not([data-theme="terminal"]) .maker-btn .m-meta { flex: 0 1 auto; max-width: 44%; white-space: normal; text-align: right; line-height: 1.3; }
+}
+
+/* ==== Fun theme: Notebook (dot-grid paper, ink, handwriting) ==== */
+@font-face { font-family: "Caveat"; font-weight: 500; font-style: normal; font-display: swap;
+  src: url("vendor/caveat-latin-500-normal.woff2?v=20261126a") format("woff2"); }
+@font-face { font-family: "Caveat"; font-weight: 700; font-style: normal; font-display: swap;
+  src: url("vendor/caveat-latin-700-normal.woff2?v=20261126a") format("woff2"); }
+:root[data-theme="notebook"] {
+  color-scheme: light;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --hand: "Caveat", "Segoe Print", "Bradley Hand", "Marker Felt", cursive;
+  --bg: #f1ecdd; --paper: #fbf9f1; --land: #f0ead6; --land-dot: rgba(36, 54, 130, .3); --land-ca: #f0ead6;
+  --name: rgba(27, 35, 82, .7); --country-name: rgba(27, 35, 82, .55);
+  --water: #fbf9f1; --inner-line: rgba(36, 54, 130, .32); --country-line: #1f2d78;
+  --ink: #1b2352; --ink-2: #3d4778; --ink-3: #59638a; --on-ink: #fbf9f1; --ink-hover: #2d3877;
+  --line: rgba(27, 35, 82, .3); --accent: #2540c8; --pin: #1b2352; --ring: #d1332e;
+  --dot-stroke: #fbf9f1; --leader: #6d77a6; --legend-bg: rgba(251, 249, 241, .94);
+  --pin-lo: #6a78c8; --pin-mid: #1b2352; --pin-hi: #0b1030; --pin-none: #9aa2c2;
+  --chip: transparent; --chip-hover: rgba(37, 64, 200, .08); --hover: rgba(37, 64, 200, .07); --active: rgba(255, 226, 90, .5);
+  --radius: 8px; --shadow: 2px 3px 0 rgba(27, 35, 82, .14); --shadow-lg: 3px 5px 0 rgba(27, 35, 82, .2), 0 12px 30px rgba(27, 35, 82, .15);
+  --country: #3d4778;
+  --nb-dots: radial-gradient(circle, rgba(36, 54, 130, .3) 1.1px, transparent 1.5px);
+  --blob: 255px 18px 225px 18px / 18px 225px 18px 255px;
+  --hl: #ffe35c;
+}
+:root[data-theme="notebook"] body { background-color: var(--bg); background-image: var(--nb-dots); background-size: 22px 22px; background-position: 11px 11px; }
+:root[data-theme="notebook"] .map-panel, :root[data-theme="notebook"] .card, :root[data-theme="notebook"] .filter-panel, :root[data-theme="notebook"] .fav-panel, :root[data-theme="notebook"] .theme-menu, :root[data-theme="notebook"] .legend, :root[data-theme="notebook"] .map-empty { background-image: var(--nb-dots); background-size: 22px 22px; }
+:root[data-theme="notebook"] .discover-bar { background-image: var(--nb-dots); background-size: 22px 22px; }
+:root[data-theme="notebook"] ::selection { background: var(--hl); color: #1b2352; }
+:root[data-theme="notebook"] .map-panel, :root[data-theme="notebook"] .card, :root[data-theme="notebook"] .filter-panel, :root[data-theme="notebook"] .fav-panel, :root[data-theme="notebook"] .fav-banner, :root[data-theme="notebook"] .map-empty, :root[data-theme="notebook"] .legend, :root[data-theme="notebook"] .theme-menu, :root[data-theme="notebook"] .filter-suggest { border: 1.5px solid #1b2352; border-radius: 10px; box-shadow: var(--shadow); }
+:root[data-theme="notebook"] .legend { background-color: rgba(251, 249, 241, .94); }
+:root[data-theme="notebook"] .discover-bar { border-bottom: 1.5px solid #1b2352; }
+:root[data-theme="notebook"] .map-controls, :root[data-theme="notebook"] .fav-bar { border-top: 1.5px solid rgba(27, 35, 82, .5); }
+
+/* handwriting */
+:root[data-theme="notebook"] .title, :root[data-theme="notebook"] .list-title, :root[data-theme="notebook"] .drawer-title, :root[data-theme="notebook"] .card-name, :root[data-theme="notebook"] .country-name, :root[data-theme="notebook"] .year-value, :root[data-theme="notebook"] .drawer-count, :root[data-theme="notebook"] .region-name, :root[data-theme="notebook"] .fg-label, :root[data-theme="notebook"] .maker-btn .m-name, :root[data-theme="notebook"] .subtitle, :root[data-theme="notebook"] .theme-opt-label { font-family: var(--hand); letter-spacing: 0; }
+:root[data-theme="notebook"] .title { font-weight: 700; font-size: 50px; line-height: 1; letter-spacing: 0; }
+:root[data-theme="notebook"] .title-live { background: linear-gradient(transparent 62%, rgba(255, 227, 92, .85) 62% 88%, transparent 88%); padding: 0 .1em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+:root[data-theme="notebook"] .site-header::before { content: "✎ my pen makers notebook"; content: "✎ my pen makers notebook" / ""; display: block; font-family: var(--hand); font-size: 21px; color: var(--ink-2); transform: rotate(-1.2deg); transform-origin: left; margin-bottom: 2px; }
+:root[data-theme="notebook"] .subtitle { font-size: 22px; font-weight: 500; color: var(--accent); border-bottom: 2px wavy rgba(37, 64, 200, .45); padding-bottom: 0; text-decoration: none; }
+:root[data-theme="notebook"] .list-title { font-size: 36px; font-weight: 700; }
+:root[data-theme="notebook"] .drawer-title { font-size: 32px; font-weight: 700; }
+:root[data-theme="notebook"] .card-name { font-size: 28px; font-weight: 700; }
+:root[data-theme="notebook"] .country-name { font-size: 24px; font-weight: 700; color: var(--ink); text-transform: none; letter-spacing: 0; border-bottom: 2px solid var(--ink); display: inline-block; padding-right: 10px; }
+:root[data-theme="notebook"] .region-name { font-size: 21px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--accent); }
+:root[data-theme="notebook"] .fg-label { font-size: 22px; font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--ink); }
+:root[data-theme="notebook"] .maker-btn .m-name { font-size: 24px; font-weight: 500; line-height: 1.1; }
+:root[data-theme="notebook"] .maker-btn .m-meta { color: var(--ink-3); }
+:root[data-theme="notebook"] .year-value { font-weight: 700; font-size: 38px; color: var(--ink); }
+:root[data-theme="notebook"] .drawer-count { font-size: 20px; }
+:root[data-theme="notebook"] .site-footer { color: var(--ink-2); }
+:root[data-theme="notebook"] .site-footer a { color: var(--accent); text-decoration: underline wavy rgba(37, 64, 200, .5); text-underline-offset: 4px; }
+:root[data-theme="notebook"] .site-footer p:first-child { border-top: 2px dashed rgba(27, 35, 82, .4); }
+:root[data-theme="notebook"] .region, :root[data-theme="notebook"] .maker-flat li { border-top: 1.5px dashed rgba(27, 35, 82, .3); }
+
+/* controls: pen-drawn pills, highlighter when on */
+:root[data-theme="notebook"] .filter-chip, :root[data-theme="notebook"] .af-chip, :root[data-theme="notebook"] .list-sort-btn, :root[data-theme="notebook"] .card-links a, :root[data-theme="notebook"] .fav-toggle, :root[data-theme="notebook"] .fav-btn, :root[data-theme="notebook"] .fav-banner-actions button, :root[data-theme="notebook"] .world-btn, :root[data-theme="notebook"] .world-back, :root[data-theme="notebook"] .print-now, :root[data-theme="notebook"] .print-back, :root[data-theme="notebook"] .filters-btn { border: 1.5px solid #1b2352; border-radius: var(--blob); background: transparent; color: var(--ink); font-family: var(--hand); font-weight: 700; font-size: 19px; letter-spacing: 0; min-height: 34px; }
+:root[data-theme="notebook"] .filter-chip:hover, :root[data-theme="notebook"] .af-chip:hover, :root[data-theme="notebook"] .list-sort-btn:hover, :root[data-theme="notebook"] .card-links a:hover, :root[data-theme="notebook"] .fav-toggle:hover, :root[data-theme="notebook"] .fav-btn:hover, :root[data-theme="notebook"] .fav-banner-actions button:hover, :root[data-theme="notebook"] .world-btn:hover, :root[data-theme="notebook"] .world-back:hover, :root[data-theme="notebook"] .print-now:hover, :root[data-theme="notebook"] .print-back:hover, :root[data-theme="notebook"] .filters-btn:hover { background: rgba(37, 64, 200, .08); }
+:root[data-theme="notebook"] .filter-chip[aria-pressed="true"], :root[data-theme="notebook"] .list-sort-btn[aria-pressed="true"], :root[data-theme="notebook"] .fav-toggle[aria-pressed="true"], :root[data-theme="notebook"] .filters-btn[aria-expanded="true"] { background: var(--hl); color: #1b2352; border-color: #1b2352; }
+:root[data-theme="notebook"] .filter-chip[aria-pressed="true"] .chip-n { background: rgba(27, 35, 82, .12); color: #1b2352; }
+:root[data-theme="notebook"] .filter-chip .chip-n { font-family: var(--font); background: rgba(27, 35, 82, .08); color: var(--ink-2); }
+:root[data-theme="notebook"] .filter-chip.chip-curated { background: transparent; color: var(--ink); border-style: dashed; }
+:root[data-theme="notebook"] .filter-chip.chip-curated .chip-ico { color: var(--accent); }
+:root[data-theme="notebook"] .filter-chip.chip-curated[aria-pressed="true"] { background: var(--hl); border-style: solid; color: #1b2352; }
+:root[data-theme="notebook"] .af-chip { background: var(--hl); color: #1b2352; border-color: #1b2352; font-size: 17px; }
+:root[data-theme="notebook"] .card-links a { font-size: 20px; }
+:root[data-theme="notebook"] .card-links a.primary { background: #1b2352; color: #fbf9f1; }
+:root[data-theme="notebook"] .card-links a.primary:hover { background: var(--accent); }
+:root[data-theme="notebook"] .play { background: #1b2352; color: #fbf9f1; border-color: #1b2352; }
+:root[data-theme="notebook"] .list-sort { border: 1.5px solid #1b2352; border-radius: var(--blob); background: transparent; }
+:root[data-theme="notebook"] .list-sort-btn { border-radius: 0; border: 0; border-right: 1.5px solid #1b2352; }
+:root[data-theme="notebook"] .list-sort-btn[aria-pressed="true"] { background: var(--hl); color: #1b2352; }
+:root[data-theme="notebook"] .filters-badge { background: #d1332e; border-color: var(--paper); }
+:root[data-theme="notebook"] .discover-search-box, :root[data-theme="notebook"] .list-search, :root[data-theme="notebook"] .list-filter, :root[data-theme="notebook"] .filter-search { background-color: var(--paper); border: 1.5px solid #1b2352; border-radius: 10px; color: var(--ink); }
+:root[data-theme="notebook"] .discover-search-box { border-radius: 10px; }
+:root[data-theme="notebook"] .discover-search-box:focus-within { box-shadow: 0 0 0 3px rgba(255, 227, 92, .7); }
+:root[data-theme="notebook"] .discover-search-input { font-size: 16px; }
+:root[data-theme="notebook"] .list-search:focus, :root[data-theme="notebook"] .filter-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 227, 92, .7); }
+:root[data-theme="notebook"] .discover-search-ico { color: var(--ink); }
+:root[data-theme="notebook"] .theme-toggle { border: 1.5px solid #1b2352; background: var(--paper); border-radius: var(--blob); box-shadow: 2px 2px 0 rgba(27, 35, 82, .2); }
+:root[data-theme="notebook"] .theme-opt { font-size: 20px; }
+:root[data-theme="notebook"] .theme-opt-label { font-size: 24px; font-weight: 700; }
+:root[data-theme="notebook"] .theme-opt[aria-checked="true"] { background: var(--hl); }
+:root[data-theme="notebook"] .theme-sw { border-color: #1b2352; border-radius: 6px; font-family: var(--hand); font-size: 17px; }
+:root[data-theme="notebook"] .filter-suggest li:hover, :root[data-theme="notebook"] .filter-suggest li[aria-selected="true"] { background: rgba(255, 227, 92, .55); }
+:root[data-theme="notebook"] .filter-suggest-name { font-family: var(--hand); font-size: 22px; font-weight: 700; }
+:root[data-theme="notebook"] .maker-btn:hover, :root[data-theme="notebook"] .maker-row:hover { background: rgba(37, 64, 200, .06); }
+:root[data-theme="notebook"] .maker-row.is-active, :root[data-theme="notebook"] .maker-btn.active { background: rgba(255, 227, 92, .5); }
+:root[data-theme="notebook"] .card-tag { font-family: var(--hand); font-size: 18px; background: var(--hl); color: #1b2352; border: 1.5px solid #1b2352; border-radius: var(--blob); }
+:root[data-theme="notebook"] .card-close:hover, :root[data-theme="notebook"] .icon-btn:hover { background: rgba(255, 227, 92, .7); }
+:root[data-theme="notebook"] .card { box-shadow: var(--shadow-lg); }
+:root[data-theme="notebook"] .filter-scrim { background: rgba(27, 35, 82, .28); }
+
+/* map: pencil-shaded land, ink dots, red-pen circles */
+:root[data-theme="notebook"] .land, :root[data-theme="notebook"] .land-ca, :root[data-theme="notebook"] .hi-inset-land { fill: url(#t-hatch); }
+:root[data-theme="notebook"] .country-border { stroke-width: 1.8px; }
+:root[data-theme="notebook"] .inner-line { stroke-width: 1px; }
+:root[data-theme="notebook"] .region-label, :root[data-theme="notebook"] .country-name-label, :root[data-theme="notebook"] .hi-inset-label { font-family: var(--hand); font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+:root[data-theme="notebook"] .hi-inset-frame { stroke: #1b2352; stroke-dasharray: 5 4; }
+:root[data-theme="notebook"] .pin .dot { fill: #1b2352; stroke: #fbf9f1; stroke-width: 1.8px; }
+:root[data-theme="notebook"] .pin.inactive .dot { fill: #fbf9f1; stroke: #1b2352; stroke-width: 2.4px; }
+:root[data-theme="notebook"] .pin .ring { stroke: #d1332e; stroke-width: 2.2px; stroke-dasharray: 66 5; }
+:root[data-theme="notebook"] .pin .focus-ring { stroke: #2540c8; }
+:root[data-theme="notebook"] .pin .star-border { fill: #fbf9f1; stroke: #1b2352; }
+:root[data-theme="notebook"] .pin .star { fill: #1b2352; }
+:root[data-theme="notebook"] .country-pin .dot { fill: #1b2352; }
+:root[data-theme="notebook"] .country-pin .pin-halo { fill: #ffe35c; opacity: .8; }
+:root[data-theme="notebook"] .world-btn, :root[data-theme="notebook"] .world-back { background: var(--paper); font-size: 19px; }
+:root[data-theme="notebook"] .world-btn:hover, :root[data-theme="notebook"] .world-btn:focus-visible { background: var(--hl); color: #1b2352; }
+:root[data-theme="notebook"] .legend, :root[data-theme="notebook"] .legend-row span { font-family: var(--hand); font-size: 18px; color: var(--ink); }
+
+/* a strip of tape on the map page */
+:root[data-theme="notebook"] .map-panel::before { content: ""; position: absolute; z-index: 30; pointer-events: none; top: -11px; left: 28px; width: 92px; height: 24px; background: rgba(255, 214, 102, .72); transform: rotate(-3deg); box-shadow: 0 1px 2px rgba(27, 35, 82, .18); }
+:root[data-theme="notebook"] .discover-chip-scroll { height: 36px; padding: 2px 1px; }
+:root[data-theme="notebook"] .discover-chip-scroll .filter-chip { min-height: 30px; }
+@media (min-width: 641px) { :root[data-theme="notebook"] .card { transform: rotate(-.5deg); } }
+@media (max-width: 640px) {
+  :root[data-theme="notebook"] .title { font-size: 40px; }
+  :root[data-theme="notebook"] .discover-chip-scroll { height: 38px; }
+  :root[data-theme="notebook"] .discover-chip-scroll .filter-chip { font-size: 18px; min-height: 32px; }
+  :root[data-theme="notebook"] .card { border-width: 1.5px 0 0; border-radius: 18px 18px 0 0; }
+  :root[data-theme="notebook"] .filter-panel { border-width: 1.5px 0 0; border-radius: 18px 18px 0 0; }
+  :root[data-theme="notebook"] .maker-btn .m-name { font-size: 24px; }
+  :root[data-theme="notebook"] .card-links a { font-size: 21px; }
+  :root[data-theme="notebook"] .map-panel::before { left: 20px; }
+}
+/* ==== End Notebook ==== */

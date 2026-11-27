@@ -25,7 +25,9 @@
         { id: "dark", label: "Dark", color: "#0d0d0d", scheme: "dark",
           swatch: { bg: "#0d0d0d", fg: "#ff7a1a", glyph: "Aa" } },
         { id: "terminal", label: "Terminal", color: "#141414", scheme: "dark", fun: true,
-          swatch: { bg: "#141414", fg: "#ff8a1f", glyph: ">_" } }
+          swatch: { bg: "#141414", fg: "#ff8a1f", glyph: ">_" } },
+        { id: "notebook", label: "Notebook", color: "#f3efe3", scheme: "light", fun: true,
+          swatch: { bg: "#fbf9f1", fg: "#1b2352", glyph: "Nb" } }
       ];
       var AUTO = { id: "auto", label: "Auto (device)",
         swatch: { bg: "linear-gradient(90deg,#f5ecdc 50%,#0d0d0d 50%)", fg: "#c2410c", glyph: "Aa" } };
@@ -216,17 +218,21 @@
     })();
   </script>
   <!-- === End seasonal block === -->
-  <link rel="stylesheet" href="style.css?v=20261125o">
+  <link rel="stylesheet" href="style.css?v=20261126a">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
 
-  <!-- Shared SVG paint for fun themes (unused by light and dark). -->
+  <!-- Shared SVG paint for fun themes (unused by light and dark): t-dots (Terminal), t-hatch (Notebook). -->
   <svg class="theme-defs" width="0" height="0" aria-hidden="true" focusable="false">
     <defs>
       <pattern id="t-dots" width="6" height="6" patternUnits="userSpaceOnUse">
         <rect width="6" height="6" fill="var(--land)"/>
         <rect x="2" y="2" width="1.6" height="1.6" fill="var(--land-dot, var(--land))"/>
+      </pattern>
+      <pattern id="t-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="6" height="6" fill="var(--land)"/>
+        <rect width="1" height="6" fill="var(--land-dot, var(--land))"/>
       </pattern>
     </defs>
   </svg>
@@ -256,6 +262,10 @@
           <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="4.2" fill="currentColor"/>
             <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <svg class="theme-icon theme-icon-palette" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.4-.6-.4-1 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.4-4-7.6-9-7.6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <circle cx="7.6" cy="11.4" r="1.3" fill="currentColor"/><circle cx="10.4" cy="7.4" r="1.3" fill="currentColor"/><circle cx="15" cy="7.6" r="1.3" fill="currentColor"/>
           </svg>
           <svg class="theme-icon theme-icon-fun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M5 7l6 5-6 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -487,11 +497,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261125o"></script>
-  <script src="vendor/topojson-client.min.js?v=20261125o"></script>
-  <script src="vendor/qrcode-generator.js?v=20261125o"></script>
-  <script src="vendor/fuse.min.js?v=20261125o"></script>
-  <script src="map.js?v=20261125o"></script>
+  <script src="vendor/d3.min.js?v=20261126a"></script>
+  <script src="vendor/topojson-client.min.js?v=20261126a"></script>
+  <script src="vendor/qrcode-generator.js?v=20261126a"></script>
+  <script src="vendor/fuse.min.js?v=20261126a"></script>
+  <script src="map.js?v=20261126a"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;
