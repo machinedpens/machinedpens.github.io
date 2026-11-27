@@ -16,7 +16,8 @@ The published site is this folder: HTML, CSS, JS, `makers.json`, map data, and t
 | `index.html` | Page shell, nav pills, Filters drawer, timeline, list, GoatCounter loader, cache-busted asset tags |
 | `map.js` | Map, list, cards, filters, favorites, country grouping |
 | `style.css` | Layout and themes (CSS custom properties). Default light look is cream, black text, and burnt-orange pins; dark mode is near-black with orange accents; the Terminal fun theme is monospace orange-on-black (see Themes) |
-| `makers.json` | All maker records (`updated`, optional `lists`, and a `makers` array) |
+| `makers.json` | All maker records (`updated`, `attrs_source`, optional `lists`, and a `makers` array) |
+| `tools/derive_attrs.py` | Rerunnable script that fills each maker’s `mechanisms` and `materials` from a product catalog (see Mechanism and material data). Not loaded by the site |
 | `maker-map-still.png` | Home-map still, also used as `og:image` |
 | `data/us-canada.topo.json` | Detailed US + Canada land for the home map (object `usca`) |
 | `data/world-110m.topo.json` | World land for the World view and regional zooms |
@@ -30,7 +31,7 @@ Themes (light, dark, and fun themes such as Terminal) are described under Themes
 
 ## `makers.json` schema
 
-Top level: `{ "updated": "YYYY-MM-DD", "lists": [ ... ], "makers": [ ... ] }`. `lists` is optional and may be omitted or `[]`. There is no `id` field on a maker; `map.js` assigns one at load. Slugs are lowercase, punctuation stripped, spaces to hyphens (see `slugify` in `map.js`).
+Top level: `{ "updated": "YYYY-MM-DD", "attrs_source": "catalog YYYY-MM-DD", "lists": [ ... ], "makers": [ ... ] }`. `lists` is optional and may be omitted or `[]`. There is no `id` field on a maker; `map.js` assigns one at load. Slugs are lowercase, punctuation stripped, spaces to hyphens (see `slugify` in `map.js`).
 
 Typical fields on a current entry:
 
@@ -47,6 +48,9 @@ Typical fields on a current entry:
 | `shop_founded` | string | What the card shows (`2016`, sometimes `by 2020` or `2014–2015`) |
 | `priceLow`, `priceHigh` | number or `null` | USD integers after rounding. Omit both (`null`) when there is no price |
 | `pen_types` | array of strings | One or more of `regular`, `fountain`, `multi-pen`, `marker`. `regular` is a standard ballpoint/rollerball/gel pen (bolt, click, twist, or capped). A maker can have several types. If the field is missing, the map treats the maker as `regular` only |
+| `mechanisms` | array of strings | Derived, not hand-edited (see below). Any of `bolt-action`, `side-click`, `top-click`, `twist`, `capped`, `magnetic`, `knock`, in that fixed order. Empty = not yet tagged |
+| `materials` | array of strings | Derived. Lowercase-hyphen ids such as `titanium`, `stainless-steel`, `damascus`, ordered by how many of the maker’s pens use each (so the first three are its “main” materials, shown on the card). Empty = not yet tagged |
+| `attrs_source` | string | Where `mechanisms` / `materials` came from, e.g. `catalog 2026-11-27` |
 | `first_pen` | string, optional | First-pen year when known |
 | `in_maker_index` | boolean | `true` gets the Maker Index ring on the pin |
 | `maker_index_url` | string or `null` | Set only when `in_maker_index` is true |
@@ -55,6 +59,33 @@ Typical fields on a current entry:
 | `geocode_source` | string | e.g. `Nominatim (OSM) city centroid` |
 
 Optional, only when they apply: `status` (`inactive` or `closed`), `status_label`, `status_note`, `city_unconfirmed`, `previously`, `shop_founded_short`.
+
+### Mechanism and material data
+
+`mechanisms` and `materials` are generated from a product catalog (one row per product, with `maker_slug`, `pen_type`, `mechanism`, `materials`, `checked_date`, among other fields). Do not edit them in `makers.json` by hand: re-run the script so they stay reproducible. The current data comes from the catalog snapshot **2026-11-27** (2,712 products, 44 of 53 makers covered).
+
+**Refresh from a new catalog:**
+
+```
+python3 tools/derive_attrs.py /path/to/catalog.json            # rewrites makers.json in place
+python3 tools/derive_attrs.py /path/to/catalog.json --dry-run  # summary only, writes nothing
+python3 tools/derive_attrs.py /path/to/catalog.json --in-stock-only
+```
+
+Then update the top-level `updated` date if you like, bump the cache version, and check the Filters drawer. The script overwrites only `mechanisms`, `materials`, and `attrs_source` (per maker, plus the top-level `attrs_source`, which is set to `catalog <latest checked_date>`). It prints the makers per mechanism and material, makers with no pens in the catalog, makers with no tags, and any material or mechanism it could not map. A slug in the catalog that is not in `makers.json` is ignored, so add new makers to `makers.json` first. The `makers.json` slugs must match the catalog’s `maker_slug`.
+
+**Rules:**
+
+- Only pen products count. Rows with `pen_type: "accessory"` are skipped; `regular`, `fountain`, `multi`, and `marker` rows count.
+- A maker gets a value only if at least one of its pen products lists it. The catalog is built from each shop’s live product feed, so every row counts as a current product, including sold-out pens still listed. `--in-stock-only` counts only rows where `in_stock` is true (this drops many makers, because small-batch shops sell out).
+- Makers with no pen rows in the catalog (currently MaxMadCo, SPP, Maverick Customs, Koenig, Hypercut MFG, Araki F Machine, That Dutch Pen Guy, Hungoblin, Kasama) keep empty arrays. Makers that are in the catalog but whose products never state a mechanism get an empty `mechanisms` (7 makers today).
+- A maker is tagged from any single product. One brass clip or stainless refill makes a maker count as Brass or Stainless Steel, so the Stainless Steel and Brass counts are generous.
+
+**Normalization** (the alias tables are `MECH_ALIASES` and `MATERIAL_ALIASES` in the script; add a row there when a new spelling shows up):
+
+- Mechanisms: `bolt action`/`bolt` → `bolt-action`; `side click` → `side-click`; `top click`/`click` → `top-click`; `twist` → `twist`; `capped`/`cap` → `capped`; `magnetic` → `magnetic`; `knock` → `knock`. Any other value (`post`, `other`) has no chip and is dropped.
+- Titanium: Ti, Titanium, 6Al-4V, Ti-6Al-4V, Grade 5, Ti64. Brass: Brass, C360, C260. Copper: Copper, C110, C101, OFHC. Bronze: Bronze, C932, C954, silicon, aluminum, and phosphor bronze. Aluminum: Aluminum, Aluminium, Al, 6061, 7075. Stainless Steel: Stainless Steel, Stainless, SS, 304, 316, 316L, 17-4, 303, 440C. Zirconium: Zirc, Zirconium, Zr, Zr702. Carbon Fiber: carbon fibre/fiber. Delrin: Delrin, acetal, POM. Tungsten: tungsten, tungsten carbide.
+- **No “Exotic” bucket.** Damascus, Timascus, Mokume (Mokume-gane), Zircuti, Micarta, PEEK, and Ultem keep their own names, because collectors search for them by name and lumping them hides what they are. Values that contain several materials (`Titanium / Brass`) are split on `/ , ; + & and`. A value that cannot be mapped is ignored and listed in the script output.
 
 ### Lists
 
@@ -118,7 +149,7 @@ Never invent data. If a field is unverified, leave it off or `null`. If the owne
    - No price if the maker is discontinued — leave `priceLow` and `priceHigh` null (current examples: MaxMadCo, inactive; SPP, closed)
    - If the owner gives a range, use it (after applying this rounding, unless they give an already-final range and tell you to use it exactly)
 
-   The Filters drawer has three groups: Price, Pen type, and Lists. Picks inside a group are combined with **or**, picks across groups with **and**. Nothing selected in a group means “any”. Chips show a live count of how many makers you would see if you selected that chip, given the other groups. A chip with a count of 0 is greyed but still tappable. Makers that do not match are hidden on the map and in the list, not faded.
+   The Filters drawer has five groups: Price, Pen type, Mechanism, Material, and Lists. Picks inside a group are combined with **or**, picks across groups with **and**. Nothing selected in a group means “any”. Chips show a live count of how many makers you would see if you selected that chip, given the other groups. A Price or Lists chip with a count of 0 is greyed but still tappable; Pen type, Mechanism, and Material chips with a count of 0 are hidden. Makers that do not match are hidden on the map and in the list, not faded.
 
    Price chips are **Under $100**, **$100–250**, and **Over $250**. A maker appears under every chip its range touches, as implemented in `matchesPriceTier`:
 
@@ -126,7 +157,7 @@ Never invent data. If a field is unverified, leave it off or `null`. If the owne
    - $100–250: `priceLow <= 250` and `priceHigh >= 100`
    - Over $250: `priceHigh > 250`
 
-   Makers with no price appear in none of the price chips. Pen type chips are **Regular**, **Fountain**, **Multi pen**, and **Marker**, from the maker’s `pen_types` array. List chips come from the top-level `lists` array; a maker is on a list when their slug appears in that list’s `makers`.
+   Makers with no price appear in none of the price chips. Pen type chips are **Regular**, **Fountain**, **Multi pen**, and **Marker**, from the maker’s `pen_types` array; Mechanism and Material chips come from `mechanisms` and `materials`. List chips come from the top-level `lists` array; a maker is on a list when their slug appears in that list’s `makers`.
 6. **Append** the new object to the `makers` array (do not rewrite or reorder existing entries). Update the top-level `updated` date if you are changing data.
 7. **Bump the cache version** (see Release process) and recapture `maker-map-still.png` if the home map (US + Canada pins) changed.
 
@@ -141,14 +172,15 @@ Preserve these. Keep the site simple. Brand colors are orange and black. The def
 - Tapping US or Canada (pin or land) from the world view also returns home. Tapping the Europe pin (or any European country with visible makers) zooms to the Europe map, which shows every visible European maker.
 - **Favorites** are a local star list, max 5, stored in `localStorage` under `machinedpens-maker-map-favorites`. Favorite pins are orange stars, about pin-sized, with a star-shaped border (the circle/ring is hidden). Do not change that shape.
 - **Timeline** is the only map view. The year slider (through `MAX_YEAR` in `map.js`, currently 2026) and play button stay. There is no Price mode and no price-colored pins; every pin uses the standard orange.
-- **Filters** opens a side drawer on desktop and a bottom sheet on a phone. A search box sits at the top of that drawer/sheet, above the Price, Pen type, and Lists chip groups (it is not a map overlay). A count such as “12 of 44 makers”, a Reset button, and removable chips under the slider show what is active. The `.map-panel` size must stay the same when the drawer opens or filters are applied (the chips row under the slider is a reserved slot; search lives inside the overlay, so it must not grow the panel).
+- **Filters** opens a side drawer on desktop and a bottom sheet on a phone. A search box sits at the top of that drawer/sheet, above the Price, Pen type, Mechanism, Material, and Lists chip groups (it is not a map overlay). A count such as “12 of 44 makers”, a Reset button, and removable chips under the slider show what is active. The `.map-panel` size must stay the same when the drawer opens or filters are applied (the chips row under the slider is a reserved slot; search lives inside the overlay, so it must not grow the panel).
 
 ### Search in the Filters drawer
 
-The drawer search is a small parser plus [Fuse.js](https://fusejs.io) fuzzy matching. There is no AI. Typing ticks matching chips live; tapping chips by hand edits the same `priceFilters` / `typeFilters` / `listFilters` state. Clearing the box drops chips the search turned on and leaves chips you picked by hand. **Reset** clears the box, the “Showing:” line, suggestions, and every chip.
+The drawer search is a small parser plus [Fuse.js](https://fusejs.io) fuzzy matching. There is no AI. Typing ticks matching chips live; tapping chips by hand edits the same `priceFilters` / `typeFilters` / `mechFilters` / `materialFilters` / `listFilters` state. Clearing the box drops chips the search turned on and leaves chips you picked by hand. **Reset** clears the box, the “Showing:” line, suggestions, and every chip.
 
 How a query is read:
 
+0. Mechanism and material words are synonyms too: `bolt`, `bolt action`, `click` (ticks Side click and Top click), `twist`, `capped`, `titanium`, `ti`, `zirc`, `brass`, `steel`, `damascus`, and so on. Materials in the “More” row are added to the synonyms automatically from the data. `bolt` and `click` used to tick Regular; they now tick the mechanism chips instead.
 1. Price number patterns are pulled out first. “Under N” / “below N” / “less than N” ticks every price chip whose bucket overlaps `[0, N)`. “Over N” / “above N” / “more than N” / “N+” ticks chips overlapping `(N, ∞)`. “Between A and B” (or “A–B”, “A to B”) ticks chips overlapping `[A, B]`. Examples: `under 250` → Under $100 and $100–250; `over 250` → Over $250; `between 100 and 250` → $100–250.
 2. Remaining words are matched to synonyms (exact whole words or phrases, then Fuse.js fuzzy match for tokens of 4+ characters). Stopwords such as `pen`, `pens`, `the`, `and`, `maker` are ignored. A typo like `fountian pens over 250` ticks Fountain and Over $250.
 3. Leftover tokens are matched against makers for the suggestion list (up to five hits). A query that matches the **start of the maker name**, or the **start of any word in the name**, always counts and is listed first (for example `Makar` → Makar Tools, `Black` → Blackside Customs, `Kasa` → Kasama, `Karas` → Karas Pen Co and Everyday Karas). Fuse.js still adds typo and location hits (`name`, `city`, `region`, `region_name`, and country code or the display name in `COUNTRY_NAMES`). Picking a suggestion closes the drawer and zooms/highlights that pin (`focusMaker`). Location hits are suggestions only — there is no hidden location filter.
@@ -159,9 +191,11 @@ A short “Showing: …” line under the box lists the chips parsed from the cu
 
 The list panel’s “Find a maker” box is unchanged: it is a simple substring search on name, city, region name, and country. It does not use this parser or Fuse.js.
 
-**Adding a synonym.** In `map.js`, edit the `SEARCH_SYNONYMS` array. Each entry has `group` (`price`, `type`, or `list`), `value` (a chip id from `PRICE_CHIPS`, `TYPE_CHIPS`, or `LIST_CHIPS`, e.g. `fountain`, `under-100`, or `pp-top-10-budget-2026`), and `terms` (the words or phrases to recognize). List search terms can also be stored on the list in `makers.json` as `search_terms`. Unique terms such as `pp new`, `pp top 10 budget`, `lyfl`, or `favs` tick that one list. Shared phrases such as `pp top 10` or `pocket priorities` do not auto-select a list when more than one list matches; the drawer suggests the matching lists instead so the user can pick one or both. Restart is not needed beyond a refresh; bump the cache version if the file will be published. Do not add a CDN copy of Fuse.js — the local `vendor/fuse.min.js` and `vendor/LICENSE-fuse.txt` are the ones to keep.
+**Mechanism and Material chips.** Mechanism chips are Bolt action, Side click, Top click, Twist, Capped, Magnetic, and Knock (`MECH_CHIPS`). Material chips are Titanium, Brass, Copper, Zirconium, Aluminum, Stainless Steel, and Bronze (`MATERIAL_MAIN`), followed by a “More” row built from the data: every other material used by at least `MORE_MIN_MAKERS` (3) makers, most common first. Same logic as the other groups: **or** inside a group, **and** across groups; counts are live given the other groups. Pen type, Mechanism, and Material chips with a count of 0 are hidden (so Multi pen and Marker disappear until a maker has them), unless the chip is on. While any Mechanism or Material chip is on, a small “N makers not yet tagged” note appears under the count in the drawer and above the list. It counts makers that pass all other filters and are hidden only because they have no mechanism (or material) data. Maker cards show Mechanism tags and up to three Material tags (the maker’s three most common).
+
+**Adding a synonym.** In `map.js`, edit the `SEARCH_SYNONYMS` array. Each entry has `group` (`price`, `type`, `mech`, `material`, or `list`), `value` (a chip id from `PRICE_CHIPS`, `TYPE_CHIPS`, `MECH_CHIPS`, `MATERIAL_CHIPS`, or `LIST_CHIPS`, e.g. `fountain`, `under-100`, `bolt-action`, `titanium`, or `pp-top-10-budget-2026`; or `values: [...]` to tick several chips of one group, as `click` does for Side click and Top click), and `terms` (the words or phrases to recognize). List search terms can also be stored on the list in `makers.json` as `search_terms`. Unique terms such as `pp new`, `pp top 10 budget`, `lyfl`, or `favs` tick that one list. Shared phrases such as `pp top 10` or `pocket priorities` do not auto-select a list when more than one list matches; the drawer suggests the matching lists instead so the user can pick one or both. Restart is not needed beyond a refresh; bump the cache version if the file will be published. Do not add a CDN copy of Fuse.js — the local `vendor/fuse.min.js` and `vendor/LICENSE-fuse.txt` are the ones to keep.
 - **Do not add Share link or Share image buttons.** They were removed from the UI. Incoming shared-favorite links can still open a “Viewing shared favorites” banner; leave that as is unless asked to change it.
-- Featured Maker Index pins keep the ring. Inactive/closed pins stay hollow. Cards show location, shop founded, price (when present), first pen (when present), website, and “Update this entry” (opens a GitHub issue). When a Lists chip is on, a matching maker’s card also shows that list’s rank or unranked tag and credit (for example `PP Budget #1 · Pocket Priorities`, or `lyfl's fav · lyfl`). When two list chips are on, a maker on both shows both tags (for example `lyfl's fav · PP New #6`).
+- Featured Maker Index pins keep the ring. Inactive/closed pins stay hollow. Cards show location, shop founded, price (when present), first pen (when present), mechanism and material tags (when tagged), website, and “Update this entry” (opens a GitHub issue). When a Lists chip is on, a matching maker’s card also shows that list’s rank or unranked tag and credit (for example `PP Budget #1 · Pocket Priorities`, or `lyfl's fav · lyfl`). When two list chips are on, a maker on both shows both tags (for example `lyfl's fav · PP New #6`).
 
 ## Themes
 
@@ -183,7 +217,7 @@ Light and dark themes are never changed by a fun theme: a fun theme only adds se
 
 Owner approval is required before any push. Show preview screenshots first and wait. Do not publish, force-push, or go live unasked.
 
-**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125n`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
+**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125o`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
 
 - `style.css` (this also covers the four `url("vendor/ibm-plex-mono-…")` font references inside it), `vendor/d3.min.js`, `vendor/topojson-client.min.js`, `vendor/qrcode-generator.js`, `vendor/fuse.min.js`, `map.js` (in `index.html`)
 - `makers.json`, `data/us-canada.topo.json`, `data/world-110m.topo.json` (in `map.js`)
@@ -194,7 +228,7 @@ Owner approval is required before any push. Show preview screenshots first and w
 
 **Light and dark mode.** Light and dark are the two built-in themes, and the default. With nothing saved, the map follows the visitor’s device setting (`prefers-color-scheme`). The header button is now a theme picker (see Themes); it keeps the moon in light and the sun in dark, and shows a `>_` glyph in a fun theme. Before the first paint, an inline head script in `index.html` sets `data-theme` so the cream light theme does not flash on a dark visit. Order of precedence: `?mode=<theme>` (URL override for that load, e.g. `?mode=dark`, `?mode=light`, `?mode=terminal`), then the saved choice in `localStorage` under `maker-map-theme`, then `prefers-color-scheme`. Choosing a theme in the picker writes `maker-map-theme` and drops any `?mode=` from the URL so the saved choice wins on reload; choosing Auto removes the saved value so the device setting applies again. Colors live in CSS custom properties in `style.css` (`:root` / `[data-theme="light"]` for the cream light look, `[data-theme="dark"]` for near-black backgrounds, orange accents, and light text). The map is a D3/SVG drawing, not raster tiles, so land, water, borders, and labels follow those variables. In light and dark, pins keep the brand orange (`--pin`) and are not CSS-filtered. Native form controls use `color-scheme`. The picker is hidden on `?still=1` and the print view, and those two views always use the plain light look even if a fun theme is saved.
 
-**Test locally.** Serve this folder over HTTP (so `makers.json` and the topo files load), then check home, World (including Australia, New Zealand, Hungary, and Philippines pins; New Zealand must sit comfortably in the frame), a Europe zoom, Japan, the Philippines, South Africa, Australia or New Zealand, a new maker’s card, the list/country filter, the Filters drawer (search at the top, Price, Pen type, and Lists, including a typo query such as `fountian pens over 250`, a unique list query such as `pp new` or `lyfl`, and an ambiguous list query such as `pp top 10` or `pocket priorities` (which should suggest both PP lists, not the owner’s list), a maker-name suggestion such as `shon`, a no-match query, and a zero-count chip), the list “Find a maker” box, the timeline with filters on, light, dark, and Terminal (`?mode=light`, `?mode=dark`, `?mode=terminal`, the header picker, that the choice persists across a reload, and that Auto returns to the device setting), a start-of-word name query such as `Makar` or `Kasa`, and `?still=1`. Confirm the map panel does not change size when Filters opens, search suggestions appear, or a filter is applied.
+**Test locally.** Serve this folder over HTTP (so `makers.json` and the topo files load), then check home, World (including Australia, New Zealand, Hungary, and Philippines pins; New Zealand must sit comfortably in the frame), a Europe zoom, Japan, the Philippines, South Africa, Australia or New Zealand, a new maker’s card, the list/country filter, the Filters drawer (search at the top, Price, Pen type, Mechanism, Material, and Lists, plus searches such as `bolt titanium` and `zirc`, including a typo query such as `fountian pens over 250`, a unique list query such as `pp new` or `lyfl`, and an ambiguous list query such as `pp top 10` or `pocket priorities` (which should suggest both PP lists, not the owner’s list), a maker-name suggestion such as `shon`, a no-match query, and a zero-count chip), the list “Find a maker” box, the timeline with filters on, light, dark, and Terminal (`?mode=light`, `?mode=dark`, `?mode=terminal`, the header picker, that the choice persists across a reload, and that Auto returns to the device setting), a start-of-word name query such as `Makar` or `Kasa`, and `?still=1`. Confirm the map panel does not change size when Filters opens, search suggestions appear, or a filter is applied.
 
 **Publish**, only after the owner approves the previews: commit to `main` in `machinedpens/machinedpens.github.io`, keep `.nojekyll` and this `README.md`, and verify the live site at https://machinedpens.github.io (hard-refresh so the new `?v=` assets load).
 

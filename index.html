@@ -216,7 +216,7 @@
     })();
   </script>
   <!-- === End seasonal block === -->
-  <link rel="stylesheet" href="style.css?v=20261125n">
+  <link rel="stylesheet" href="style.css?v=20261125o">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -414,14 +414,25 @@
           <span class="drawer-count" id="drawer-count">44 of 44 makers</span>
           <button type="button" class="clear-btn" id="filters-reset" disabled>Reset</button>
         </div>
+        <p class="untagged-note" id="drawer-untagged" hidden></p>
         <div class="drawer-body">
           <section class="fg">
             <h3 class="fg-label" id="price-filter-label">Price</h3>
             <div class="fg-chips" id="price-chips" role="group" aria-labelledby="price-filter-label"></div>
           </section>
-          <section class="fg">
+          <section class="fg" id="type-filter">
             <h3 class="fg-label" id="type-filter-label">Pen type</h3>
             <div class="fg-chips" id="type-chips" role="group" aria-labelledby="type-filter-label"></div>
+          </section>
+          <section class="fg" id="mech-filter">
+            <h3 class="fg-label" id="mech-filter-label">Mechanism</h3>
+            <div class="fg-chips" id="mech-chips" role="group" aria-labelledby="mech-filter-label"></div>
+          </section>
+          <section class="fg" id="material-filter">
+            <h3 class="fg-label" id="material-filter-label">Material</h3>
+            <div class="fg-chips" id="material-chips" role="group" aria-labelledby="material-filter-label"></div>
+            <h4 class="fg-sublabel" id="material-more-label">More</h4>
+            <div class="fg-chips" id="material-more-chips" role="group" aria-labelledby="material-more-label"></div>
           </section>
           <section class="fg" id="list-filter">
             <h3 class="fg-label" id="list-filter-label">Lists</h3>
@@ -451,6 +462,7 @@
           <button type="button" class="list-sort-btn" data-sort="price" aria-pressed="false">Price</button>
         </div>
       </div>
+      <p class="untagged-note" id="list-untagged" hidden></p>
       <div id="list"></div>
             <p class="list-empty" id="list-empty" hidden>
         No makers match
@@ -475,11 +487,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261125n"></script>
-  <script src="vendor/topojson-client.min.js?v=20261125n"></script>
-  <script src="vendor/qrcode-generator.js?v=20261125n"></script>
-  <script src="vendor/fuse.min.js?v=20261125n"></script>
-  <script src="map.js?v=20261125n"></script>
+  <script src="vendor/d3.min.js?v=20261125o"></script>
+  <script src="vendor/topojson-client.min.js?v=20261125o"></script>
+  <script src="vendor/qrcode-generator.js?v=20261125o"></script>
+  <script src="vendor/fuse.min.js?v=20261125o"></script>
+  <script src="map.js?v=20261125o"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;

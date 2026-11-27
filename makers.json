@@ -182,7 +182,22 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "side-click",
+        "top-click",
+        "twist",
+        "knock"
+      ],
+      "materials": [
+        "titanium",
+        "aluminum",
+        "stainless-steel",
+        "brass",
+        "copper",
+        "bronze"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Confounded Machine",
@@ -205,7 +220,10 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Q3D",
@@ -227,7 +245,20 @@
       "geocode_source": "Illinois centroid (Natural Earth polygon)",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action"
+      ],
+      "materials": [
+        "titanium",
+        "copper",
+        "zirconium",
+        "bronze",
+        "damascus",
+        "mokume",
+        "zircuti"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "FocusWorks",
@@ -250,7 +281,24 @@
       "geocode_source": "Nominatim (OSM) town centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "side-click",
+        "magnetic"
+      ],
+      "materials": [
+        "titanium",
+        "ultem",
+        "brass",
+        "copper",
+        "stainless-steel",
+        "aluminum",
+        "zirconium",
+        "delrin",
+        "bronze",
+        "tungsten"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Seguin",
@@ -272,7 +320,15 @@
       "geocode_source": "Nominatim (OSM) town centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action"
+      ],
+      "materials": [
+        "aluminum",
+        "titanium"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Grimsmo",
@@ -295,7 +351,13 @@
       "geocode_source": "Nominatim (OSM) community centroid (Hamilton, ON)",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [
+        "titanium",
+        "bronze"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "MaxMadCo",
@@ -319,7 +381,10 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "SPP",
@@ -343,7 +408,10 @@
       "geocode_source": "Nominatim (OSM) village centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "MachineWise",
@@ -366,7 +434,14 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "twist"
+      ],
+      "materials": [
+        "titanium"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Schon DSGN",
@@ -390,7 +465,21 @@
       "pen_types": [
         "regular",
         "fountain"
-      ]
+      ],
+      "mechanisms": [
+        "capped"
+      ],
+      "materials": [
+        "aluminum",
+        "ultem",
+        "brass",
+        "copper",
+        "peek",
+        "titanium",
+        "bronze",
+        "stainless-steel"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "The Right Choice Painting Company",
@@ -412,7 +501,24 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "top-click",
+        "capped"
+      ],
+      "materials": [
+        "titanium",
+        "stainless-steel",
+        "copper",
+        "brass",
+        "zirconium",
+        "timascus",
+        "zircuti",
+        "aluminum",
+        "bronze"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Modern Fuel",
@@ -437,7 +543,23 @@
       "pen_types": [
         "regular",
         "fountain"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "top-click",
+        "knock"
+      ],
+      "materials": [
+        "titanium",
+        "bronze",
+        "copper",
+        "stainless-steel",
+        "zirconium",
+        "aluminum",
+        "brass",
+        "damascus"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Tactile Turn",
@@ -459,7 +581,28 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "side-click",
+        "top-click"
+      ],
+      "materials": [
+        "titanium",
+        "damascus",
+        "bronze",
+        "copper",
+        "zirconium",
+        "stainless-steel",
+        "aluminum",
+        "brass",
+        "mokume",
+        "tungsten",
+        "ultem",
+        "carbon-fiber",
+        "micarta"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Inventery",
@@ -481,7 +624,24 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "twist"
+      ],
+      "materials": [
+        "titanium",
+        "zirconium",
+        "stainless-steel",
+        "brass",
+        "copper",
+        "damascus",
+        "mokume",
+        "aluminum",
+        "ultem",
+        "bronze"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Matthew Martin Makes",
@@ -505,7 +665,18 @@
       "pen_types": [
         "regular",
         "fountain"
-      ]
+      ],
+      "mechanisms": [
+        "capped"
+      ],
+      "materials": [
+        "peek",
+        "titanium",
+        "zirconium",
+        "damascus",
+        "bronze"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Maverick Customs",
@@ -528,7 +699,10 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "OG Brad",
@@ -550,7 +724,15 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action"
+      ],
+      "materials": [
+        "brass",
+        "copper"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Billetspin",
@@ -573,7 +755,20 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "top-click",
+        "twist"
+      ],
+      "materials": [
+        "zirconium",
+        "titanium",
+        "bronze",
+        "stainless-steel",
+        "timascus",
+        "damascus"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Fellhoelter",
@@ -595,7 +790,25 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "top-click"
+      ],
+      "materials": [
+        "titanium",
+        "zirconium",
+        "carbon-fiber",
+        "copper",
+        "brass",
+        "aluminum",
+        "damascus",
+        "mokume",
+        "stainless-steel",
+        "timascus",
+        "zircuti"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Nottingham Tactical",
@@ -618,7 +831,27 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "side-click",
+        "top-click",
+        "twist"
+      ],
+      "materials": [
+        "titanium",
+        "brass",
+        "copper",
+        "bronze",
+        "damascus",
+        "timascus",
+        "zirconium",
+        "zircuti",
+        "carbon-fiber",
+        "aluminum",
+        "mokume"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Karas Pen Co",
@@ -642,7 +875,21 @@
       "pen_types": [
         "regular",
         "fountain"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "top-click",
+        "capped"
+      ],
+      "materials": [
+        "aluminum",
+        "brass",
+        "stainless-steel",
+        "copper",
+        "delrin",
+        "bronze"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Machine Era",
@@ -666,7 +913,19 @@
       "pen_types": [
         "regular",
         "fountain"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "twist",
+        "capped"
+      ],
+      "materials": [
+        "brass",
+        "stainless-steel",
+        "titanium",
+        "aluminum"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Big Idea Design",
@@ -691,7 +950,26 @@
       "pen_types": [
         "regular",
         "fountain"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "side-click",
+        "top-click",
+        "twist",
+        "capped"
+      ],
+      "materials": [
+        "titanium",
+        "damascus",
+        "brass",
+        "copper",
+        "zirconium",
+        "stainless-steel",
+        "bronze",
+        "aluminum",
+        "ultem"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Honey Badger Arsenal",
@@ -713,7 +991,18 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action"
+      ],
+      "materials": [
+        "titanium",
+        "stainless-steel",
+        "brass",
+        "aluminum",
+        "copper"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Aerocrafted",
@@ -736,7 +1025,17 @@
       "geocode_source": "Nominatim (OSM) city centroid (not the county)",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "top-click"
+      ],
+      "materials": [
+        "titanium",
+        "bronze",
+        "stainless-steel",
+        "ultem"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Spoke Design",
@@ -760,7 +1059,22 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "side-click",
+        "top-click",
+        "twist",
+        "capped",
+        "knock"
+      ],
+      "materials": [
+        "titanium",
+        "aluminum",
+        "delrin",
+        "stainless-steel",
+        "brass"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Koenig",
@@ -783,7 +1097,10 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Ti2 Design",
@@ -805,7 +1122,20 @@
       "geocode_source": "Nominatim (OSM) locality centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "magnetic"
+      ],
+      "materials": [
+        "titanium",
+        "bronze",
+        "brass",
+        "copper",
+        "stainless-steel",
+        "ultem"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Melrose Machine Works",
@@ -827,7 +1157,14 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action"
+      ],
+      "materials": [
+        "brass"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Pencestry",
@@ -849,7 +1186,16 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action"
+      ],
+      "materials": [
+        "bronze",
+        "stainless-steel",
+        "brass"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "CW&T",
@@ -872,7 +1218,23 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "side-click",
+        "top-click",
+        "magnetic",
+        "knock"
+      ],
+      "materials": [
+        "aluminum",
+        "stainless-steel",
+        "titanium",
+        "brass",
+        "bronze",
+        "copper",
+        "peek"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Studio Neat",
@@ -896,7 +1258,16 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "top-click"
+      ],
+      "materials": [
+        "stainless-steel",
+        "aluminum",
+        "copper"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "OZ Machine Company",
@@ -919,7 +1290,15 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [
+        "titanium",
+        "damascus",
+        "zircuti",
+        "bronze"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Hypercut MFG",
@@ -942,7 +1321,10 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "AJOTO",
@@ -966,7 +1348,18 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [
+        "stainless-steel",
+        "brass",
+        "aluminum",
+        "tungsten",
+        "bronze",
+        "copper",
+        "titanium"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Wingback",
@@ -990,7 +1383,19 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "top-click",
+        "twist"
+      ],
+      "materials": [
+        "stainless-steel",
+        "brass",
+        "titanium",
+        "tungsten",
+        "bronze"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Araki F Machine",
@@ -1013,7 +1418,10 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Arno Bernard Pens",
@@ -1036,7 +1444,15 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action"
+      ],
+      "materials": [
+        "timascus",
+        "titanium"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Herman Knives",
@@ -1059,7 +1475,13 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [
+        "bronze",
+        "titanium"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Sunderland Machine Works",
@@ -1082,7 +1504,13 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [
+        "aluminum",
+        "stainless-steel"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Tuff Writer",
@@ -1105,7 +1533,21 @@
       "geocode_source": "Arizona centroid (US-Canada map polygon)",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "side-click",
+        "top-click"
+      ],
+      "materials": [
+        "aluminum",
+        "stainless-steel",
+        "titanium",
+        "brass",
+        "copper",
+        "bronze",
+        "zirconium"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Prometheus Writes",
@@ -1128,7 +1570,21 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "top-click"
+      ],
+      "materials": [
+        "titanium",
+        "brass",
+        "copper",
+        "stainless-steel",
+        "ultem",
+        "aluminum",
+        "mokume",
+        "zirconium"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Baronfig",
@@ -1151,7 +1607,18 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "top-click",
+        "twist"
+      ],
+      "materials": [
+        "aluminum",
+        "brass",
+        "copper",
+        "stainless-steel"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Ensso",
@@ -1175,7 +1642,20 @@
       "pen_types": [
         "regular",
         "fountain"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "top-click",
+        "capped"
+      ],
+      "materials": [
+        "titanium",
+        "aluminum",
+        "stainless-steel",
+        "brass",
+        "bronze"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Magnus Pens",
@@ -1197,7 +1677,19 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "top-click",
+        "twist"
+      ],
+      "materials": [
+        "titanium",
+        "stainless-steel",
+        "timascus",
+        "bronze"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "MIG Shed",
@@ -1221,7 +1713,20 @@
       "pen_types": [
         "regular",
         "fountain"
-      ]
+      ],
+      "mechanisms": [
+        "bolt-action",
+        "capped"
+      ],
+      "materials": [
+        "titanium",
+        "timascus",
+        "copper",
+        "brass",
+        "stainless-steel",
+        "aluminum"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Everyman",
@@ -1243,7 +1748,18 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "top-click",
+        "twist"
+      ],
+      "materials": [
+        "aluminum",
+        "brass",
+        "stainless-steel",
+        "copper"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Everyday Karas",
@@ -1266,7 +1782,18 @@
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "capped"
+      ],
+      "materials": [
+        "aluminum",
+        "delrin",
+        "stainless-steel",
+        "brass",
+        "copper"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "That Dutch Pen Guy",
@@ -1288,7 +1815,10 @@
       "geocode_source": "Nominatim (OSM) state centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Hungoblin",
@@ -1310,7 +1840,10 @@
       "geocode_source": "Nominatim (OSM) country centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Blackside Customs",
@@ -1327,12 +1860,21 @@
       "in_maker_index": false,
       "maker_index_url": null,
       "lat": 40.6391,
-      "lon": -73.6400,
+      "lon": -73.64,
       "location_precision": "city",
       "geocode_source": "Nominatim (OSM) city centroid",
       "pen_types": [
         "regular"
-      ]
+      ],
+      "mechanisms": [
+        "side-click"
+      ],
+      "materials": [
+        "aluminum",
+        "stainless-steel",
+        "titanium"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Makar Tools",
@@ -1355,7 +1897,14 @@
       "pen_types": [
         "regular",
         "fountain"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [
+        "brass",
+        "bronze",
+        "copper"
+      ],
+      "attrs_source": "catalog 2026-11-27"
     },
     {
       "name": "Kasama",
@@ -1378,7 +1927,11 @@
       "geocode_source": "Nominatim (OSM) country centroid",
       "pen_types": [
         "fountain"
-      ]
+      ],
+      "mechanisms": [],
+      "materials": [],
+      "attrs_source": "catalog 2026-11-27"
     }
-  ]
+  ],
+  "attrs_source": "catalog 2026-11-27"
 }
