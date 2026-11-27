@@ -84,9 +84,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], mechFilters: [], materialFilters: [], listFilters: [], lists: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261127b"),
-    d3.json("data/us-canada.topo.json?v=20261127b"),
-    d3.json("data/world-110m.topo.json?v=20261127b")
+    d3.json("makers.json?v=20261127c"),
+    d3.json("data/us-canada.topo.json?v=20261127c"),
+    d3.json("data/world-110m.topo.json?v=20261127c")
   ]).then(function (res) { init(res[0], res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -285,6 +285,7 @@
     if (!H) return;
     var S = sizes();
     svg.attr("viewBox", "0 0 " + W + " " + H).attr("width", W).attr("height", H);
+    fitRoast(W, H);
     svg.selectAll("*").remove();
     document.body.setAttribute("data-view", "world");
     syncMapButtons();
@@ -371,6 +372,7 @@
     groups.append("circle").attr("class", "hit").attr("r", narrow ? 22 : 28);
     groups.append("circle").attr("class", "pin-halo").attr("r", narrow ? 11 : 16);
     groups.append("circle").attr("class", "dot").attr("r", narrow ? 7 : 9);
+    addBean(groups, narrow ? 7 : 9);
     groups.append("text").attr("class", "country-pin-label")
       .attr("x", function (d) { return (labelAt[d.code] || labelAt.US).x; })
       .attr("y", function (d) { return (labelAt[d.code] || labelAt.US).y; })
@@ -455,6 +457,7 @@
     if (!H) return;
     var S = sizes();
     svg.attr("viewBox", "0 0 " + W + " " + H).attr("width", W).attr("height", H);
+    fitRoast(W, H);
     svg.selectAll("*").remove();
     document.body.setAttribute("data-view", "country");
     syncMapButtons();
@@ -533,6 +536,7 @@
     body.filter(function (d) { return d.m.in_maker_index; })
       .append("circle").attr("class", "ring").attr("r", S.ring);
     body.append("circle").attr("class", "dot").attr("r", S.dot);
+    addBean(body, S.dot);
     if (!STILL) {
       var mark = body.append("g").attr("class", "star-mark");
       mark.append("path").attr("class", "star-border")
@@ -582,6 +586,29 @@
       d.push((i ? "L" : "M") + (Math.cos(a) * rad).toFixed(3) + "," + (Math.sin(a) * rad).toFixed(3));
     }
     return d.join("") + "Z";
+  }
+  // Coffee land gradient (#cf-roast in index.html): light at the middle of the view, roasted toward the edges.
+  // Sized in px because the gradient's percent units would resolve against its own 0x0 <svg>.
+  function fitRoast(W, H) {
+    var g = document.getElementById("cf-roast");
+    if (!g) return;
+    g.setAttribute("cx", Math.round(W * 0.46)); g.setAttribute("cy", Math.round(H * 0.6));
+    g.setAttribute("r", Math.round(Math.max(W, H) * 0.5));
+  }
+  // A coffee bean (tilted oval with a center crease). Drawn for every pin but only shown by the Coffee theme.
+  function beanPaths(r) {
+    var rx = r * 1.12, ry = r * 0.8, t = -32 * Math.PI / 180, c = Math.cos(t), s = Math.sin(t);
+    function pt(x, y) { return (x * c - y * s).toFixed(2) + "," + (x * s + y * c).toFixed(2); }
+    var body = "M" + pt(-rx, 0) + "A" + rx.toFixed(2) + "," + ry.toFixed(2) + " -32 1 0 " + pt(rx, 0) +
+      "A" + rx.toFixed(2) + "," + ry.toFixed(2) + " -32 1 0 " + pt(-rx, 0) + "Z";
+    var crease = "M" + pt(-rx * 0.74, ry * 0.12) + "C" + pt(-rx * 0.25, -ry * 0.55) + " " + pt(rx * 0.25, ry * 0.55) + " " + pt(rx * 0.74, -ry * 0.12);
+    return { body: body, crease: crease };
+  }
+  function addBean(sel, r) {
+    var b = beanPaths(r), g = sel.append("g").attr("class", "bean-g").attr("aria-hidden", "true");
+    g.append("path").attr("class", "bean").attr("d", b.body);
+    g.append("path").attr("class", "bean-crease").attr("d", b.crease);
+    return g;
   }
   function favBorderRadius(d, S) {
     return d.m.in_maker_index ? S.starIndex : S.starBorder;
@@ -668,6 +695,7 @@
     if (!H) return;
     var S = sizes();
     svg.attr("viewBox", "0 0 " + W + " " + H).attr("width", W).attr("height", H);
+    fitRoast(W, H);
     svg.selectAll("*").remove();
 
     backBand = (!STILL && state.focusCountry) ? 34 : 0;
@@ -772,6 +800,7 @@
     body.filter(function (d) { return d.m.in_maker_index; })
       .append("circle").attr("class", "ring").attr("r", S.ring);
     body.append("circle").attr("class", "dot").attr("r", S.dot);
+    addBean(body, S.dot);
     if (!STILL) {
       var mark = body.append("g").attr("class", "star-mark");
       mark.append("path").attr("class", "star-border")
@@ -1019,12 +1048,13 @@
     { value: "twist", label: "Twist" },
     { value: "capped", label: "Capped" },
     { value: "magnetic", label: "Magnetic" },
-    { value: "knock", label: "Knock" }
+    // One-of-a-kind actions that are not one of the above. `unique_mechanisms` on the maker names them (FocusWorks: Sideswipe; Magnus Pens: ClickShift; Billetspin: name not set yet, so the card says just "Unique").
+    { value: "unique", label: "Unique", items: ["Sideswipe", "ClickShift", "Billetspin"] }
   ];
   // Main material row, in this order. Any other material used by MORE_MIN_MAKERS+ makers goes in the "More" row.
-  var MATERIAL_MAIN = ["titanium", "brass", "copper", "zirconium", "aluminum", "stainless-steel", "bronze"];
+  var MATERIAL_MAIN = ["titanium", "heavy-metals", "zirconium", "aluminum", "stainless-steel"];  // Heavy metals = brass, copper and bronze (merged 2026-11-27)
   var MORE_MIN_MAKERS = 3;
-  var MATERIAL_LABELS = { "peek": "PEEK", "stainless-steel": "Stainless Steel", "carbon-fiber": "Carbon Fiber" };
+  var MATERIAL_LABELS = { "heavy-metals": "Heavy metals", "peek": "PEEK", "stainless-steel": "Stainless Steel", "carbon-fiber": "Carbon Fiber" };
   var MATERIAL_CHIPS = [];
   var MATERIAL_MORE_CHIPS = [];
   function attrLabel(id) {
@@ -1046,6 +1076,9 @@
       var terms = [c.label.toLowerCase()];
       if (c.value === "mokume") terms.push("mokume gane");
       if (c.value === "delrin") terms.push("acetal");
+      if (c.value === "titanium-damascus") terms.push("timascus", "ti damascus");
+      if (c.value === "steel-damascus") terms.push("damascus", "damasteel", "damascus steel");
+      if (c.value === "zirconium-damascus") terms.push("zircuti", "zircuity", "zirc damascus");
       SEARCH_SYNONYMS.push({ group: "material", value: c.value, terms: terms });
     });
     keywordFuse = null;
@@ -1426,6 +1459,7 @@
         var li = document.createElement("li");
         li.className = "attr-tag";
         li.textContent = attrLabel(id);
+        if (id === "unique" && Array.isArray(m.unique_mechanisms) && m.unique_mechanisms.length) li.textContent = "Unique: " + m.unique_mechanisms.join(", ");
         ul.appendChild(li);
       });
       wrap.appendChild(ul);
@@ -1448,17 +1482,24 @@
     else { tag.hidden = true; tag.textContent = ""; }
     var meta = document.getElementById("card-meta");
     meta.innerHTML = "";
-    function addLine(cls, text) {
+    function addLine(cls, text, key) {
       if (!text) return;
       var el = document.createElement("p");
       el.className = cls;
-      el.textContent = text;
+      if (key && text.indexOf(key + " ") === 0) {
+        // Same text as before; the key is wrapped so a theme can set it as a label column.
+        var k = document.createElement("span");
+        k.className = "k";
+        k.textContent = key;
+        el.appendChild(k);
+        el.appendChild(document.createTextNode(text.slice(key.length)));
+      } else el.textContent = text;
       meta.appendChild(el);
     }
     addLine("loc", locationLine(m));
-    addLine("founded", foundedLine(m));
-    addLine("price", priceLine(m));
-    addLine("pen", m.first_pen ? "First pen " + m.first_pen : null);
+    addLine("founded", foundedLine(m), "Shop founded");
+    addLine("price", priceLine(m), "Price");
+    addLine("pen", m.first_pen ? "First pen " + m.first_pen : null, "First pen");
     addAttrTags(meta, m);
     if (m.previously) {
       var prev = document.createElement("p");
@@ -1743,7 +1784,7 @@
     var dot = m.status
       ? '<circle cx="10" cy="10" r="4.5" fill="var(--paper)" stroke="var(--pin)" stroke-width="1.8"/>'
       : '<circle cx="10" cy="10" r="4.5" fill="var(--pin)"/>';
-    return '<svg viewBox="0 0 20 20" aria-hidden="true">' + dot +
+    return '<svg class="m-sw' + (m.status ? " is-gone" : "") + '" viewBox="0 0 20 20" aria-hidden="true">' + dot +
       (m.in_maker_index ? '<circle cx="10" cy="10" r="8" fill="none" stroke="var(--ring)" stroke-width="1.4"/>' : "") + "</svg>";
   }
   function focusMaker(m, btn) {
@@ -1772,6 +1813,9 @@
         pin.select(".dot").interrupt()
           .transition().duration(220).attr("r", S.dot * 1.8)
           .transition().duration(380).attr("r", S.dot);
+        pin.select(".bean-g").interrupt()
+          .transition().duration(220).attr("transform", "scale(1.6)")
+          .transition().duration(380).attr("transform", "scale(1)");
       }
     };
     if (needScroll) {
@@ -3076,18 +3120,16 @@
     { group: "mech", value: "bolt-action", terms: ["bolt action", "bolt-action", "bolt", "bolts"] },
     { group: "mech", values: ["side-click", "top-click"], terms: ["click", "clicks", "clicker", "clicky"] },
     { group: "mech", value: "side-click", terms: ["side click", "side-click", "sideclick", "side clicker"] },
-    { group: "mech", value: "top-click", terms: ["top click", "top-click", "topclick", "plunger"] },
+    { group: "mech", value: "top-click", terms: ["top click", "top-click", "topclick", "plunger", "knock", "knocker"] },
     { group: "mech", value: "twist", terms: ["twist", "twists", "twisty", "twist action"] },
     { group: "mech", value: "capped", terms: ["capped", "cap", "caps"] },
     { group: "mech", value: "magnetic", terms: ["magnetic", "magnet", "magnets"] },
-    { group: "mech", value: "knock", terms: ["knock", "knocker"] },
+    { group: "mech", value: "unique", terms: ["unique", "sideswipe", "side swipe", "side-swipe", "clip actuated", "clip-actuated", "clickshift", "click shift"] },
     { group: "material", value: "titanium", terms: ["titanium", "ti", "titan"] },
-    { group: "material", value: "brass", terms: ["brass"] },
-    { group: "material", value: "copper", terms: ["copper"] },
+    { group: "material", value: "heavy-metals", terms: ["heavy metals", "heavy metal", "heavy", "brass", "copper", "bronze"] },
     { group: "material", value: "zirconium", terms: ["zirconium", "zirc", "zr"] },
     { group: "material", value: "aluminum", terms: ["aluminum", "aluminium", "alu"] },
     { group: "material", value: "stainless-steel", terms: ["stainless steel", "stainless", "steel"] },
-    { group: "material", value: "bronze", terms: ["bronze"] },
     { group: "price", value: "under-100", terms: ["cheap", "budget", "inexpensive"] },
     { group: "price", value: "over-250", terms: ["expensive", "premium", "high end", "high-end"] }
   ];

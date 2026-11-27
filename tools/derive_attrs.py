@@ -28,7 +28,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_MAKERS = os.path.join(HERE, "..", "makers.json")
 
 # --- Mechanisms -------------------------------------------------------------
-MECH_ORDER = ["bolt-action", "side-click", "top-click", "twist", "capped", "magnetic", "knock"]
+MECH_ORDER = ["bolt-action", "side-click", "top-click", "twist", "capped", "magnetic", "unique"]
 MECH_ALIASES = {
     "bolt action": "bolt-action", "bolt": "bolt-action", "bolt-action": "bolt-action",
     "side click": "side-click", "side-click": "side-click", "side clicker": "side-click",
@@ -36,9 +36,26 @@ MECH_ALIASES = {
     "twist": "twist", "twist action": "twist", "twist-action": "twist", "rotary": "twist",
     "capped": "capped", "cap": "capped", "cap-on": "capped",
     "magnetic": "magnetic", "magnet": "magnetic",
-    "knock": "knock",
+    "knock": "top-click",  # "Knock" is not its own mechanism (owner, 2026-11-27): a knock is a top click
 }
 # Anything else ("post", "other", ...) is not a filter chip and is ignored.
+# Owner rules (2026-11-27), applied after the catalog. They win over whatever the catalog says.
+#   * Side click and Magnetic are reserved for the listed makers only (added for them, removed for everyone else).
+#   * "unique" is for one-of-a-kind actions; UNIQUE_MECHS also writes `unique_mechanisms` (shown on the card).
+#   * NO_TOP_CLICK / NO_TWIST drop Top click / Twist for those makers.
+#   * MECH_FIXED replaces a maker's whole mechanism list (CW&T has no click pens at all).
+SIDE_CLICK_ONLY = {"nottingham-tactical", "autmog", "tactile-turn", "big-idea-design", "q3d", "prometheus-writes"}
+NO_TOP_CLICK = {"ensso", "autmog", "magnus-pens", "cwandt"}
+NO_TWIST = {"nottingham-tactical", "billetspin"}
+MAGNETIC_ONLY = {"cwandt", "spoke-design", "studio-neat"}
+UNIQUE_MECHS = {"focusworks": ["Sideswipe"], "magnus-pens": ["ClickShift"], "billetspin": []}  # Billetspin: mechanism name not confirmed yet
+STEEL_ONLY = {"inventery", "pencestry", "ajoto", "wingback", "honey-badger-arsenal", "baronfig", "cwandt", "studio-neat", "modern-fuel", "machine-era", "matthew-martin-makes", "q3d"}  # owner, 2026-11-27
+DELRIN_ONLY = {"karas-pen-co", "everyday-karas"}  # owner, 2026-11-27
+TUNGSTEN_ONLY = {"tactile-turn", "q3d"}  # owner, 2026-11-27
+MATERIAL_ADD = {"hungoblin": ["titanium", "heavy-metals", "mokume", "titanium-damascus"]}  # owner, 2026-11-27: add if missing, keep the rest
+MATERIALS_FIXED = {"oz-machine-company": ["titanium"], "makar-tools": ["titanium", "mokume", "titanium-damascus", "ultem", "zirconium-damascus", "carbon-fiber"], "kasama": ["aluminum", "titanium", "mokume", "titanium-damascus", "ultem"], "q3d": ["titanium", "heavy-metals", "zirconium", "steel-damascus", "mokume", "zirconium-damascus", "tungsten", "aluminum", "stainless-steel", "titanium-damascus", "ultem", "carbon-fiber", "micarta"], "matthew-martin-makes": ["peek", "titanium", "zirconium", "steel-damascus", "heavy-metals", "stainless-steel", "titanium-damascus", "mokume", "zirconium-damascus", "carbon-fiber", "micarta"]}  # owner, 2026-11-27
+MATERIAL_REMOVE = {"studio-neat": ["copper"], "seguin": ["aluminum"], "focusworks": ["aluminum", "ultem"], "mig-shed": ["aluminum"], "prometheus-writes": ["zirconium", "mokume"], "oz-machine-company": ["steel-damascus"], "aerocrafted": ["ultem"], "arno-bernard-pens": ["titanium-damascus"], "cwandt": ["peek"]}  # owner, 2026-11-27
+MECH_FIXED = {"spoke-design": ["bolt-action", "top-click", "capped", "magnetic"], "prometheus-writes": ["side-click"], "cwandt": ["magnetic"], "everyday-karas": ["bolt-action"]}
 
 # --- Materials --------------------------------------------------------------
 # canonical name -> aliases (matched case-insensitively against the whole value first,
@@ -52,9 +69,9 @@ MATERIAL_ALIASES = {
     "Stainless Steel": ["stainless steel", "stainless", "ss", "316", "316l", "304", "17-4", "17-4ph", "303", "440c", "stainless-steel"],
     "Zirconium": ["zirconium", "zirc", "zr", "zr702", "zr 702", "zirconium 702"],
     # Kept as their own names (see README "Normalization"): no 'Exotic' bucket.
-    "Zircuti": ["zircuti"],
-    "Damascus": ["damascus", "damasteel"],
-    "Timascus": ["timascus"],
+    "Zirconium Damascus": ["zirconium damascus", "zircuti", "zircuity", "zirc damascus"],  # was "Zircuti" (renamed 2026-11-27)
+    "Steel Damascus": ["steel damascus", "damascus", "damasteel", "damascus steel"],  # was "Damascus" (renamed 2026-11-27)
+    "Titanium Damascus": ["titanium damascus", "timascus"],  # was "Timascus" (renamed 2026-11-27)
     "Mokume": ["mokume", "mokume gane", "mokume-gane"],
     "Tungsten": ["tungsten", "tungsten carbide"],
     "Carbon Fiber": ["carbon fiber", "carbon fibre", "carbon-fiber", "carbon", "cf"],
@@ -151,7 +168,36 @@ def main():
     for i, m in enumerate(makers):
         s = m["slug"]
         mechs = [x for x in MECH_ORDER if x in mech.get(s, ())]
+        ms = set(mechs)
+        if s in SIDE_CLICK_ONLY: ms.add("side-click")
+        else: ms.discard("side-click")
+        if s in MAGNETIC_ONLY: ms.add("magnetic")
+        else: ms.discard("magnetic")
+        if s in NO_TOP_CLICK: ms.discard("top-click")
+        if s in NO_TWIST: ms.discard("twist")
+        if s in UNIQUE_MECHS:
+            ms.add("unique")
+            if UNIQUE_MECHS[s]: m["unique_mechanisms"] = UNIQUE_MECHS[s]
+        if s in MECH_FIXED: ms = set(MECH_FIXED[s])
+        mechs = [x for x in MECH_ORDER if x in ms]
         mats = [k for k, _ in sorted(mat.get(s, {}).items(), key=lambda kv: (-kv[1], kv[0]))]
+        mats = [x for x in mats if x not in MATERIAL_REMOVE.get(s, ())]
+        # Brass, Copper and Bronze are one tag, "heavy-metals" (owner, 2026-11-27); applied after the removals above.
+        merged = []
+        for x in mats:
+            y = "heavy-metals" if x in ("brass", "copper", "bronze") else x
+            if y not in merged: merged.append(y)
+        mats = merged
+        if s not in DELRIN_ONLY: mats = [x for x in mats if x != "delrin"]
+        if s in TUNGSTEN_ONLY:
+            if "tungsten" not in mats: mats.append("tungsten")
+        else: mats = [x for x in mats if x != "tungsten"]
+        for x in MATERIAL_ADD.get(s, []):
+            if x not in mats: mats.append(x)
+        if s in MATERIALS_FIXED: mats = list(MATERIALS_FIXED[s])
+        if s in STEEL_ONLY:
+            if "stainless-steel" not in mats: mats.append("stainless-steel")
+        else: mats = [x for x in mats if x != "stainless-steel"]
         new = {}
         for k, v in m.items():
             if k in ("mechanisms", "materials", "attrs_source"):

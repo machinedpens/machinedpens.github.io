@@ -11,18 +11,18 @@
   <meta property="og:image" content="https://machinedpens.github.io/maker-map-still.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%23c2410c'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%231b1612' stroke-width='2.5'/%3E%3C/svg%3E">
   <script>
-    /* Themes. There are three themes (Default, Terminal, Notebook) and each has a Light and a Dark mode.
+    /* Themes. There are four themes (Default, Terminal, Notebook, Coffee) and each has a Light and a Dark mode.
        The picker in the header has two controls: Theme and Mode (Auto, Light, Dark; Auto follows the
        device's prefers-color-scheme).
 
-       Saved choices: localStorage "maker-map-theme" = default | terminal | notebook, and
+       Saved choices: localStorage "maker-map-theme" = default | terminal | notebook | coffee, and
        "maker-map-mode" = light | dark (missing = Auto). Older saved values are migrated once:
        light -> default + light, dark -> default + dark, terminal -> terminal + dark, notebook -> notebook + light
        (the mode each of those always had, so nobody's look changes). Stale Notebook "pen & paper" keys are removed.
 
        URL override (for screenshots and links), wins over anything saved and is never saved:
          ?mode=light | dark                       Default theme in that mode
-         ?mode=terminal | notebook | default      that theme, mode from saved/device
+         ?mode=terminal | notebook | coffee | default   that theme, mode from saved/device
          ?mode=terminal-light, ?mode=notebook-dark, ?mode=default-dark ...   both at once
        Do not use ?theme= here: that query is reserved for the seasonal theme (?theme=off turns it off).
 
@@ -41,7 +41,10 @@
           dark:  { color: "#141414", sw: { bg: "#141414", fg: "#ff8a1f", glyph: ">_" } } },
         { id: "notebook", label: "Notebook", fun: true,
           light: { color: "#f3efe3", sw: { bg: "#fbf9f1", fg: "#1b2352", glyph: "Nb" } },
-          dark:  { color: "#0a0a0a", sw: { bg: "#0a0a0a", fg: "#ff8f3a", glyph: "Nb" } } }
+          dark:  { color: "#0a0a0a", sw: { bg: "#0a0a0a", fg: "#ff8f3a", glyph: "Nb" } } },
+        { id: "coffee", label: "Coffee", fun: true, fonts: ["vendor/fraunces-latin-600-normal.woff2?v=20261127c"],
+          light: { color: "#efe6d6", sw: { bg: "linear-gradient(160deg, #e6d3b3, #d6bd94)", fg: "#3a2114", glyph: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" aria-hidden=\"true\"><ellipse cx=\"12\" cy=\"12\" rx=\"8.6\" ry=\"6.2\" transform=\"rotate(-32 12 12)\" fill=\"currentColor\"/><path d=\"M6.9 15.6C9.4 13.2 9.6 10.6 12 9.7s3.6-.9 5.1-1.4\" fill=\"none\" stroke=\"var(--cf-sw-crease, #f3e6cf)\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg>" } },
+          dark:  { color: "#0f0a07", sw: { bg: "radial-gradient(circle at 50% 35%, #3a2a1e, #150e0a)", fg: "#e7ab5c", glyph: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" aria-hidden=\"true\"><ellipse cx=\"12\" cy=\"12\" rx=\"8.6\" ry=\"6.2\" transform=\"rotate(-32 12 12)\" fill=\"currentColor\"/><path d=\"M6.9 15.6C9.4 13.2 9.6 10.6 12 9.7s3.6-.9 5.1-1.4\" fill=\"none\" stroke=\"var(--cf-sw-crease, #f3e6cf)\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg>" } } },
       ];
       var MODES = [
         { id: "auto", label: "Auto" },
@@ -124,6 +127,12 @@
         root.setAttribute("data-mode", c.mode);
         root.style.colorScheme = c.mode;
         if (def.fun) root.setAttribute("data-fun", "1"); else root.removeAttribute("data-fun");
+        if (def.fonts) def.fonts.forEach(function (href) {
+          if (document.querySelector('link[rel="preload"][href="' + href + '"]')) return;
+          var l = document.createElement("link");
+          l.rel = "preload"; l.as = "font"; l.type = "font/woff2"; l.crossOrigin = "anonymous"; l.href = href;
+          document.head.appendChild(l);
+        });
         var meta = document.querySelector('meta[name="theme-color"]');
         if (meta) meta.setAttribute("content", look.color);
         var b = document.getElementById("theme-toggle");
@@ -292,18 +301,23 @@
     })();
   </script>
   <!-- === End seasonal block === -->
-  <link rel="stylesheet" href="style.css?v=20261127b">
+  <link rel="stylesheet" href="style.css?v=20261127c">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
 
-  <!-- Shared SVG paint for fun themes (unused by light and dark): t-dots (Terminal), t-hatch (Notebook). -->
+  <!-- Shared SVG paint for fun themes (unused by light and dark): t-dots (Terminal), t-hatch (Notebook), cf-roast (Coffee land). -->
   <svg class="theme-defs" width="0" height="0" aria-hidden="true" focusable="false">
     <defs>
       <pattern id="t-dots" width="6" height="6" patternUnits="userSpaceOnUse">
         <rect width="6" height="6" fill="var(--land)"/>
         <rect x="2" y="2" width="1.6" height="1.6" fill="var(--land-dot, var(--land))"/>
       </pattern>
+      <radialGradient id="cf-roast" gradientUnits="userSpaceOnUse" cx="512" cy="430" r="557">
+        <stop offset="0" style="stop-color: var(--cf-land-1, var(--land))"/>
+        <stop offset=".62" style="stop-color: var(--cf-land-2, var(--land))"/>
+        <stop offset="1" style="stop-color: var(--cf-land-3, var(--land))"/>
+      </radialGradient>
       <pattern id="t-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
         <rect width="6" height="6" fill="var(--land)"/>
         <rect width="1" height="6" fill="var(--land-dot, var(--land))"/>
@@ -327,7 +341,7 @@
 
   <header class="site-header">
     <div class="header-row">
-      <h1 class="title"><span class="title-live">Machined Pens Maker Map</span><span class="title-print">My Machined Pens Makers</span></h1>
+      <h1 class="title"><span class="title-live">Machined Pens Maker Map</span><span class="title-cup" aria-hidden="true"></span><span class="title-print">My Machined Pens Makers</span></h1>
       <div class="theme-picker" id="theme-picker">
         <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Choose a theme" aria-haspopup="menu" aria-expanded="false" aria-controls="theme-menu">
           <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -340,6 +354,11 @@
           <svg class="theme-icon theme-icon-palette" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.4-.6-.4-1 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.4-4-7.6-9-7.6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
             <circle cx="7.6" cy="11.4" r="1.3" fill="currentColor"/><circle cx="10.4" cy="7.4" r="1.3" fill="currentColor"/><circle cx="15" cy="7.6" r="1.3" fill="currentColor"/>
+          </svg>
+          <svg class="theme-icon theme-icon-cup" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 10h12v3.5A5.5 5.5 0 0 1 10.5 19h-1A5.5 5.5 0 0 1 4 13.5z" fill="currentColor"/>
+            <path d="M16 11.5h1.2a2.3 2.3 0 0 1 0 4.6H15.5" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M8 7.5c-1-1.2 1-2.2 0-3.6M12 7.5c-1-1.2 1-2.2 0-3.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
           </svg>
           <svg class="theme-icon theme-icon-fun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M5 7l6 5-6 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -571,11 +590,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261127b"></script>
-  <script src="vendor/topojson-client.min.js?v=20261127b"></script>
-  <script src="vendor/qrcode-generator.js?v=20261127b"></script>
-  <script src="vendor/fuse.min.js?v=20261127b"></script>
-  <script src="map.js?v=20261127b"></script>
+  <script src="vendor/d3.min.js?v=20261127c"></script>
+  <script src="vendor/topojson-client.min.js?v=20261127c"></script>
+  <script src="vendor/qrcode-generator.js?v=20261127c"></script>
+  <script src="vendor/fuse.min.js?v=20261127c"></script>
+  <script src="map.js?v=20261127c"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;

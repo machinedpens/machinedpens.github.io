@@ -185,17 +185,12 @@
       ],
       "mechanisms": [
         "side-click",
-        "top-click",
-        "twist",
-        "knock"
+        "twist"
       ],
       "materials": [
         "titanium",
         "aluminum",
-        "stainless-steel",
-        "brass",
-        "copper",
-        "bronze"
+        "heavy-metals"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -247,16 +242,23 @@
         "regular"
       ],
       "mechanisms": [
-        "bolt-action"
+        "bolt-action",
+        "side-click"
       ],
       "materials": [
         "titanium",
-        "copper",
+        "heavy-metals",
         "zirconium",
-        "bronze",
-        "damascus",
+        "steel-damascus",
         "mokume",
-        "zircuti"
+        "zirconium-damascus",
+        "tungsten",
+        "aluminum",
+        "stainless-steel",
+        "titanium-damascus",
+        "ultem",
+        "carbon-fiber",
+        "micarta"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -283,22 +285,17 @@
         "regular"
       ],
       "mechanisms": [
-        "side-click",
-        "magnetic"
+        "unique"
       ],
       "materials": [
         "titanium",
-        "ultem",
-        "brass",
-        "copper",
-        "stainless-steel",
-        "aluminum",
-        "zirconium",
-        "delrin",
-        "bronze",
-        "tungsten"
+        "heavy-metals",
+        "zirconium"
       ],
-      "attrs_source": "catalog 2026-11-27"
+      "attrs_source": "catalog 2026-11-27",
+      "unique_mechanisms": [
+        "Sideswipe"
+      ]
     },
     {
       "name": "Seguin",
@@ -325,7 +322,6 @@
         "bolt-action"
       ],
       "materials": [
-        "aluminum",
         "titanium"
       ],
       "attrs_source": "catalog 2026-11-27"
@@ -355,7 +351,7 @@
       "mechanisms": [],
       "materials": [
         "titanium",
-        "bronze"
+        "heavy-metals"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -472,12 +468,9 @@
       "materials": [
         "aluminum",
         "ultem",
-        "brass",
-        "copper",
+        "heavy-metals",
         "peek",
-        "titanium",
-        "bronze",
-        "stainless-steel"
+        "titanium"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -509,14 +502,11 @@
       ],
       "materials": [
         "titanium",
-        "stainless-steel",
-        "copper",
-        "brass",
+        "heavy-metals",
         "zirconium",
-        "timascus",
-        "zircuti",
-        "aluminum",
-        "bronze"
+        "titanium-damascus",
+        "zirconium-damascus",
+        "aluminum"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -546,18 +536,15 @@
       ],
       "mechanisms": [
         "bolt-action",
-        "top-click",
-        "knock"
+        "top-click"
       ],
       "materials": [
         "titanium",
-        "bronze",
-        "copper",
+        "heavy-metals",
         "stainless-steel",
         "zirconium",
         "aluminum",
-        "brass",
-        "damascus"
+        "steel-damascus"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -589,13 +576,10 @@
       ],
       "materials": [
         "titanium",
-        "damascus",
-        "bronze",
-        "copper",
+        "steel-damascus",
+        "heavy-metals",
         "zirconium",
-        "stainless-steel",
         "aluminum",
-        "brass",
         "mokume",
         "tungsten",
         "ultem",
@@ -633,13 +617,11 @@
         "titanium",
         "zirconium",
         "stainless-steel",
-        "brass",
-        "copper",
-        "damascus",
+        "heavy-metals",
+        "steel-damascus",
         "mokume",
         "aluminum",
-        "ultem",
-        "bronze"
+        "ultem"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -673,8 +655,14 @@
         "peek",
         "titanium",
         "zirconium",
-        "damascus",
-        "bronze"
+        "steel-damascus",
+        "heavy-metals",
+        "stainless-steel",
+        "titanium-damascus",
+        "mokume",
+        "zirconium-damascus",
+        "carbon-fiber",
+        "micarta"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -729,8 +717,7 @@
         "bolt-action"
       ],
       "materials": [
-        "brass",
-        "copper"
+        "heavy-metals"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -758,15 +745,14 @@
       ],
       "mechanisms": [
         "top-click",
-        "twist"
+        "unique"
       ],
       "materials": [
         "zirconium",
         "titanium",
-        "bronze",
-        "stainless-steel",
-        "timascus",
-        "damascus"
+        "heavy-metals",
+        "titanium-damascus",
+        "steel-damascus"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -799,14 +785,12 @@
         "titanium",
         "zirconium",
         "carbon-fiber",
-        "copper",
-        "brass",
+        "heavy-metals",
         "aluminum",
-        "damascus",
+        "steel-damascus",
         "mokume",
-        "stainless-steel",
-        "timascus",
-        "zircuti"
+        "titanium-damascus",
+        "zirconium-damascus"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -835,18 +819,15 @@
       "mechanisms": [
         "bolt-action",
         "side-click",
-        "top-click",
-        "twist"
+        "top-click"
       ],
       "materials": [
         "titanium",
-        "brass",
-        "copper",
-        "bronze",
-        "damascus",
-        "timascus",
+        "heavy-metals",
+        "steel-damascus",
+        "titanium-damascus",
         "zirconium",
-        "zircuti",
+        "zirconium-damascus",
         "carbon-fiber",
         "aluminum",
         "mokume"
@@ -883,11 +864,8 @@
       ],
       "materials": [
         "aluminum",
-        "brass",
-        "stainless-steel",
-        "copper",
-        "delrin",
-        "bronze"
+        "heavy-metals",
+        "delrin"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -920,7 +898,7 @@
         "capped"
       ],
       "materials": [
-        "brass",
+        "heavy-metals",
         "stainless-steel",
         "titanium",
         "aluminum"
@@ -960,12 +938,9 @@
       ],
       "materials": [
         "titanium",
-        "damascus",
-        "brass",
-        "copper",
+        "steel-damascus",
+        "heavy-metals",
         "zirconium",
-        "stainless-steel",
-        "bronze",
         "aluminum",
         "ultem"
       ],
@@ -998,9 +973,8 @@
       "materials": [
         "titanium",
         "stainless-steel",
-        "brass",
-        "aluminum",
-        "copper"
+        "heavy-metals",
+        "aluminum"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1031,9 +1005,7 @@
       ],
       "materials": [
         "titanium",
-        "bronze",
-        "stainless-steel",
-        "ultem"
+        "heavy-metals"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1061,18 +1033,15 @@
         "regular"
       ],
       "mechanisms": [
-        "side-click",
+        "bolt-action",
         "top-click",
-        "twist",
         "capped",
-        "knock"
+        "magnetic"
       ],
       "materials": [
         "titanium",
         "aluminum",
-        "delrin",
-        "stainless-steel",
-        "brass"
+        "heavy-metals"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1124,15 +1093,11 @@
         "regular"
       ],
       "mechanisms": [
-        "bolt-action",
-        "magnetic"
+        "bolt-action"
       ],
       "materials": [
         "titanium",
-        "bronze",
-        "brass",
-        "copper",
-        "stainless-steel",
+        "heavy-metals",
         "ultem"
       ],
       "attrs_source": "catalog 2026-11-27"
@@ -1162,7 +1127,7 @@
         "bolt-action"
       ],
       "materials": [
-        "brass"
+        "heavy-metals"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1191,9 +1156,8 @@
         "bolt-action"
       ],
       "materials": [
-        "bronze",
-        "stainless-steel",
-        "brass"
+        "heavy-metals",
+        "stainless-steel"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1220,19 +1184,13 @@
         "regular"
       ],
       "mechanisms": [
-        "side-click",
-        "top-click",
-        "magnetic",
-        "knock"
+        "magnetic"
       ],
       "materials": [
         "aluminum",
         "stainless-steel",
         "titanium",
-        "brass",
-        "bronze",
-        "copper",
-        "peek"
+        "heavy-metals"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1260,12 +1218,12 @@
         "regular"
       ],
       "mechanisms": [
-        "top-click"
+        "top-click",
+        "magnetic"
       ],
       "materials": [
         "stainless-steel",
-        "aluminum",
-        "copper"
+        "aluminum"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1293,10 +1251,7 @@
       ],
       "mechanisms": [],
       "materials": [
-        "titanium",
-        "damascus",
-        "zircuti",
-        "bronze"
+        "titanium"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1352,11 +1307,8 @@
       "mechanisms": [],
       "materials": [
         "stainless-steel",
-        "brass",
+        "heavy-metals",
         "aluminum",
-        "tungsten",
-        "bronze",
-        "copper",
         "titanium"
       ],
       "attrs_source": "catalog 2026-11-27"
@@ -1390,10 +1342,8 @@
       ],
       "materials": [
         "stainless-steel",
-        "brass",
-        "titanium",
-        "tungsten",
-        "bronze"
+        "heavy-metals",
+        "titanium"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1449,7 +1399,6 @@
         "bolt-action"
       ],
       "materials": [
-        "timascus",
         "titanium"
       ],
       "attrs_source": "catalog 2026-11-27"
@@ -1478,7 +1427,7 @@
       ],
       "mechanisms": [],
       "materials": [
-        "bronze",
+        "heavy-metals",
         "titanium"
       ],
       "attrs_source": "catalog 2026-11-27"
@@ -1507,8 +1456,7 @@
       ],
       "mechanisms": [],
       "materials": [
-        "aluminum",
-        "stainless-steel"
+        "aluminum"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1535,16 +1483,12 @@
         "regular"
       ],
       "mechanisms": [
-        "side-click",
         "top-click"
       ],
       "materials": [
         "aluminum",
-        "stainless-steel",
         "titanium",
-        "brass",
-        "copper",
-        "bronze",
+        "heavy-metals",
         "zirconium"
       ],
       "attrs_source": "catalog 2026-11-27"
@@ -1572,17 +1516,13 @@
         "regular"
       ],
       "mechanisms": [
-        "top-click"
+        "side-click"
       ],
       "materials": [
         "titanium",
-        "brass",
-        "copper",
-        "stainless-steel",
+        "heavy-metals",
         "ultem",
-        "aluminum",
-        "mokume",
-        "zirconium"
+        "aluminum"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1614,8 +1554,7 @@
       ],
       "materials": [
         "aluminum",
-        "brass",
-        "copper",
+        "heavy-metals",
         "stainless-steel"
       ],
       "attrs_source": "catalog 2026-11-27"
@@ -1645,15 +1584,12 @@
       ],
       "mechanisms": [
         "bolt-action",
-        "top-click",
         "capped"
       ],
       "materials": [
         "titanium",
         "aluminum",
-        "stainless-steel",
-        "brass",
-        "bronze"
+        "heavy-metals"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1680,16 +1616,18 @@
       ],
       "mechanisms": [
         "bolt-action",
-        "top-click",
-        "twist"
+        "twist",
+        "unique"
       ],
       "materials": [
         "titanium",
-        "stainless-steel",
-        "timascus",
-        "bronze"
+        "titanium-damascus",
+        "heavy-metals"
       ],
-      "attrs_source": "catalog 2026-11-27"
+      "attrs_source": "catalog 2026-11-27",
+      "unique_mechanisms": [
+        "ClickShift"
+      ]
     },
     {
       "name": "MIG Shed",
@@ -1720,11 +1658,8 @@
       ],
       "materials": [
         "titanium",
-        "timascus",
-        "copper",
-        "brass",
-        "stainless-steel",
-        "aluminum"
+        "titanium-damascus",
+        "heavy-metals"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1755,9 +1690,7 @@
       ],
       "materials": [
         "aluminum",
-        "brass",
-        "stainless-steel",
-        "copper"
+        "heavy-metals"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1784,14 +1717,12 @@
         "regular"
       ],
       "mechanisms": [
-        "capped"
+        "bolt-action"
       ],
       "materials": [
         "aluminum",
         "delrin",
-        "stainless-steel",
-        "brass",
-        "copper"
+        "heavy-metals"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1842,7 +1773,12 @@
         "regular"
       ],
       "mechanisms": [],
-      "materials": [],
+      "materials": [
+        "titanium",
+        "heavy-metals",
+        "mokume",
+        "titanium-damascus"
+      ],
       "attrs_source": "catalog 2026-11-27"
     },
     {
@@ -1866,12 +1802,9 @@
       "pen_types": [
         "regular"
       ],
-      "mechanisms": [
-        "side-click"
-      ],
+      "mechanisms": [],
       "materials": [
         "aluminum",
-        "stainless-steel",
         "titanium"
       ],
       "attrs_source": "catalog 2026-11-27"
@@ -1886,8 +1819,8 @@
       "country": "PL",
       "est_year": 2019,
       "shop_founded": "2019",
-      "priceLow": 800,
-      "priceHigh": 1500,
+      "priceLow": 700,
+      "priceHigh": 2000,
       "in_maker_index": false,
       "maker_index_url": null,
       "lat": 53.7767,
@@ -1900,9 +1833,12 @@
       ],
       "mechanisms": [],
       "materials": [
-        "brass",
-        "bronze",
-        "copper"
+        "titanium",
+        "mokume",
+        "titanium-damascus",
+        "ultem",
+        "zirconium-damascus",
+        "carbon-fiber"
       ],
       "attrs_source": "catalog 2026-11-27"
     },
@@ -1916,8 +1852,8 @@
       "country": "PH",
       "est_year": 2018,
       "shop_founded": "2018",
-      "priceLow": null,
-      "priceHigh": null,
+      "priceLow": 400,
+      "priceHigh": 1000,
       "first_pen": "2018",
       "in_maker_index": false,
       "maker_index_url": null,
@@ -1929,7 +1865,13 @@
         "fountain"
       ],
       "mechanisms": [],
-      "materials": [],
+      "materials": [
+        "aluminum",
+        "titanium",
+        "mokume",
+        "titanium-damascus",
+        "ultem"
+      ],
       "attrs_source": "catalog 2026-11-27"
     }
   ],
