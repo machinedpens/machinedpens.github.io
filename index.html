@@ -42,7 +42,7 @@
         { id: "notebook", label: "Notebook", fun: true,
           light: { color: "#f3efe3", sw: { bg: "#fbf9f1", fg: "#1b2352", glyph: "Nb" } },
           dark:  { color: "#0a0a0a", sw: { bg: "#0a0a0a", fg: "#ff8f3a", glyph: "Nb" } } },
-        { id: "coffee", label: "Coffee", fun: true, fonts: ["vendor/fraunces-latin-600-normal.woff2?v=20261127c"],
+        { id: "coffee", label: "Coffee", fun: true, fonts: ["vendor/fraunces-latin-600-normal.woff2?v=20261127d"],
           light: { color: "#efe6d6", sw: { bg: "linear-gradient(160deg, #e6d3b3, #d6bd94)", fg: "#3a2114", glyph: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" aria-hidden=\"true\"><ellipse cx=\"12\" cy=\"12\" rx=\"8.6\" ry=\"6.2\" transform=\"rotate(-32 12 12)\" fill=\"currentColor\"/><path d=\"M6.9 15.6C9.4 13.2 9.6 10.6 12 9.7s3.6-.9 5.1-1.4\" fill=\"none\" stroke=\"var(--cf-sw-crease, #f3e6cf)\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg>" } },
           dark:  { color: "#0f0a07", sw: { bg: "radial-gradient(circle at 50% 35%, #3a2a1e, #150e0a)", fg: "#e7ab5c", glyph: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" aria-hidden=\"true\"><ellipse cx=\"12\" cy=\"12\" rx=\"8.6\" ry=\"6.2\" transform=\"rotate(-32 12 12)\" fill=\"currentColor\"/><path d=\"M6.9 15.6C9.4 13.2 9.6 10.6 12 9.7s3.6-.9 5.1-1.4\" fill=\"none\" stroke=\"var(--cf-sw-crease, #f3e6cf)\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg>" } } },
       ];
@@ -175,7 +175,7 @@
         MODES.forEach(function (m) {
           html += '<button type="button" class="mode-opt" role="menuitemradio" aria-checked="false" tabindex="-1" data-mode-choice="' + m.id + '"' +
             (m.id === "auto" ? ' title="Follow the device setting"' : "") + '>' +
-            '<span class="mode-ico">' + ICONS[m.id] + '</span><span class="mode-opt-label">' + m.label + '</span></button>';
+            '<span class="mode-ico">' + ICONS[m.id] + '</span><span class="mode-cup" aria-hidden="true"></span><span class="mode-opt-label">' + m.label + '</span></button>';
         });
         html += '</div></div>';
         menu.innerHTML = html;
@@ -231,7 +231,12 @@
             if (!t) return;
             /* the menu stays open so a theme and a mode can be picked in one go */
             if (t.hasAttribute("data-theme-choice")) choose("theme", t.getAttribute("data-theme-choice"));
-            else choose("mode", t.getAttribute("data-mode-choice"));
+            else {
+              choose("mode", t.getAttribute("data-mode-choice"));
+              /* Coffee shows a one-shot steam puff over the cup just picked (CSS only; off under reduced motion) */
+              t.classList.remove("is-puff"); void t.offsetWidth; t.classList.add("is-puff");
+              setTimeout(function () { t.classList.remove("is-puff"); }, 1200);
+            }
             t.focus();
           });
           menu.addEventListener("keydown", function (e) {
@@ -301,7 +306,7 @@
     })();
   </script>
   <!-- === End seasonal block === -->
-  <link rel="stylesheet" href="style.css?v=20261127c">
+  <link rel="stylesheet" href="style.css?v=20261127d">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -590,11 +595,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261127c"></script>
-  <script src="vendor/topojson-client.min.js?v=20261127c"></script>
-  <script src="vendor/qrcode-generator.js?v=20261127c"></script>
-  <script src="vendor/fuse.min.js?v=20261127c"></script>
-  <script src="map.js?v=20261127c"></script>
+  <script src="vendor/d3.min.js?v=20261127d"></script>
+  <script src="vendor/topojson-client.min.js?v=20261127d"></script>
+  <script src="vendor/qrcode-generator.js?v=20261127d"></script>
+  <script src="vendor/fuse.min.js?v=20261127d"></script>
+  <script src="map.js?v=20261127d"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;

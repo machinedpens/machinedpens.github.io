@@ -84,9 +84,9 @@
   var state = { makers: [], features: null, topo: null, worldTopo: null, worldFeatures: null, year: MAX_YEAR, active: null, playing: null, minYear: 2008, favorites: {}, favOnly: false, priceFilters: [], typeFilters: [], mechFilters: [], materialFilters: [], listFilters: [], lists: [], filtersOpen: false, shared: false, listSort: "state", listQuery: "", listCountry: "", view: "home", focusCountry: null };
 
   Promise.all([
-    d3.json("makers.json?v=20261127c"),
-    d3.json("data/us-canada.topo.json?v=20261127c"),
-    d3.json("data/world-110m.topo.json?v=20261127c")
+    d3.json("makers.json?v=20261127d"),
+    d3.json("data/us-canada.topo.json?v=20261127d"),
+    d3.json("data/world-110m.topo.json?v=20261127d")
   ]).then(function (res) { init(res[0], res[1], res[2]); })
     .catch(function (err) {
       console.error(err);
@@ -1523,6 +1523,7 @@
     syncCardStar(m);
 
     card.hidden = false;
+    pourCard();
     positionCard(m);
     svg.selectAll("g.pin").classed("active", function (d) { return d.m === m; });
     d3.selectAll(".maker-btn").classed("active", function () { return this.getAttribute("data-id") === m.id; })
@@ -1534,6 +1535,17 @@
     // Bring the active pin to the top.
     var node = svg.select('g.pin[data-id="' + m.id + '"]').node();
     if (node) node.parentNode.appendChild(node);
+  }
+  // Coffee only: restart the one-shot "pour" reveal on every card open (CSS does the rest; off under reduced motion).
+  var pourTimer = null;
+  function pourCard() {
+    if (document.documentElement.getAttribute("data-theme") !== "coffee") return;
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    card.classList.remove("cf-pour");
+    void card.offsetWidth;
+    card.classList.add("cf-pour");
+    clearTimeout(pourTimer);
+    pourTimer = setTimeout(function () { card.classList.remove("cf-pour"); }, 700);
   }
   function link(href, text, primary) {
     var a = document.createElement("a");
@@ -1572,7 +1584,7 @@
 
   /* ---------- List ---------- */
 
-  function listMeta(m, opts) {
+  function listPlace(m, opts) {
     var parts = [];
     if (opts && opts.includeRegion) {
       if (m.city && isEuropeMaker(m) && COUNTRY_NAMES[m.country]) parts.push(m.city + ", " + COUNTRY_NAMES[m.country]);
@@ -1585,11 +1597,24 @@
     } else if (COUNTRY_NAMES[m.country]) {
       parts.push(COUNTRY_NAMES[m.country]);
     }
+    return parts;
+  }
+  function listMeta(m, opts) {
+    var parts = listPlace(m, opts);
     var year = listYear(m);
     if (year) parts.push(year);
     if (m.status === "closed") parts.push("Closed");
     else if (m.status === "inactive") parts.push("Inactive");
     return parts.join(" · ");
+  }
+  // Coffee's menu-board row: "place · mechanisms" under the name, and the price range on the right.
+  function menuLine(m, opts) {
+    var parts = listPlace(m, opts);
+    var mechs = makerMechs(m).map(attrLabel);
+    if (mechs.length) parts.push(mechs.join(", "));
+    if (m.status === "closed") parts.push("Closed");
+    else if (m.status === "inactive") parts.push("Inactive");
+    return parts.join(" \u00b7 ");
   }
   var STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.47 5.01 5.53.8-4 3.9.94 5.5L12 16.2l-4.94 2.6.94-5.5-4-3.9 5.53-.8z"/></svg>';
 
@@ -1599,9 +1624,13 @@
     b.setAttribute("data-slug", m.slug);
     b.setAttribute("aria-expanded", "false");
     b.setAttribute("aria-label", ariaLabel(m) + ". Show on map");
-    b.innerHTML = swatch(m) + '<span class="m-name"></span><span class="m-meta"></span>';
+    if (m.in_maker_index) b.classList.add("is-indexed");
+    b.innerHTML = swatch(m) + '<span class="m-name"></span><span class="m-meta"></span>' +
+      '<span class="m-lead" aria-hidden="true"></span><span class="m-price"></span><span class="m-sub"></span>';
     b.querySelector(".m-name").textContent = m.name;
     b.querySelector(".m-meta").textContent = listMeta(m, opts);
+    b.querySelector(".m-price").textContent = priceText(m) || "\u2014";
+    b.querySelector(".m-sub").textContent = menuLine(m, opts);
     b.addEventListener("click", function () { focusMaker(m, b); });
     return b;
   }
