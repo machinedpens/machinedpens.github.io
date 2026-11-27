@@ -11,183 +11,173 @@
   <meta property="og:image" content="https://machinedpens.github.io/maker-map-still.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%23c2410c'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%231b1612' stroke-width='2.5'/%3E%3C/svg%3E">
   <script>
-    /* Themes. Order of precedence: ?mode=<id> (URL override), then localStorage "maker-map-theme",
-       then the device setting (prefers-color-scheme -> light or dark). Nothing saved = "Auto (device)".
-       Do not use ?theme= here: that query is reserved for the seasonal theme.
+    /* Themes. There are three themes (Default, Terminal, Notebook) and each has a Light and a Dark mode.
+       The picker in the header has two controls: Theme and Mode (Auto, Light, Dark; Auto follows the
+       device's prefers-color-scheme).
 
-       Notebook has two extra choices, handwriting (?nbfont=casual|italic|architect, saved as
-       maker-map-nb-font) and paper (?paper=dots|ruled|graph|plain, saved as maker-map-nb-paper, plus the
-       ruled paper's red margin, ?margin=0|1, saved as maker-map-nb-margin). They only change how Notebook looks.
+       Saved choices: localStorage "maker-map-theme" = default | terminal | notebook, and
+       "maker-map-mode" = light | dark (missing = Auto). Older saved values are migrated once:
+       light -> default + light, dark -> default + dark, terminal -> terminal + dark, notebook -> notebook + light
+       (the mode each of those always had, so nobody's look changes). Stale Notebook "pen & paper" keys are removed.
 
-       To add a fun theme: (1) add an entry to THEMES below, (2) add a :root[data-theme="<id>"] block
-       to style.css. The header picker builds itself from this list. See README, "Themes". */
+       URL override (for screenshots and links), wins over anything saved and is never saved:
+         ?mode=light | dark                       Default theme in that mode
+         ?mode=terminal | notebook | default      that theme, mode from saved/device
+         ?mode=terminal-light, ?mode=notebook-dark, ?mode=default-dark ...   both at once
+       Do not use ?theme= here: that query is reserved for the seasonal theme (?theme=off turns it off).
+
+       On the page: data-theme is the palette CSS keys on (light | dark for Default, else terminal | notebook),
+       data-family is the theme id, data-mode is light | dark, and data-fun is set for Terminal and Notebook.
+       To add a theme: add an entry to THEMES, add a :root[data-theme="<id>"] block to style.css and its
+       dark (or light) counterpart as :root[data-theme="<id>"][data-mode="dark"]. See README, "Themes". */
     (function () {
-      var KEY = "maker-map-theme";
+      var KEY = "maker-map-theme", MODE_KEY = "maker-map-mode";
       var THEMES = [
-        { id: "light", label: "Light", color: "#f5ecdc", scheme: "light",
-          swatch: { bg: "#f5ecdc", fg: "#c2410c", glyph: "Aa" } },
-        { id: "dark", label: "Dark", color: "#0d0d0d", scheme: "dark",
-          swatch: { bg: "#0d0d0d", fg: "#ff7a1a", glyph: "Aa" } },
-        { id: "terminal", label: "Terminal", color: "#141414", scheme: "dark", fun: true,
-          swatch: { bg: "#141414", fg: "#ff8a1f", glyph: ">_" } },
-        { id: "notebook", label: "Notebook", color: "#f3efe3", scheme: "light", fun: true,
-          swatch: { bg: "#fbf9f1", fg: "#1b2352", glyph: "Nb" } }
+        { id: "default", label: "Default",
+          light: { color: "#f5ecdc", sw: { bg: "#f5ecdc", fg: "#a8390c", glyph: "Aa" } },
+          dark:  { color: "#0d0d0d", sw: { bg: "#0d0d0d", fg: "#ff7a1a", glyph: "Aa" } } },
+        { id: "terminal", label: "Terminal", fun: true,
+          light: { color: "#f5efdf", sw: { bg: "#f5efdf", fg: "#a84300", glyph: ">_" } },
+          dark:  { color: "#141414", sw: { bg: "#141414", fg: "#ff8a1f", glyph: ">_" } } },
+        { id: "notebook", label: "Notebook", fun: true,
+          light: { color: "#f3efe3", sw: { bg: "#fbf9f1", fg: "#1b2352", glyph: "Nb" } },
+          dark:  { color: "#0a0a0a", sw: { bg: "#0a0a0a", fg: "#ff8f3a", glyph: "Nb" } } }
       ];
-      var AUTO = { id: "auto", label: "Auto (device)",
-        swatch: { bg: "linear-gradient(90deg,#f5ecdc 50%,#0d0d0d 50%)", fg: "#c2410c", glyph: "Aa" } };
-      var root = document.documentElement;
-
-      /* ---- Notebook options (handwriting, paper, margin) ---- */
-      var NB = {
-        font:   { key: "maker-map-nb-font",  param: "nbfont", list: ["casual", "italic", "architect"], def: "casual" },
-        paper:  { key: "maker-map-nb-paper", param: "paper",  list: ["dots", "ruled", "graph", "plain"], def: "dots" },
-        margin: { key: "maker-map-nb-margin", param: "margin", list: ["1", "0"], def: "1" }
+      var MODES = [
+        { id: "auto", label: "Auto" },
+        { id: "light", label: "Light" },
+        { id: "dark", label: "Dark" }
+      ];
+      var ICONS = {
+        auto: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>',
+        light: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+        dark: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15.2 3.1a8.6 8.6 0 1 0 5.7 15.3A8.4 8.4 0 0 1 15.2 3.1z" fill="currentColor"/></svg>'
       };
-      var NB_COLOR = { dots: "#f3efe3", ruled: "#f2eee0", graph: "#eef3ee", plain: "#ffffff" };
-      function nbUrlValue(o) {
-        try {
-          var v = (new URLSearchParams(location.search).get(o.param) || "").toLowerCase();
-          if (o.list.indexOf(v) !== -1) return v;
-        } catch (e) {}
-        return null;
-      }
-      function nbSavedValue(o) {
-        try {
-          var v = localStorage.getItem(o.key);
-          if (o.list.indexOf(v) !== -1) return v;
-        } catch (e) {}
-        return null;
-      }
-      function nbValue(name) { var o = NB[name]; return nbUrlValue(o) || nbSavedValue(o) || o.def; }
-      function applyNb() {
-        root.setAttribute("data-nbfont", nbValue("font"));
-        root.setAttribute("data-nbpaper", nbValue("paper"));
-        root.setAttribute("data-nbmargin", nbValue("margin"));
-        if (root.getAttribute("data-theme") === "notebook") {
-          var meta = document.querySelector('meta[name="theme-color"]');
-          if (meta) meta.setAttribute("content", NB_COLOR[nbValue("paper")]);
-        }
-        markNb();
-      }
-      function chooseNb(name, value) {
-        var o = NB[name];
-        try { localStorage.setItem(o.key, value); } catch (e) {}
-        try {
-          var url = new URL(location.href);
-          url.searchParams.delete(o.param);
-          history.replaceState(null, "", url.pathname + url.search + url.hash);
-        } catch (e) {}
-        applyNb();
-      }
-      function markNb() {
-        if (!menu) return;
-        var items = menu.querySelectorAll("[data-nb-font], [data-nb-paper], [data-nb-margin]");
-        for (var i = 0; i < items.length; i++) {
-          var el = items[i], on;
-          if (el.hasAttribute("data-nb-font")) on = el.getAttribute("data-nb-font") === nbValue("font");
-          else if (el.hasAttribute("data-nb-paper")) on = el.getAttribute("data-nb-paper") === nbValue("paper");
-          else on = nbValue("margin") === "1";
-          el.setAttribute("aria-checked", on ? "true" : "false");
-        }
-      }
+      var root = document.documentElement;
 
       function find(id) {
         for (var i = 0; i < THEMES.length; i++) if (THEMES[i].id === id) return THEMES[i];
         return null;
       }
-      function modeParam() {
+      function isMode(m) { return m === "light" || m === "dark"; }
+
+      /* one-time migration of the old single-choice values, and cleanup of retired Notebook options */
+      try {
+        var old = localStorage.getItem(KEY);
+        if (isMode(old)) {
+          localStorage.setItem(KEY, "default");
+          if (!isMode(localStorage.getItem(MODE_KEY))) localStorage.setItem(MODE_KEY, old);
+        } else if ((old === "terminal" || old === "notebook") && localStorage.getItem("maker-map-mode-migrated") !== "1") {
+          if (!isMode(localStorage.getItem(MODE_KEY))) localStorage.setItem(MODE_KEY, old === "terminal" ? "dark" : "light");
+        }
+        localStorage.setItem("maker-map-mode-migrated", "1");
+        localStorage.removeItem("maker-map-nb-font");
+        localStorage.removeItem("maker-map-nb-paper");
+        localStorage.removeItem("maker-map-nb-margin");
+      } catch (e) {}
+
+      /* ?mode= parsing: returns { theme, mode } with either part possibly null */
+      function urlChoice() {
+        var out = { theme: null, mode: null };
         try {
           var m = (new URLSearchParams(location.search).get("mode") || "").toLowerCase();
-          if (find(m)) return m;
+          if (!m) return out;
+          if (isMode(m)) { out.theme = "default"; out.mode = m; return out; }
+          var parts = m.split(/[-_ ]/);
+          if (find(parts[0])) out.theme = parts[0];
+          if (parts.length > 1 && isMode(parts[1])) out.mode = parts[1];
+          if (!out.theme) out.mode = null;
         } catch (e) {}
-        return null;
+        return out;
       }
       function savedTheme() {
-        try {
-          var s = localStorage.getItem(KEY);
-          if (find(s)) return s;
-        } catch (e) {}
+        try { var s = localStorage.getItem(KEY); if (find(s)) return s; } catch (e) {}
         return null;
       }
-      function systemTheme() {
+      function savedMode() {
+        try { var s = localStorage.getItem(MODE_KEY); if (isMode(s)) return s; } catch (e) {}
+        return null;
+      }
+      function systemMode() {
         try {
           if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
         } catch (e) {}
         return "light";
       }
-      /* The still image and the print view always use the plain light look, never a fun theme. */
+      /* The still image and the print view always use the plain Default light look. */
       function paperView() { return /[?&](still|print)=1\b/.test(location.search); }
-      function currentTheme() {
-        var t = modeParam() || savedTheme() || systemTheme();
-        if (find(t).fun && paperView()) return "light";
-        return t;
+      function current() {
+        if (paperView()) return { theme: "default", mode: "light" };
+        var u = urlChoice();
+        return { theme: u.theme || savedTheme() || "default", mode: u.mode || savedMode() || systemMode() };
       }
-      function choiceId() { return modeParam() || savedTheme() || "auto"; }
+      /* what the picker shows as chosen (Auto when no mode is fixed) */
+      function choice() {
+        var u = urlChoice();
+        return { theme: u.theme || savedTheme() || "default", mode: u.mode || savedMode() || "auto" };
+      }
 
-      function applyTheme(id) {
-        var def = find(id) || find("light");
-        root.setAttribute("data-theme", def.id);
-        root.style.colorScheme = def.scheme;
+      function apply() {
+        var c = current(), def = find(c.theme) || THEMES[0], look = def[c.mode];
+        root.setAttribute("data-theme", def.id === "default" ? c.mode : def.id);
+        root.setAttribute("data-family", def.id);
+        root.setAttribute("data-mode", c.mode);
+        root.style.colorScheme = c.mode;
         if (def.fun) root.setAttribute("data-fun", "1"); else root.removeAttribute("data-fun");
         var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute("content", def.color);
-        var btn = document.getElementById("theme-toggle");
-        if (btn) {
-          btn.setAttribute("aria-label", "Theme: " + def.label + ". Choose a theme");
-          btn.setAttribute("title", "Theme: " + def.label);
+        if (meta) meta.setAttribute("content", look.color);
+        var b = document.getElementById("theme-toggle");
+        if (b) {
+          var label = def.label + ", " + (c.mode === "dark" ? "Dark" : "Light") + (choice().mode === "auto" ? " (Auto)" : "");
+          b.setAttribute("aria-label", "Theme: " + label + ". Change theme or mode");
+          b.setAttribute("title", "Theme: " + label);
         }
         markMenu();
-        applyNb();
       }
 
       /* ---- picker menu ---- */
       var menu, btn;
       function markMenu() {
         if (!menu) return;
-        var c = choiceId();
-        var items = menu.querySelectorAll("[data-theme-choice]");
+        var ch = choice(), mode = current().mode;
+        var items = menu.querySelectorAll("[data-theme-choice], [data-mode-choice]");
         for (var i = 0; i < items.length; i++) {
-          var on = items[i].getAttribute("data-theme-choice") === c;
-          items[i].setAttribute("aria-checked", on ? "true" : "false");
-          items[i].setAttribute("tabindex", on ? "0" : "-1");
+          var el = items[i], on;
+          if (el.hasAttribute("data-theme-choice")) {
+            on = el.getAttribute("data-theme-choice") === ch.theme;
+            var sw = el.querySelector(".theme-sw"), s = find(el.getAttribute("data-theme-choice"))[mode].sw;
+            if (sw) { sw.style.background = s.bg; sw.style.color = s.fg; }
+          } else on = el.getAttribute("data-mode-choice") === ch.mode;
+          el.setAttribute("aria-checked", on ? "true" : "false");
         }
-      }
-      function nbPanel() {
-        function opt(attr, val, label, sw) {
-          return '<button type="button" class="nb-opt" role="menuitemradio" aria-checked="false" tabindex="-1" data-nb-' + attr + '="' + val + '">' +
-            (sw ? '<span class="nb-sw" aria-hidden="true"></span>' : "") + '<span>' + label + '</span></button>';
-        }
-        return '<div class="nb-opts" role="group" aria-label="Notebook pen and paper">' +
-          '<span class="nb-lab" id="nb-lab-font">Handwriting</span>' +
-          '<div class="nb-row" role="group" aria-labelledby="nb-lab-font">' +
-            opt("font", "casual", "Casual") + opt("font", "italic", "Italic") + opt("font", "architect", "Architect") + '</div>' +
-          '<span class="nb-lab" id="nb-lab-paper">Paper</span>' +
-          '<div class="nb-row nb-row-paper" role="group" aria-labelledby="nb-lab-paper">' +
-            opt("paper", "dots", "Dots", 1) + opt("paper", "ruled", "Ruled", 1) + opt("paper", "graph", "Graph", 1) + opt("paper", "plain", "Plain", 1) + '</div>' +
-          '<button type="button" class="nb-opt nb-margin" role="menuitemcheckbox" aria-checked="false" tabindex="-1" data-nb-margin="1"><span>Red margin line</span></button>' +
-          '</div>';
       }
       function buildMenu() {
-        var entries = THEMES.concat([AUTO]);
-        var html = "";
-        var sawFun = false;
-        entries.forEach(function (t) {
-          if (t.fun && !sawFun) { sawFun = true; html += '<div class="theme-sep" role="separator"></div>'; }
-          if (t.id === "auto") html += '<div class="theme-sep" role="separator"></div>';
+        var html = '<div class="theme-group" role="group" aria-labelledby="theme-lab-theme">' +
+          '<span class="theme-lab" id="theme-lab-theme">Theme</span>';
+        THEMES.forEach(function (t) {
           html += '<button type="button" class="theme-opt" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-choice="' + t.id + '">' +
-            '<span class="theme-sw" aria-hidden="true" style="background:' + t.swatch.bg + ';color:' + t.swatch.fg + '">' + t.swatch.glyph + '</span>' +
+            '<span class="theme-sw" aria-hidden="true">' + t.light.sw.glyph + '</span>' +
             '<span class="theme-opt-label">' + t.label + '</span>' +
             '<span class="theme-opt-check" aria-hidden="true"></span></button>';
-          if (t.id === "notebook") html += nbPanel();
         });
+        html += '</div><div class="theme-sep" role="separator"></div>' +
+          '<div class="theme-group" role="group" aria-labelledby="theme-lab-mode">' +
+          '<span class="theme-lab" id="theme-lab-mode">Mode</span><div class="mode-row">';
+        MODES.forEach(function (m) {
+          html += '<button type="button" class="mode-opt" role="menuitemradio" aria-checked="false" tabindex="-1" data-mode-choice="' + m.id + '"' +
+            (m.id === "auto" ? ' title="Follow the device setting"' : "") + '>' +
+            '<span class="mode-ico">' + ICONS[m.id] + '</span><span class="mode-opt-label">' + m.label + '</span></button>';
+        });
+        html += '</div></div>';
         menu.innerHTML = html;
       }
+      function items() { return Array.prototype.slice.call(menu.querySelectorAll("[data-theme-choice], [data-mode-choice]")); }
       function isOpen() { return !menu.hidden; }
       function openMenu() {
         menu.hidden = false;
         btn.setAttribute("aria-expanded", "true");
         markMenu();
-        var cur = menu.querySelector('[aria-checked="true"]') || menu.querySelector(".theme-opt");
+        var cur = menu.querySelector('.theme-opt[aria-checked="true"]') || menu.querySelector(".theme-opt");
         if (cur) cur.focus();
       }
       function closeMenu(refocus) {
@@ -196,53 +186,54 @@
         btn.setAttribute("aria-expanded", "false");
         if (refocus) btn.focus();
       }
-      function choose(id) {
+      /* A choice applies at once and is saved; any ?mode= override is dropped from the address. */
+      function choose(kind, id) {
+        var u = urlChoice();
         try {
-          if (id === "auto") localStorage.removeItem(KEY);
-          else localStorage.setItem(KEY, id);
+          if (kind === "theme") {
+            localStorage.setItem(KEY, id);
+            /* keep a mode that only came from the URL, so the look does not jump */
+            if (u.mode) localStorage.setItem(MODE_KEY, u.mode);
+          } else {
+            if (id === "auto") localStorage.removeItem(MODE_KEY); else localStorage.setItem(MODE_KEY, id);
+            if (u.theme) localStorage.setItem(KEY, u.theme);
+          }
         } catch (e) {}
         try {
           var url = new URL(location.href);
-          url.searchParams.delete("mode");
-          history.replaceState(null, "", url.pathname + url.search + url.hash);
+          if (url.searchParams.has("mode")) {
+            url.searchParams.delete("mode");
+            history.replaceState(null, "", url.pathname + url.search + url.hash);
+          }
         } catch (e) {}
-        applyTheme(id === "auto" ? systemTheme() : id);
+        apply();
       }
 
-      applyTheme(currentTheme());
+      apply();
       document.addEventListener("DOMContentLoaded", function () {
         btn = document.getElementById("theme-toggle");
         menu = document.getElementById("theme-menu");
         if (btn && menu) {
           buildMenu();
-          applyTheme(currentTheme());
+          apply();
           btn.addEventListener("click", function () { if (isOpen()) closeMenu(false); else openMenu(); });
           menu.addEventListener("click", function (e) {
-            var n = e.target.closest ? e.target.closest("[data-nb-font], [data-nb-paper], [data-nb-margin]") : null;
-            if (n) {
-              /* Notebook options change the look in place; the menu stays open so choices can be compared. */
-              if (n.hasAttribute("data-nb-font")) chooseNb("font", n.getAttribute("data-nb-font"));
-              else if (n.hasAttribute("data-nb-paper")) chooseNb("paper", n.getAttribute("data-nb-paper"));
-              else chooseNb("margin", nbValue("margin") === "1" ? "0" : "1");
-              return;
-            }
-            var t = e.target.closest ? e.target.closest("[data-theme-choice]") : null;
+            var t = e.target.closest ? e.target.closest("[data-theme-choice], [data-mode-choice]") : null;
             if (!t) return;
-            choose(t.getAttribute("data-theme-choice"));
-            closeMenu(true);
+            /* the menu stays open so a theme and a mode can be picked in one go */
+            if (t.hasAttribute("data-theme-choice")) choose("theme", t.getAttribute("data-theme-choice"));
+            else choose("mode", t.getAttribute("data-mode-choice"));
+            t.focus();
           });
           menu.addEventListener("keydown", function (e) {
-            var items = Array.prototype.slice.call(menu.querySelectorAll("[data-theme-choice], [data-nb-font], [data-nb-paper], [data-nb-margin]"))
-              .filter(function (el) { return el.offsetParent !== null; });
-            var i = items.indexOf(document.activeElement);
-            if (e.key === "ArrowRight" && i > -1) e = { key: "ArrowDown", preventDefault: function () {} };
-            else if (e.key === "ArrowLeft" && i > -1) e = { key: "ArrowUp", preventDefault: function () {} };
-            if (e.key === "ArrowDown") { items[(i + 1) % items.length].focus(); e.preventDefault(); }
-            else if (e.key === "ArrowUp") { items[(i - 1 + items.length) % items.length].focus(); e.preventDefault(); }
-            else if (e.key === "Home") { items[0].focus(); e.preventDefault(); }
-            else if (e.key === "End") { items[items.length - 1].focus(); e.preventDefault(); }
-            else if (e.key === "Escape") { closeMenu(true); e.preventDefault(); }
-            else if (e.key === "Tab") { closeMenu(false); }
+            var list = items(), i = list.indexOf(document.activeElement), k = e.key;
+            if (k === "ArrowRight") k = "ArrowDown"; else if (k === "ArrowLeft") k = "ArrowUp";
+            if (k === "ArrowDown") { list[(i + 1) % list.length].focus(); e.preventDefault(); }
+            else if (k === "ArrowUp") { list[(i - 1 + list.length) % list.length].focus(); e.preventDefault(); }
+            else if (k === "Home") { list[0].focus(); e.preventDefault(); }
+            else if (k === "End") { list[list.length - 1].focus(); e.preventDefault(); }
+            else if (k === "Escape") { closeMenu(true); e.preventDefault(); }
+            else if (k === "Tab") { closeMenu(false); }
           });
           document.addEventListener("click", function (e) {
             if (isOpen() && !e.target.closest("#theme-picker")) closeMenu(false);
@@ -253,10 +244,7 @@
         }
         try {
           var mq = window.matchMedia("(prefers-color-scheme: dark)");
-          var onChange = function () {
-            if (modeParam() || savedTheme()) return;
-            applyTheme(systemTheme());
-          };
+          var onChange = function () { apply(); };
           if (mq.addEventListener) mq.addEventListener("change", onChange);
           else if (mq.addListener) mq.addListener(onChange);
         } catch (e) {}
@@ -304,7 +292,7 @@
     })();
   </script>
   <!-- === End seasonal block === -->
-  <link rel="stylesheet" href="style.css?v=20261127a">
+  <link rel="stylesheet" href="style.css?v=20261127b">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -583,11 +571,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261127a"></script>
-  <script src="vendor/topojson-client.min.js?v=20261127a"></script>
-  <script src="vendor/qrcode-generator.js?v=20261127a"></script>
-  <script src="vendor/fuse.min.js?v=20261127a"></script>
-  <script src="map.js?v=20261127a"></script>
+  <script src="vendor/d3.min.js?v=20261127b"></script>
+  <script src="vendor/topojson-client.min.js?v=20261127b"></script>
+  <script src="vendor/qrcode-generator.js?v=20261127b"></script>
+  <script src="vendor/fuse.min.js?v=20261127b"></script>
+  <script src="map.js?v=20261127b"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;
