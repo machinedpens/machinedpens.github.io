@@ -1,64 +1,79 @@
-:root, :root[data-theme="light"] {
-  /* Theme 1 · Light: off-white, light gray land, black lines and text, orange pins with black rings */
-  --bg: #f6f5f2;
-  --paper: #fdfcfa;
-  --land: #e4e2de;
-  --land-ca: #ecebe7;
-  --name: rgba(20, 20, 20, .38);
-  --country-name: rgba(20, 20, 20, .3);
-  --water: var(--paper);
-  --inner-line: rgba(20, 20, 20, .28);
-  --country-line: #141414;
-  --ink: #141414;
-  --ink-2: #55524d;
-  --ink-3: #8c8882;
+:root, :root[data-theme="light"], :root[data-theme="warm"] {
+  /* Light (default): cream, soft sand land, black text, burnt-orange pins with black rings.
+     This is the live look. data-theme="warm" is kept as an alias. */
+  color-scheme: light;
+  --bg: #f5ecdc;
+  --paper: #fbf5ea;
+  --land: #e4d1b0;
+  --land-ca: #ede1ca;
+  --name: rgba(94, 74, 52, .55);
+  --country-name: rgba(94, 74, 52, .42);
+  --water: #fbf5ea;
+  --inner-line: rgba(255, 250, 240, .95);
+  --country-line: #8c6c45;
+  --ink: #1b1612;
+  --ink-2: #5e5246;
+  --ink-3: #94857a;
   --on-ink: #ffffff;
-  --ink-hover: #343230;
-  --line: #e4e1db;
-  --accent: #f26b1d;
-  --pin: #f26b1d;
-  --ring: #141414;
-  --dot-stroke: var(--paper);
-  --leader: #8c8882;
-  --legend-bg: rgba(253, 252, 250, .9);
-  --pin-lo: #f0a05a; --pin-mid: #f26b1d; --pin-hi: #9a2f08; --pin-none: #9a9590;
-  --chip: var(--bg);
-  --chip-hover: #ebe8e3;
-  --hover: rgba(20, 20, 20, .05);
-  --active: rgba(242, 107, 29, .14);
+  --ink-hover: #3a3129;
+  --line: #e8dcc6;
+  --accent: #c2410c;
+  --pin: #c2410c;
+  --ring: #1b1612;
+  --dot-stroke: #fbf5ea;
+  --leader: #94857a;
+  --legend-bg: rgba(251, 245, 234, .9);
+  --pin-lo: #e8923a; --pin-mid: #c2410c; --pin-hi: #6b1d08; --pin-none: #9a9088;
+  --chip: #f3e9d7;
+  --chip-hover: #ecdfc8;
+  --hover: rgba(27, 22, 18, .05);
+  --active: rgba(194, 65, 12, .13);
   --radius: 14px;
   --shadow: 0 1px 2px rgba(20, 20, 20, .06), 0 8px 24px rgba(20, 20, 20, .08);
   --shadow-lg: 0 2px 6px rgba(20, 20, 20, .08), 0 18px 48px rgba(20, 20, 20, .16);
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
-/* Theme 2 · Dark: near-black, charcoal land, thin gray borders, bright orange pins with white rings */
+/* Dark: near-black, charcoal land, orange accents, light text (body text meets WCAG AA). */
 :root[data-theme="dark"] {
-  --bg: #0d0d0d; --paper: #151515; --land: #2a2a2a; --land-ca: #222222; --name: rgba(255, 255, 255, .34); --country-name: rgba(255, 255, 255, .26); --water: #151515;
-  --inner-line: rgba(255, 255, 255, .14); --country-line: #7a7a7a;
-  --ink: #f4f4f2; --ink-2: #b8b6b2; --ink-3: #85827e; --on-ink: #111111; --ink-hover: #d6d4d0;
-  --line: #2b2b2b; --accent: #ff7a1a; --pin: #ff7a1a; --ring: #ffffff; --dot-stroke: #151515; --leader: #8a8a8a;
-  --legend-bg: rgba(21, 21, 21, .88); --chip: #1f1f1f; --chip-hover: #2a2a2a; --hover: rgba(255, 255, 255, .06); --active: rgba(255, 122, 26, .18);
+  color-scheme: dark;
+  --bg: #0d0d0d;
+  --paper: #151515;
+  --land: #2a2a2a;
+  --land-ca: #222222;
+  --name: rgba(255, 255, 255, .42);
+  --country-name: rgba(255, 255, 255, .34);
+  --water: #151515;
+  --inner-line: rgba(255, 255, 255, .16);
+  --country-line: #8a8a8a;
+  --ink: #f4f4f2;
+  --ink-2: #c4c1bc;
+  --ink-3: #9c9893;
+  --on-ink: #111111;
+  --ink-hover: #d6d4d0;
+  --line: #2b2b2b;
+  --accent: #ff7a1a;
+  --pin: #ff7a1a;
+  --ring: #ffffff;
+  --dot-stroke: #151515;
+  --leader: #8a8a8a;
+  --legend-bg: rgba(21, 21, 21, .88);
+  --chip: #1f1f1f;
+  --chip-hover: #2a2a2a;
+  --hover: rgba(255, 255, 255, .06);
+  --active: rgba(255, 122, 26, .18);
   --pin-lo: #ffb070; --pin-mid: #ff7a1a; --pin-hi: #c44708; --pin-none: #8a8a8a;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
   --shadow-lg: 0 2px 6px rgba(0, 0, 0, .5), 0 18px 48px rgba(0, 0, 0, .55);
 }
-/* Theme 3 · Bold: black land on warm off-white, orange pins and rings */
+/* Unused leftover palette (not in the toggle). Kept so a data-theme="bold" preview still works. */
 :root[data-theme="bold"] {
+  color-scheme: light;
   --bg: #f4efe7; --paper: #f8f4ee; --land: #161616; --land-ca: #262422; --name: rgba(255, 255, 255, .4); --country-name: rgba(255, 255, 255, .32); --water: #f8f4ee;
   --inner-line: rgba(255, 255, 255, .16); --country-line: #8a8580;
   --ink: #141414; --ink-2: #55524d; --ink-3: #8c8882; --on-ink: #ffffff; --ink-hover: #343230;
   --line: #e2dcd2; --accent: #ff6a13; --pin: #ff6a13; --ring: #ff6a13; --dot-stroke: #161616; --leader: #ff6a13;
   --legend-bg: rgba(248, 244, 238, .92); --chip: #efe9e0; --chip-hover: #e6dfd4; --hover: rgba(20, 20, 20, .05); --active: rgba(255, 106, 19, .14);
   --pin-lo: #ff9a55; --pin-mid: #ff6a13; --pin-hi: #b33a00; --pin-none: #9a9088;
-}
-/* Theme 4 · Warm (default): cream, soft sand land, black text, burnt-orange pins with black rings */
-:root, :root[data-theme="warm"] {
-  --bg: #f5ecdc; --paper: #fbf5ea; --land: #e4d1b0; --land-ca: #ede1ca; --name: rgba(94, 74, 52, .55); --country-name: rgba(94, 74, 52, .42); --water: #fbf5ea;
-  --inner-line: rgba(255, 250, 240, .95); --country-line: #8c6c45;
-  --ink: #1b1612; --ink-2: #5e5246; --ink-3: #94857a; --on-ink: #ffffff; --ink-hover: #3a3129;
-  --line: #e8dcc6; --accent: #c2410c; --pin: #c2410c; --ring: #1b1612; --dot-stroke: #fbf5ea; --leader: #94857a;
-  --legend-bg: rgba(251, 245, 234, .9); --chip: #f3e9d7; --chip-hover: #ecdfc8; --hover: rgba(27, 22, 18, .05); --active: rgba(194, 65, 12, .13);
-  --pin-lo: #e8923a; --pin-mid: #c2410c; --pin-hi: #6b1d08; --pin-none: #9a9088;
 }
 
 * { box-sizing: border-box; }
@@ -81,7 +96,29 @@ button { font: inherit; color: inherit; }
 /* Header */
 .site-header, main, .site-footer { width: 100%; max-width: 1180px; margin: 0 auto; padding-left: 32px; padding-right: 32px; }
 .site-header { padding-top: 44px; padding-bottom: 22px; }
-.title { margin: 0; font-size: 40px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 700; }
+.header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.title { margin: 0; font-size: 40px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 700; flex: 1; min-width: 0; }
+.theme-toggle {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin: -2px -4px 0 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow);
+}
+.theme-toggle:hover { background: var(--chip-hover); }
+.theme-toggle .theme-icon { width: 22px; height: 22px; display: none; }
+.theme-toggle .theme-icon-moon { display: block; }
+:root[data-theme="dark"] .theme-toggle .theme-icon-moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .theme-icon-sun { display: block; }
+body.still .theme-toggle, body.print .theme-toggle { display: none !important; }
 .subtitle {
   display: inline-block; margin-top: 8px; font-size: 15px; color: var(--ink-2);
   text-decoration: none; letter-spacing: .01em;
@@ -1440,16 +1477,24 @@ body[data-view="world"] .legend { display: none; }
 }
 
 /* === Seasonal: Thanksgiving 2026 (removable) ===
-   Auto-on in America/New_York from 26 Nov 2026 00:00 through 27 Nov 2026 23:59.
+   Auto-on in America/New_York from 25 Nov 2026 00:00 through 27 Nov 2026 23:59.
    Preview with ?theme=thanksgiving; force off with ?theme=off.
    Delete this block plus the matching marked blocks in index.html to remove. */
-:root[data-season="thanksgiving"]:not([data-theme]) {
+:root[data-season="thanksgiving"]:not([data-theme="dark"]) {
   --bg: #f4e4cc;
   --paper: #fbf1e0;
   --land: #e8c894;
   --land-ca: #f0d6ae;
   --water: #fbf1e0;
   --line: #e8d4b0;
+}
+:root[data-season="thanksgiving"][data-theme="dark"] {
+  --bg: #14110d;
+  --paper: #1c1813;
+  --land: #3a3024;
+  --land-ca: #322a20;
+  --water: #1c1813;
+  --line: #3a342c;
 }
 :root[data-season="thanksgiving"] {
   --thanks-amber: #c4842a;
@@ -1488,6 +1533,14 @@ body[data-view="world"] .legend { display: none; }
 }
 :root[data-season="thanksgiving"]:not([data-thanks-banner="off"]) .thanks-banner {
   display: flex;
+}
+:root[data-theme="dark"][data-season="thanksgiving"] .thanks-banner {
+  background: #3a2a18;
+  color: #f6e8d0;
+  border-bottom-color: #8a6230;
+}
+:root[data-theme="dark"][data-season="thanksgiving"] .thanks-banner-dismiss:hover {
+  background: rgba(246, 232, 208, .12);
 }
 .thanks-banner-text { margin: 0; }
 .thanks-banner-dismiss {

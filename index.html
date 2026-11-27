@@ -11,12 +11,72 @@
   <meta property="og:image" content="https://machinedpens.github.io/maker-map-still.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%23c2410c'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%231b1612' stroke-width='2.5'/%3E%3C/svg%3E">
   <script>
-    // ?theme=light|dark|bold|warm (or 1-4). Warm is the default.
+    /* Light/dark mode: ?mode=dark|light overrides, then localStorage maker-map-theme, then prefers-color-scheme.
+       Do not use ?theme= here — that query is reserved for the seasonal theme. */
     (function () {
-      var t = (new URLSearchParams(location.search).get("theme") || "").toLowerCase();
-      var map = { "1": "light", "2": "dark", "3": "bold", "4": "warm" };
-      t = map[t] || t;
-      if (["light", "dark", "bold"].indexOf(t) >= 0) document.documentElement.setAttribute("data-theme", t);
+      var KEY = "maker-map-theme";
+      var COLORS = { light: "#f5ecdc", dark: "#0d0d0d" };
+      function modeParam() {
+        try {
+          var m = (new URLSearchParams(location.search).get("mode") || "").toLowerCase();
+          if (m === "dark" || m === "light") return m;
+        } catch (e) {}
+        return null;
+      }
+      function savedTheme() {
+        try {
+          var s = localStorage.getItem(KEY);
+          if (s === "dark" || s === "light") return s;
+        } catch (e) {}
+        return null;
+      }
+      function systemTheme() {
+        try {
+          if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+        } catch (e) {}
+        return "light";
+      }
+      function currentTheme() { return modeParam() || savedTheme() || systemTheme(); }
+      function applyTheme(theme) {
+        if (theme !== "dark") theme = "light";
+        document.documentElement.setAttribute("data-theme", theme);
+        document.documentElement.style.colorScheme = theme;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", COLORS[theme]);
+        var btn = document.getElementById("theme-toggle");
+        if (btn) {
+          var toDark = theme !== "dark";
+          btn.setAttribute("aria-label", toDark ? "Switch to dark theme" : "Switch to light theme");
+          btn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+          btn.setAttribute("title", theme === "dark" ? "Dark theme" : "Light theme");
+        }
+      }
+      applyTheme(currentTheme());
+      document.addEventListener("DOMContentLoaded", function () {
+        applyTheme(currentTheme());
+        var btn = document.getElementById("theme-toggle");
+        if (btn) {
+          btn.addEventListener("click", function () {
+            var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+            try { localStorage.setItem(KEY, next); } catch (e) {}
+            try {
+              var url = new URL(location.href);
+              url.searchParams.delete("mode");
+              history.replaceState(null, "", url.pathname + url.search + url.hash);
+            } catch (e) {}
+            applyTheme(next);
+          });
+        }
+        try {
+          var mq = window.matchMedia("(prefers-color-scheme: dark)");
+          var onChange = function () {
+            if (modeParam() || savedTheme()) return;
+            applyTheme(systemTheme());
+          };
+          if (mq.addEventListener) mq.addEventListener("change", onChange);
+          else if (mq.addListener) mq.addListener(onChange);
+        } catch (e) {}
+      });
     })();
   </script>
   <!-- === Seasonal: Thanksgiving 2026 (removable) === -->
@@ -60,7 +120,7 @@
     })();
   </script>
   <!-- === End seasonal block === -->
-  <link rel="stylesheet" href="style.css?v=20261125l">
+  <link rel="stylesheet" href="style.css?v=20261125m">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -80,7 +140,18 @@
   <!-- === End seasonal block === -->
 
   <header class="site-header">
-    <h1 class="title"><span class="title-live">Machined Pens Maker Map</span><span class="title-print">My Machined Pens Makers</span></h1>
+    <div class="header-row">
+      <h1 class="title"><span class="title-live">Machined Pens Maker Map</span><span class="title-print">My Machined Pens Makers</span></h1>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false">
+        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M15.2 3.1a8.6 8.6 0 1 0 5.7 15.3A8.4 8.4 0 0 1 15.2 3.1z" fill="currentColor"/>
+        </svg>
+        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2" fill="currentColor"/>
+          <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
     <a class="subtitle" href="https://machinedpens.substack.com/p/the-maker-index-all-makers">Machined Pens · The Maker Index</a>
   </header>
 
@@ -291,11 +362,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261125l"></script>
-  <script src="vendor/topojson-client.min.js?v=20261125l"></script>
-  <script src="vendor/qrcode-generator.js?v=20261125l"></script>
-  <script src="vendor/fuse.min.js?v=20261125l"></script>
-  <script src="map.js?v=20261125l"></script>
+  <script src="vendor/d3.min.js?v=20261125m"></script>
+  <script src="vendor/topojson-client.min.js?v=20261125m"></script>
+  <script src="vendor/qrcode-generator.js?v=20261125m"></script>
+  <script src="vendor/fuse.min.js?v=20261125m"></script>
+  <script src="map.js?v=20261125m"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;
