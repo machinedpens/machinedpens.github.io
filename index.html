@@ -15,6 +15,10 @@
        then the device setting (prefers-color-scheme -> light or dark). Nothing saved = "Auto (device)".
        Do not use ?theme= here: that query is reserved for the seasonal theme.
 
+       Notebook has two extra choices, handwriting (?nbfont=casual|italic|architect, saved as
+       maker-map-nb-font) and paper (?paper=dots|ruled|graph|plain, saved as maker-map-nb-paper, plus the
+       ruled paper's red margin, ?margin=0|1, saved as maker-map-nb-margin). They only change how Notebook looks.
+
        To add a fun theme: (1) add an entry to THEMES below, (2) add a :root[data-theme="<id>"] block
        to style.css. The header picker builds itself from this list. See README, "Themes". */
     (function () {
@@ -32,6 +36,60 @@
       var AUTO = { id: "auto", label: "Auto (device)",
         swatch: { bg: "linear-gradient(90deg,#f5ecdc 50%,#0d0d0d 50%)", fg: "#c2410c", glyph: "Aa" } };
       var root = document.documentElement;
+
+      /* ---- Notebook options (handwriting, paper, margin) ---- */
+      var NB = {
+        font:   { key: "maker-map-nb-font",  param: "nbfont", list: ["casual", "italic", "architect"], def: "casual" },
+        paper:  { key: "maker-map-nb-paper", param: "paper",  list: ["dots", "ruled", "graph", "plain"], def: "dots" },
+        margin: { key: "maker-map-nb-margin", param: "margin", list: ["1", "0"], def: "1" }
+      };
+      var NB_COLOR = { dots: "#f3efe3", ruled: "#f2eee0", graph: "#eef3ee", plain: "#ffffff" };
+      function nbUrlValue(o) {
+        try {
+          var v = (new URLSearchParams(location.search).get(o.param) || "").toLowerCase();
+          if (o.list.indexOf(v) !== -1) return v;
+        } catch (e) {}
+        return null;
+      }
+      function nbSavedValue(o) {
+        try {
+          var v = localStorage.getItem(o.key);
+          if (o.list.indexOf(v) !== -1) return v;
+        } catch (e) {}
+        return null;
+      }
+      function nbValue(name) { var o = NB[name]; return nbUrlValue(o) || nbSavedValue(o) || o.def; }
+      function applyNb() {
+        root.setAttribute("data-nbfont", nbValue("font"));
+        root.setAttribute("data-nbpaper", nbValue("paper"));
+        root.setAttribute("data-nbmargin", nbValue("margin"));
+        if (root.getAttribute("data-theme") === "notebook") {
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", NB_COLOR[nbValue("paper")]);
+        }
+        markNb();
+      }
+      function chooseNb(name, value) {
+        var o = NB[name];
+        try { localStorage.setItem(o.key, value); } catch (e) {}
+        try {
+          var url = new URL(location.href);
+          url.searchParams.delete(o.param);
+          history.replaceState(null, "", url.pathname + url.search + url.hash);
+        } catch (e) {}
+        applyNb();
+      }
+      function markNb() {
+        if (!menu) return;
+        var items = menu.querySelectorAll("[data-nb-font], [data-nb-paper], [data-nb-margin]");
+        for (var i = 0; i < items.length; i++) {
+          var el = items[i], on;
+          if (el.hasAttribute("data-nb-font")) on = el.getAttribute("data-nb-font") === nbValue("font");
+          else if (el.hasAttribute("data-nb-paper")) on = el.getAttribute("data-nb-paper") === nbValue("paper");
+          else on = nbValue("margin") === "1";
+          el.setAttribute("aria-checked", on ? "true" : "false");
+        }
+      }
 
       function find(id) {
         for (var i = 0; i < THEMES.length; i++) if (THEMES[i].id === id) return THEMES[i];
@@ -79,6 +137,7 @@
           btn.setAttribute("title", "Theme: " + def.label);
         }
         markMenu();
+        applyNb();
       }
 
       /* ---- picker menu ---- */
@@ -93,6 +152,21 @@
           items[i].setAttribute("tabindex", on ? "0" : "-1");
         }
       }
+      function nbPanel() {
+        function opt(attr, val, label, sw) {
+          return '<button type="button" class="nb-opt" role="menuitemradio" aria-checked="false" tabindex="-1" data-nb-' + attr + '="' + val + '">' +
+            (sw ? '<span class="nb-sw" aria-hidden="true"></span>' : "") + '<span>' + label + '</span></button>';
+        }
+        return '<div class="nb-opts" role="group" aria-label="Notebook pen and paper">' +
+          '<span class="nb-lab" id="nb-lab-font">Handwriting</span>' +
+          '<div class="nb-row" role="group" aria-labelledby="nb-lab-font">' +
+            opt("font", "casual", "Casual") + opt("font", "italic", "Italic") + opt("font", "architect", "Architect") + '</div>' +
+          '<span class="nb-lab" id="nb-lab-paper">Paper</span>' +
+          '<div class="nb-row nb-row-paper" role="group" aria-labelledby="nb-lab-paper">' +
+            opt("paper", "dots", "Dots", 1) + opt("paper", "ruled", "Ruled", 1) + opt("paper", "graph", "Graph", 1) + opt("paper", "plain", "Plain", 1) + '</div>' +
+          '<button type="button" class="nb-opt nb-margin" role="menuitemcheckbox" aria-checked="false" tabindex="-1" data-nb-margin="1"><span>Red margin line</span></button>' +
+          '</div>';
+      }
       function buildMenu() {
         var entries = THEMES.concat([AUTO]);
         var html = "";
@@ -104,6 +178,7 @@
             '<span class="theme-sw" aria-hidden="true" style="background:' + t.swatch.bg + ';color:' + t.swatch.fg + '">' + t.swatch.glyph + '</span>' +
             '<span class="theme-opt-label">' + t.label + '</span>' +
             '<span class="theme-opt-check" aria-hidden="true"></span></button>';
+          if (t.id === "notebook") html += nbPanel();
         });
         menu.innerHTML = html;
       }
@@ -143,14 +218,25 @@
           applyTheme(currentTheme());
           btn.addEventListener("click", function () { if (isOpen()) closeMenu(false); else openMenu(); });
           menu.addEventListener("click", function (e) {
+            var n = e.target.closest ? e.target.closest("[data-nb-font], [data-nb-paper], [data-nb-margin]") : null;
+            if (n) {
+              /* Notebook options change the look in place; the menu stays open so choices can be compared. */
+              if (n.hasAttribute("data-nb-font")) chooseNb("font", n.getAttribute("data-nb-font"));
+              else if (n.hasAttribute("data-nb-paper")) chooseNb("paper", n.getAttribute("data-nb-paper"));
+              else chooseNb("margin", nbValue("margin") === "1" ? "0" : "1");
+              return;
+            }
             var t = e.target.closest ? e.target.closest("[data-theme-choice]") : null;
             if (!t) return;
             choose(t.getAttribute("data-theme-choice"));
             closeMenu(true);
           });
           menu.addEventListener("keydown", function (e) {
-            var items = Array.prototype.slice.call(menu.querySelectorAll("[data-theme-choice]"));
+            var items = Array.prototype.slice.call(menu.querySelectorAll("[data-theme-choice], [data-nb-font], [data-nb-paper], [data-nb-margin]"))
+              .filter(function (el) { return el.offsetParent !== null; });
             var i = items.indexOf(document.activeElement);
+            if (e.key === "ArrowRight" && i > -1) e = { key: "ArrowDown", preventDefault: function () {} };
+            else if (e.key === "ArrowLeft" && i > -1) e = { key: "ArrowUp", preventDefault: function () {} };
             if (e.key === "ArrowDown") { items[(i + 1) % items.length].focus(); e.preventDefault(); }
             else if (e.key === "ArrowUp") { items[(i - 1 + items.length) % items.length].focus(); e.preventDefault(); }
             else if (e.key === "Home") { items[0].focus(); e.preventDefault(); }
@@ -218,7 +304,7 @@
     })();
   </script>
   <!-- === End seasonal block === -->
-  <link rel="stylesheet" href="style.css?v=20261126a">
+  <link rel="stylesheet" href="style.css?v=20261127a">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
@@ -497,11 +583,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261126a"></script>
-  <script src="vendor/topojson-client.min.js?v=20261126a"></script>
-  <script src="vendor/qrcode-generator.js?v=20261126a"></script>
-  <script src="vendor/fuse.min.js?v=20261126a"></script>
-  <script src="map.js?v=20261126a"></script>
+  <script src="vendor/d3.min.js?v=20261127a"></script>
+  <script src="vendor/topojson-client.min.js?v=20261127a"></script>
+  <script src="vendor/qrcode-generator.js?v=20261127a"></script>
+  <script src="vendor/fuse.min.js?v=20261127a"></script>
+  <script src="map.js?v=20261127a"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;
