@@ -15,18 +15,18 @@ The published site is this folder: HTML, CSS, JS, `makers.json`, map data, and t
 | --- | --- |
 | `index.html` | Page shell, nav pills, Filters drawer, timeline, list, GoatCounter loader, cache-busted asset tags |
 | `map.js` | Map, list, cards, filters, favorites, country grouping |
-| `style.css` | Layout and themes (CSS custom properties). Default light look is cream, black text, and burnt-orange pins; dark mode is near-black with orange accents |
+| `style.css` | Layout and themes (CSS custom properties). Default light look is cream, black text, and burnt-orange pins; dark mode is near-black with orange accents; the Terminal fun theme is monospace orange-on-black (see Themes) |
 | `makers.json` | All maker records (`updated`, optional `lists`, and a `makers` array) |
 | `maker-map-still.png` | Home-map still, also used as `og:image` |
 | `data/us-canada.topo.json` | Detailed US + Canada land for the home map (object `usca`) |
 | `data/world-110m.topo.json` | World land for the World view and regional zooms |
-| `vendor/` | `d3.min.js`, `topojson-client.min.js`, `qrcode-generator.js`, `fuse.min.js`, and their licenses |
+| `vendor/` | `d3.min.js`, `topojson-client.min.js`, `qrcode-generator.js`, `fuse.min.js`, the self-hosted IBM Plex Mono font files used only by the Terminal theme (`ibm-plex-mono-latin-*.woff2`), and their licenses (SIL OFL 1.1 for the font) |
 | `.nojekyll` | Empty. Required on GitHub Pages |
 | `README.md` | This handoff guide |
 
 The site currently has **53 makers**. Recent additions: Blackside Customs (Oceanside, NY), Makar Tools (Olsztyn, Poland), and Kasama (Philippines, country-level pin). Ensso already existed (Los Angeles) and now has `fountain` as well as `regular` in `pen_types`. The owner’s list (`lyfls-favs`) has 10 unranked favs, in this order: Matthew Martin Makes, Autmog, MaxMadCo, Melrose Machine Works, Hungoblin, SPP, MachineWise, Karas Pen Co, Spoke Design, and The Right Choice Painting Company (TRCPC).
 
-Light and dark mode are described under Release process (`?mode=`, not `?theme=`). `?print=1` is a print view for favorites. Do not confuse it with `?still=1`.
+Themes (light, dark, and fun themes such as Terminal) are described under Themes and Release process (`?mode=`, not `?theme=`). `?print=1` is a print view for favorites. Do not confuse it with `?still=1`.
 
 ## `makers.json` schema
 
@@ -132,7 +132,7 @@ Never invent data. If a field is unverified, leave it off or `null`. If the owne
 
 ## Design rules
 
-Preserve these. Keep the site simple. Brand colors are orange and black. The default **light** look is cream (`#f5ecdc`), burnt-orange pins (`#c2410c`), and black text and rings. **Dark** mode (see Release process) uses near-black backgrounds, orange pins and accents (`#ff7a1a`), and light text. A sun/moon toggle in the header switches modes.
+Preserve these. Keep the site simple. Brand colors are orange and black. The default **light** look is cream (`#f5ecdc`), burnt-orange pins (`#c2410c`), and black text and rings. **Dark** mode (see Release process) uses near-black backgrounds, orange pins and accents (`#ff7a1a`), and light text. A small theme picker in the header (Light, Dark, Terminal, Auto) switches looks; see Themes.
 
 - **Home** is the detailed US + Canada map, including the Hawaii inset. It is not the world map.
 - A **World** pill sits at the top-right of the home map. It opens the world view (country count pins).
@@ -163,38 +163,38 @@ The list panel’s “Find a maker” box is unchanged: it is a simple substring
 - **Do not add Share link or Share image buttons.** They were removed from the UI. Incoming shared-favorite links can still open a “Viewing shared favorites” banner; leave that as is unless asked to change it.
 - Featured Maker Index pins keep the ring. Inactive/closed pins stay hollow. Cards show location, shop founded, price (when present), first pen (when present), website, and “Update this entry” (opens a GitHub issue). When a Lists chip is on, a matching maker’s card also shows that list’s rank or unranked tag and credit (for example `PP Budget #1 · Pocket Priorities`, or `lyfl's fav · lyfl`). When two list chips are on, a maker on both shows both tags (for example `lyfl's fav · PP New #6`).
 
+## Themes
+
+Each theme is one `data-theme` value on `<html>` and one block of CSS custom properties. Today: `light`, `dark`, and the fun theme `terminal`. Visitors who have not chosen anything get light or dark from their device. Nobody gets a fun theme unless they pick it (or open a `?mode=terminal` link).
+
+**Picker.** The header button (`#theme-toggle`) opens a small menu (`#theme-menu`) with one row per theme plus “Auto (device)”. Rows are 48 px tall for phones, the menu is keyboard friendly (arrow keys, Home/End, Escape returns focus to the button, Tab or an outside tap closes it), and the current choice has a check. The menu is generated from the `THEMES` list in the head script in `index.html`, so it is never edited by hand.
+
+**Terminal.** A text-only terminal look inspired by musicforprogramming.net, rebuilt in Machined Pens orange and black (no assets, text, or name copied). It uses the self-hosted IBM Plex Mono (SIL OFL, files and license in `vendor/`, loaded only when Terminal is on) with a system monospace fallback, charcoal `#141414` with orange `#ff8a1f`, dashed rules, bracketed `[chips]` and buttons that invert to a solid block on hover or when selected, a `>` prompt and blinking block cursor in the search box, a blinking cursor after the title, ASCII `----` separators, `//` comment labels, a `$` prompt in the Filters and list headings, a dotted halftone land fill, dashed borders on the map, a green ring for Maker Index pins, and a soft orange glow on pins. Blue is for links, green for primary actions and Maker Index items, yellow for favorites. The blink respects `prefers-reduced-motion`. It also runs together with the Thanksgiving theme (the banner becomes a `//` line).
+
+**Add another fun theme.**
+1. In `style.css`, copy the `:root[data-theme="terminal"] { ... }` variable block and rename it (for example `:root[data-theme="paper"]`). Set every variable in it (`--bg`, `--paper`, `--land`, `--ink`, `--accent`, `--pin`, `--line`, `--font`, and so on). That alone re-colors the whole page, because every component reads these variables. For the halftone land look, also set `--land-dot` and add `:root[data-theme="…"] .land, :root[data-theme="…"] .land-ca { fill: url(#t-dots); }` (the pattern is defined once in `index.html`).
+2. In the `THEMES` array in the head script of `index.html`, add one entry: `{ id: "paper", label: "Paper", color: "#…", scheme: "light", fun: true, swatch: { bg: "#…", fg: "#…", glyph: "Aa" } }`. `color` is the browser theme color, `scheme` is `light` or `dark` (native controls and scrollbars), and `swatch` is the little preview tile in the menu. `fun: true` shows the `>_` glyph on the header button, sets `data-fun="1"` on `<html>`, and keeps the theme out of `?still=1` and print. That is all the picker needs.
+3. Optional flavor (fonts, brackets, borders) goes in its own clearly marked block scoped to `:root[data-theme="paper"]`; use the Terminal block at the end of `style.css` as the model. Do not restyle light or dark. If the theme uses a web font, self-host it in `vendor/` with its license and use `@font-face` with `font-display: swap`.
+4. Check the home map, a card, Filters, the picker, a price filter, the World view, and a phone width. Check light and dark still look identical to before. Bump the `?v=` cache letter everywhere (see Release process), including the font URLs inside `style.css`.
+
+Light and dark themes are never changed by a fun theme: a fun theme only adds selectors scoped to its own `data-theme`. The Thanksgiving light tint is excluded from fun themes with `:not([data-fun])`.
+
 ## Release process
 
 Owner approval is required before any push. Show preview screenshots first and wait. Do not publish, force-push, or go live unasked.
 
-**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125m`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
+**Cache bust.** Every asset URL is versioned with `?v=YYYYMMDD` plus a letter. Current version in this folder: `20261125n`. Do not publish until the owner asks. Live remains whatever was last published until then. Same calendar day: increment the letter. New day: start at `a` (e.g. `20261126a`). Update **every** `?v=` reference in `index.html` and `map.js` together:
 
-- `style.css`, `vendor/d3.min.js`, `vendor/topojson-client.min.js`, `vendor/qrcode-generator.js`, `vendor/fuse.min.js`, `map.js` (in `index.html`)
+- `style.css` (this also covers the four `url("vendor/ibm-plex-mono-…")` font references inside it), `vendor/d3.min.js`, `vendor/topojson-client.min.js`, `vendor/qrcode-generator.js`, `vendor/fuse.min.js`, `map.js` (in `index.html`)
 - `makers.json`, `data/us-canada.topo.json`, `data/world-110m.topo.json` (in `map.js`)
 
 **`?still=1`.** Opens a chrome-free home map (no header, list, timeline, mode bar, nav pills, cards, or stars; labels are drawn on the map). Used to recapture `maker-map-still.png` and as the Open Graph image. Recapture it whenever US + Canada pins change (the still is the home view, 1600×1000 in the current file). Confirm the still page actually renders, with no UI chrome.
 
 **Seasonal theme (Thanksgiving 2026).** A small, removable holiday treatment in three marked blocks: two in `index.html` (a head script, plus a slim banner and leaf marks in the body) and one at the end of `style.css`. It turns on by itself in `America/New_York` from Nov 25, 2026 00:00 through Nov 27, 2026 23:59, and stays off any other time. Preview with `?theme=thanksgiving`; force it off with `?theme=off`. (`?theme=` is reserved for this seasonal switch — light/dark mode uses `?mode=` instead.) When it is on, a dismissible “Happy Thanksgiving from Machined Pens” banner appears above the header, a small cranberry maple leaf sits beside the title, a few falling leaves drift in the header area on larger screens only (not across the map, and not on small screens or when `prefers-reduced-motion` is set), and the page and land fill pick up a slight amber tint (a darker warm tint in dark mode, with a readable cream-on-brown banner). Brand orange pins, panel sizes, and features are unchanged. Dismissing the banner is stored in `localStorage` as `maker-map-thanks-2026`. The theme does not run on `?still=1` or the print view. To remove it later, delete the three “Seasonal: Thanksgiving 2026” blocks.
 
-**Light and dark mode.** A sun/moon button in the header toggles light and dark. Before the first paint, an inline head script in `index.html` sets `data-theme` to `light` or `dark` so the cream light theme does not flash on a dark visit. Order of precedence: `?mode=dark` or `?mode=light` (URL override for that load), then the saved choice in `localStorage` under `maker-map-theme`, then `prefers-color-scheme`. Tapping the toggle writes `maker-map-theme` and drops any `?mode=` from the URL so the saved choice wins on reload. Colors live in CSS custom properties in `style.css` (`:root` / `[data-theme="light"]` for the cream light look, `[data-theme="dark"]` for near-black backgrounds, orange accents, and light text). The map is a D3/SVG drawing, not raster tiles, so land, water, borders, and labels follow those variables. Pins and clusters keep the brand orange (`--pin`) and are not CSS-filtered. Native form controls use `color-scheme`. The toggle is hidden on `?still=1` and the print view.
+**Light and dark mode.** Light and dark are the two built-in themes, and the default. With nothing saved, the map follows the visitor’s device setting (`prefers-color-scheme`). The header button is now a theme picker (see Themes); it keeps the moon in light and the sun in dark, and shows a `>_` glyph in a fun theme. Before the first paint, an inline head script in `index.html` sets `data-theme` so the cream light theme does not flash on a dark visit. Order of precedence: `?mode=<theme>` (URL override for that load, e.g. `?mode=dark`, `?mode=light`, `?mode=terminal`), then the saved choice in `localStorage` under `maker-map-theme`, then `prefers-color-scheme`. Choosing a theme in the picker writes `maker-map-theme` and drops any `?mode=` from the URL so the saved choice wins on reload; choosing Auto removes the saved value so the device setting applies again. Colors live in CSS custom properties in `style.css` (`:root` / `[data-theme="light"]` for the cream light look, `[data-theme="dark"]` for near-black backgrounds, orange accents, and light text). The map is a D3/SVG drawing, not raster tiles, so land, water, borders, and labels follow those variables. In light and dark, pins keep the brand orange (`--pin`) and are not CSS-filtered. Native form controls use `color-scheme`. The picker is hidden on `?still=1` and the print view, and those two views always use the plain light look even if a fun theme is saved.
 
-
-**GoatCounter.** The page loads `https://gc.zgo.at/count.js` for `https://machinedpens.goatcounter.com/count`. That script is **not** injected when the URL contains `?still=1`, and `track()` in `map.js` also no-ops on the still page. To stop a browser from being counted, open the live map once with the GoatCounter exclusion hash: [https://machinedpens.github.io/#toggle-goatcounter](https://machinedpens.github.io/#toggle-goatcounter) (a built-in GoatCounter control; each browser or device needs this once). Custom events (`event: true`) currently fired from `map.js`:
-
-| Event path | When |
-| --- | --- |
-| `star/{slug}` | A maker is starred |
-| `unstar/{slug}` | A maker is unstarred, including Clear favorites |
-| `filter-price/{tier}` | A price chip is turned on (`under-100`, `100-250`, `over-250`) |
-| `filter-type/{type}` | A pen type chip is turned on (`regular`, `fountain`, `multi-pen`, `marker`) |
-| `filter-list/{id}` | A Lists chip is turned on (e.g. `pp-top-10-budget-2026`) |
-| `update-entry/{slug}` | “Update this entry” is clicked |
-| `suggest-maker` | “Suggest a maker” is clicked |
-| `opened-shared-link` | A shared-favorites URL is opened |
-
-(`share-link` and `share-image` still exist in JS but have no buttons in the current HTML, so they should not fire.)
-
-**Test locally.** Serve this folder over HTTP (so `makers.json` and the topo files load), then check home, World (including Australia, New Zealand, Hungary, and Philippines pins; New Zealand must sit comfortably in the frame), a Europe zoom, Japan, the Philippines, South Africa, Australia or New Zealand, a new maker’s card, the list/country filter, the Filters drawer (search at the top, Price, Pen type, and Lists, including a typo query such as `fountian pens over 250`, a unique list query such as `pp new` or `lyfl`, and an ambiguous list query such as `pp top 10` or `pocket priorities` (which should suggest both PP lists, not the owner’s list), a maker-name suggestion such as `shon`, a no-match query, and a zero-count chip), the list “Find a maker” box, the timeline with filters on, light and dark mode (`?mode=light`, `?mode=dark`, the header toggle, and that the choice persists across a reload), a start-of-word name query such as `Makar` or `Kasa`, and `?still=1`. Confirm the map panel does not change size when Filters opens, search suggestions appear, or a filter is applied.
+**Test locally.** Serve this folder over HTTP (so `makers.json` and the topo files load), then check home, World (including Australia, New Zealand, Hungary, and Philippines pins; New Zealand must sit comfortably in the frame), a Europe zoom, Japan, the Philippines, South Africa, Australia or New Zealand, a new maker’s card, the list/country filter, the Filters drawer (search at the top, Price, Pen type, and Lists, including a typo query such as `fountian pens over 250`, a unique list query such as `pp new` or `lyfl`, and an ambiguous list query such as `pp top 10` or `pocket priorities` (which should suggest both PP lists, not the owner’s list), a maker-name suggestion such as `shon`, a no-match query, and a zero-count chip), the list “Find a maker” box, the timeline with filters on, light, dark, and Terminal (`?mode=light`, `?mode=dark`, `?mode=terminal`, the header picker, that the choice persists across a reload, and that Auto returns to the device setting), a start-of-word name query such as `Makar` or `Kasa`, and `?still=1`. Confirm the map panel does not change size when Filters opens, search suggestions appear, or a filter is applied.
 
 **Publish**, only after the owner approves the previews: commit to `main` in `machinedpens/machinedpens.github.io`, keep `.nojekyll` and this `README.md`, and verify the live site at https://machinedpens.github.io (hard-refresh so the new `?v=` assets load).
 

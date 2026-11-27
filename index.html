@@ -11,22 +11,41 @@
   <meta property="og:image" content="https://machinedpens.github.io/maker-map-still.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%23c2410c'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%231b1612' stroke-width='2.5'/%3E%3C/svg%3E">
   <script>
-    /* Light/dark mode: ?mode=dark|light overrides, then localStorage maker-map-theme, then prefers-color-scheme.
-       Do not use ?theme= here — that query is reserved for the seasonal theme. */
+    /* Themes. Order of precedence: ?mode=<id> (URL override), then localStorage "maker-map-theme",
+       then the device setting (prefers-color-scheme -> light or dark). Nothing saved = "Auto (device)".
+       Do not use ?theme= here: that query is reserved for the seasonal theme.
+
+       To add a fun theme: (1) add an entry to THEMES below, (2) add a :root[data-theme="<id>"] block
+       to style.css. The header picker builds itself from this list. See README, "Themes". */
     (function () {
       var KEY = "maker-map-theme";
-      var COLORS = { light: "#f5ecdc", dark: "#0d0d0d" };
+      var THEMES = [
+        { id: "light", label: "Light", color: "#f5ecdc", scheme: "light",
+          swatch: { bg: "#f5ecdc", fg: "#c2410c", glyph: "Aa" } },
+        { id: "dark", label: "Dark", color: "#0d0d0d", scheme: "dark",
+          swatch: { bg: "#0d0d0d", fg: "#ff7a1a", glyph: "Aa" } },
+        { id: "terminal", label: "Terminal", color: "#141414", scheme: "dark", fun: true,
+          swatch: { bg: "#141414", fg: "#ff8a1f", glyph: ">_" } }
+      ];
+      var AUTO = { id: "auto", label: "Auto (device)",
+        swatch: { bg: "linear-gradient(90deg,#f5ecdc 50%,#0d0d0d 50%)", fg: "#c2410c", glyph: "Aa" } };
+      var root = document.documentElement;
+
+      function find(id) {
+        for (var i = 0; i < THEMES.length; i++) if (THEMES[i].id === id) return THEMES[i];
+        return null;
+      }
       function modeParam() {
         try {
           var m = (new URLSearchParams(location.search).get("mode") || "").toLowerCase();
-          if (m === "dark" || m === "light") return m;
+          if (find(m)) return m;
         } catch (e) {}
         return null;
       }
       function savedTheme() {
         try {
           var s = localStorage.getItem(KEY);
-          if (s === "dark" || s === "light") return s;
+          if (find(s)) return s;
         } catch (e) {}
         return null;
       }
@@ -36,35 +55,112 @@
         } catch (e) {}
         return "light";
       }
-      function currentTheme() { return modeParam() || savedTheme() || systemTheme(); }
-      function applyTheme(theme) {
-        if (theme !== "dark") theme = "light";
-        document.documentElement.setAttribute("data-theme", theme);
-        document.documentElement.style.colorScheme = theme;
+      /* The still image and the print view always use the plain light look, never a fun theme. */
+      function paperView() { return /[?&](still|print)=1\b/.test(location.search); }
+      function currentTheme() {
+        var t = modeParam() || savedTheme() || systemTheme();
+        if (find(t).fun && paperView()) return "light";
+        return t;
+      }
+      function choiceId() { return modeParam() || savedTheme() || "auto"; }
+
+      function applyTheme(id) {
+        var def = find(id) || find("light");
+        root.setAttribute("data-theme", def.id);
+        root.style.colorScheme = def.scheme;
+        if (def.fun) root.setAttribute("data-fun", "1"); else root.removeAttribute("data-fun");
         var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute("content", COLORS[theme]);
+        if (meta) meta.setAttribute("content", def.color);
         var btn = document.getElementById("theme-toggle");
         if (btn) {
-          var toDark = theme !== "dark";
-          btn.setAttribute("aria-label", toDark ? "Switch to dark theme" : "Switch to light theme");
-          btn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
-          btn.setAttribute("title", theme === "dark" ? "Dark theme" : "Light theme");
+          btn.setAttribute("aria-label", "Theme: " + def.label + ". Choose a theme");
+          btn.setAttribute("title", "Theme: " + def.label);
+        }
+        markMenu();
+      }
+
+      /* ---- picker menu ---- */
+      var menu, btn;
+      function markMenu() {
+        if (!menu) return;
+        var c = choiceId();
+        var items = menu.querySelectorAll("[data-theme-choice]");
+        for (var i = 0; i < items.length; i++) {
+          var on = items[i].getAttribute("data-theme-choice") === c;
+          items[i].setAttribute("aria-checked", on ? "true" : "false");
+          items[i].setAttribute("tabindex", on ? "0" : "-1");
         }
       }
+      function buildMenu() {
+        var entries = THEMES.concat([AUTO]);
+        var html = "";
+        var sawFun = false;
+        entries.forEach(function (t) {
+          if (t.fun && !sawFun) { sawFun = true; html += '<div class="theme-sep" role="separator"></div>'; }
+          if (t.id === "auto") html += '<div class="theme-sep" role="separator"></div>';
+          html += '<button type="button" class="theme-opt" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-choice="' + t.id + '">' +
+            '<span class="theme-sw" aria-hidden="true" style="background:' + t.swatch.bg + ';color:' + t.swatch.fg + '">' + t.swatch.glyph + '</span>' +
+            '<span class="theme-opt-label">' + t.label + '</span>' +
+            '<span class="theme-opt-check" aria-hidden="true"></span></button>';
+        });
+        menu.innerHTML = html;
+      }
+      function isOpen() { return !menu.hidden; }
+      function openMenu() {
+        menu.hidden = false;
+        btn.setAttribute("aria-expanded", "true");
+        markMenu();
+        var cur = menu.querySelector('[aria-checked="true"]') || menu.querySelector(".theme-opt");
+        if (cur) cur.focus();
+      }
+      function closeMenu(refocus) {
+        if (menu.hidden) return;
+        menu.hidden = true;
+        btn.setAttribute("aria-expanded", "false");
+        if (refocus) btn.focus();
+      }
+      function choose(id) {
+        try {
+          if (id === "auto") localStorage.removeItem(KEY);
+          else localStorage.setItem(KEY, id);
+        } catch (e) {}
+        try {
+          var url = new URL(location.href);
+          url.searchParams.delete("mode");
+          history.replaceState(null, "", url.pathname + url.search + url.hash);
+        } catch (e) {}
+        applyTheme(id === "auto" ? systemTheme() : id);
+      }
+
       applyTheme(currentTheme());
       document.addEventListener("DOMContentLoaded", function () {
-        applyTheme(currentTheme());
-        var btn = document.getElementById("theme-toggle");
-        if (btn) {
-          btn.addEventListener("click", function () {
-            var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-            try { localStorage.setItem(KEY, next); } catch (e) {}
-            try {
-              var url = new URL(location.href);
-              url.searchParams.delete("mode");
-              history.replaceState(null, "", url.pathname + url.search + url.hash);
-            } catch (e) {}
-            applyTheme(next);
+        btn = document.getElementById("theme-toggle");
+        menu = document.getElementById("theme-menu");
+        if (btn && menu) {
+          buildMenu();
+          applyTheme(currentTheme());
+          btn.addEventListener("click", function () { if (isOpen()) closeMenu(false); else openMenu(); });
+          menu.addEventListener("click", function (e) {
+            var t = e.target.closest ? e.target.closest("[data-theme-choice]") : null;
+            if (!t) return;
+            choose(t.getAttribute("data-theme-choice"));
+            closeMenu(true);
+          });
+          menu.addEventListener("keydown", function (e) {
+            var items = Array.prototype.slice.call(menu.querySelectorAll("[data-theme-choice]"));
+            var i = items.indexOf(document.activeElement);
+            if (e.key === "ArrowDown") { items[(i + 1) % items.length].focus(); e.preventDefault(); }
+            else if (e.key === "ArrowUp") { items[(i - 1 + items.length) % items.length].focus(); e.preventDefault(); }
+            else if (e.key === "Home") { items[0].focus(); e.preventDefault(); }
+            else if (e.key === "End") { items[items.length - 1].focus(); e.preventDefault(); }
+            else if (e.key === "Escape") { closeMenu(true); e.preventDefault(); }
+            else if (e.key === "Tab") { closeMenu(false); }
+          });
+          document.addEventListener("click", function (e) {
+            if (isOpen() && !e.target.closest("#theme-picker")) closeMenu(false);
+          });
+          document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape" && isOpen() && !menu.contains(document.activeElement)) closeMenu(true);
           });
         }
         try {
@@ -120,10 +216,20 @@
     })();
   </script>
   <!-- === End seasonal block === -->
-  <link rel="stylesheet" href="style.css?v=20261125m">
+  <link rel="stylesheet" href="style.css?v=20261125n">
 </head>
 <body>
   <a class="skip" href="#maker-list">Skip to the list of makers</a>
+
+  <!-- Shared SVG paint for fun themes (unused by light and dark). -->
+  <svg class="theme-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <pattern id="t-dots" width="6" height="6" patternUnits="userSpaceOnUse">
+        <rect width="6" height="6" fill="var(--land)"/>
+        <rect x="2" y="2" width="1.6" height="1.6" fill="var(--land-dot, var(--land))"/>
+      </pattern>
+    </defs>
+  </svg>
 
   <!-- === Seasonal: Thanksgiving 2026 (removable) === -->
   <div class="thanks-banner" id="thanks-banner" role="region" aria-label="Thanksgiving greeting">
@@ -142,15 +248,22 @@
   <header class="site-header">
     <div class="header-row">
       <h1 class="title"><span class="title-live">Machined Pens Maker Map</span><span class="title-print">My Machined Pens Makers</span></h1>
-      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false">
-        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M15.2 3.1a8.6 8.6 0 1 0 5.7 15.3A8.4 8.4 0 0 1 15.2 3.1z" fill="currentColor"/>
-        </svg>
-        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="4.2" fill="currentColor"/>
-          <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-        </svg>
-      </button>
+      <div class="theme-picker" id="theme-picker">
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Choose a theme" aria-haspopup="menu" aria-expanded="false" aria-controls="theme-menu">
+          <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15.2 3.1a8.6 8.6 0 1 0 5.7 15.3A8.4 8.4 0 0 1 15.2 3.1z" fill="currentColor"/>
+          </svg>
+          <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.2" fill="currentColor"/>
+            <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <svg class="theme-icon theme-icon-fun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 7l6 5-6 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M13 18h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="theme-menu" id="theme-menu" role="menu" aria-label="Theme" hidden></div>
+      </div>
     </div>
     <a class="subtitle" href="https://machinedpens.substack.com/p/the-maker-index-all-makers">Machined Pens · The Maker Index</a>
   </header>
@@ -362,11 +475,11 @@
 
   <noscript><p class="noscript">The map needs JavaScript. You can read <a href="https://machinedpens.substack.com/p/the-maker-index-all-makers">The Maker Index</a> on <a href="https://machinedpens.substack.com">Machined Pens</a>.</p></noscript>
 
-  <script src="vendor/d3.min.js?v=20261125m"></script>
-  <script src="vendor/topojson-client.min.js?v=20261125m"></script>
-  <script src="vendor/qrcode-generator.js?v=20261125m"></script>
-  <script src="vendor/fuse.min.js?v=20261125m"></script>
-  <script src="map.js?v=20261125m"></script>
+  <script src="vendor/d3.min.js?v=20261125n"></script>
+  <script src="vendor/topojson-client.min.js?v=20261125n"></script>
+  <script src="vendor/qrcode-generator.js?v=20261125n"></script>
+  <script src="vendor/fuse.min.js?v=20261125n"></script>
+  <script src="map.js?v=20261125n"></script>
   <script>
     (function () {
       if (/[?&]still=1\b/.test(location.search)) return;
